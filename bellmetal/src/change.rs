@@ -94,7 +94,7 @@ impl From<&str> for Change {
 #[cfg(test)]
 mod change_tests {
     use crate::change::Change;
-    use crate::types::{ Bell, Parity };
+    use crate::types::{ Bell, Stage, Parity };
 
     #[test]
     fn equality () {
@@ -162,12 +162,24 @@ mod change_tests {
                 Bell::from (2)
             ] }
         );
+        assert_eq! (
+            Change::from (""),
+            Change { seq : vec![] }
+        );
+
     }
 
     #[test]
     #[should_panic]
     fn from_string_illegal_bell () {
         Change::from ("2134 ");
+    }
+
+    #[test]
+    fn stage () {
+        assert_eq! (Stage::from (0), Change::from ("").stage ());
+        assert_eq! (Stage::from (1), Change::from ("1").stage ());
+        assert_eq! (Stage::from (10), Change::from ("6789052431").stage ());
     }
     
     #[test]
@@ -179,5 +191,26 @@ mod change_tests {
         assert_eq! (Parity::Odd, Change::from ("1234657").parity ());
         assert_eq! (Parity::Odd, Change::from ("2143657890").parity ());
         assert_eq! (Parity::Odd, Change::from ("7654321").parity ());
+    }
+
+    #[test]
+    fn multiplication () {
+        assert_eq! (Change::from ("1324") * Change::from ("4231"), Change::from ("4321"));
+        assert_eq! (Change::from ("13425678") * Change::from ("13425678"), Change::from ("14235678"));
+        assert_eq! (Change::from ("543216") * Change::from ("543216"), Change::from ("123456"));
+        assert_eq! (Change::from ("132546") * Change::from ("123546"), Change::from ("132456"));
+    }
+    
+    #[test]
+    #[should_panic]
+    fn multiplication_nonequal_stages () {
+        let _c = Change::from ("1234") * Change::from ("12345");
+    }
+
+    #[test]
+    fn inversion () {
+        assert_eq! (!Change::from ("12345"), Change::from ("12345"));
+        assert_eq! (!Change::from ("1235647890"), Change::from ("1236457890"));
+        assert_eq! (!Change::from ("654321"), Change::from ("654321"));
     }
 }
