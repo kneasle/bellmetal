@@ -2,6 +2,7 @@ use std::convert::{ From };
 use std::ops::{ Mul, Not };
 use crate::consts::BELL_NAMES;
 
+#[derive(PartialEq, Debug)]
 pub enum Parity {
     Even = 0,
     Odd = 1
@@ -35,12 +36,22 @@ pub type Row = [Bell];
 
 macro_rules! define_int_synonymn {
     ($type:ident) => {
-        #[derive(PartialEq, Copy, Clone)]
+        #[derive(PartialEq, Debug, Copy, Clone)]
         pub struct $type (u32);
 
         impl From<u32> for $type {
             fn from (x : u32) -> $type {
                 $type (x)
+            }
+        }
+        
+        impl From<i32> for $type {
+            fn from (x : i32) -> $type {
+                if x < 0 {
+                    panic! ("Can't convert a negative number");
+                }
+
+                $type (x as u32)
             }
         }
 

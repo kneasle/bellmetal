@@ -2,6 +2,7 @@ use crate::types::*;
 use core::ops::{ Mul, Not };
 use std::convert::{ From };
 
+#[derive(PartialEq, Debug)]
 pub struct Change {
     seq : Vec<Bell>
 }
@@ -87,5 +88,96 @@ impl From<&str> for Change {
         }
 
         Change { seq : new_seq }
+    }
+}
+
+#[cfg(test)]
+mod change_tests {
+    use crate::change::Change;
+    use crate::types::{ Bell, Parity };
+
+    #[test]
+    fn equality () {
+        assert! (
+            Change { seq : vec![
+                Bell::from (1), 
+                Bell::from (0), 
+                Bell::from (3), 
+                Bell::from (2)
+            ] } 
+            == 
+            Change { seq : vec![
+                Bell::from (1), 
+                Bell::from (0), 
+                Bell::from (3), 
+                Bell::from (2)
+            ] }
+        );
+        
+        // Different bells
+        assert! (
+            Change { seq : vec![
+                Bell::from (1), 
+                Bell::from (0), 
+                Bell::from (2), 
+                Bell::from (3)
+            ] } 
+            != 
+            Change { seq : vec![
+                Bell::from (1), 
+                Bell::from (0), 
+                Bell::from (3), 
+                Bell::from (2)
+            ] }
+        );
+        
+        // Different stage
+        assert! (
+            Change { seq : vec![
+                Bell::from (1), 
+                Bell::from (0), 
+                Bell::from (3), 
+                Bell::from (2),
+                Bell::from (4)
+            ] } 
+            != 
+            Change { seq : vec![
+                Bell::from (1), 
+                Bell::from (0), 
+                Bell::from (3), 
+                Bell::from (2)
+            ] }
+        );
+    }
+
+    #[test]
+    fn from_string () {
+        // Different bells
+        assert_eq! (
+            Change::from ("2143"),
+            Change { seq : vec![
+                Bell::from (1), 
+                Bell::from (0), 
+                Bell::from (3), 
+                Bell::from (2)
+            ] }
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_string_illegal_bell () {
+        Change::from ("2134 ");
+    }
+    
+    #[test]
+    fn parity () {
+        assert_eq! (Parity::Even, Change::from ("1234567").parity ());
+        assert_eq! (Parity::Even, Change::from ("87654321").parity ());
+        assert_eq! (Parity::Even, Change::from ("13425678").parity ());
+
+        assert_eq! (Parity::Odd, Change::from ("1234657").parity ());
+        assert_eq! (Parity::Odd, Change::from ("2143657890").parity ());
+        assert_eq! (Parity::Odd, Change::from ("7654321").parity ());
     }
 }
