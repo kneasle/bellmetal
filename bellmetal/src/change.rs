@@ -1,5 +1,6 @@
-use crate::types::{ Bell, Stage, Parity };
+use crate::types::*;
 use core::ops::{ Mul, Not };
+use std::convert::{ From };
 
 pub struct Change {
     seq : Vec<Bell>
@@ -11,7 +12,37 @@ impl Change {
     }
 
     fn parity (&self) -> Parity {
-        Parity::Even
+        let mut mask : Mask = 0 as Mask;
+        let mut bells_fixed = 0;
+
+        let mut total_cycle_length = 0;
+
+        let stage = self.stage ().as_u32 ();
+
+        while bells_fixed < stage {
+            let mut bell = 0;
+
+            while mask & ((1 as Mask) << bell) != 0 as Mask {
+                bell += 1;
+            }
+
+            total_cycle_length += 1; // Make sure that the parity is correct
+
+            while mask & ((1 as Mask) << bell) == 0 as Mask {
+                mask |= (1 as Mask) << bell;
+
+                bell = self.seq [bell as usize].as_u32 ();
+
+                total_cycle_length += 1;
+                bells_fixed += 1;
+            }
+        }
+        
+        match total_cycle_length & 1 {
+            0 => { Parity::Even },
+            1 => { Parity::Odd }
+            _ => { panic! ("Unknown parity") }
+        }
     }
 }
 
@@ -47,3 +78,14 @@ impl Not for Change {
     }
 }
 
+impl From<&str> for Change {
+    fn from (s : &str) -> Change {
+        let mut new_seq : Vec<Bell> = Vec::with_capacity (s.len ());
+
+        for c in s.chars () {
+            new_seq.push (Bell::from (c));
+        }
+
+        Change { seq : new_seq }
+    }
+}

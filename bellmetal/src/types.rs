@@ -1,12 +1,28 @@
 use std::convert::{ From };
+use std::ops::{ Mul, Not };
+use crate::consts::BELL_NAMES;
 
 pub enum Parity {
     Even = 0,
     Odd = 1
 }
 
-impl Parity {
-    pub fn opposite (self) -> Parity {
+impl Mul for Parity {
+    type Output = Self;
+
+    fn mul (self, other : Self) -> Self {
+        match (self as usize) ^ (other as usize) {
+            0 => { Parity::Even }
+            1 => { Parity::Odd }
+            _ => { panic! ("Unknown parity found") }
+        }
+    }
+}
+
+impl Not for Parity {
+    type Output = Self;
+
+    fn not (self) -> Self {
         match self {
             Parity::Even => { Parity::Odd }
             Parity::Odd  => { Parity::Even }
@@ -15,8 +31,6 @@ impl Parity {
 }
 
 pub type Mask = u64;
-pub const MAX_STAGE : usize = 64;
-
 pub type Row = [Bell];
 
 macro_rules! define_int_synonymn {
@@ -51,3 +65,12 @@ macro_rules! define_int_synonymn {
 define_int_synonymn! (Place);
 define_int_synonymn! (Bell);
 define_int_synonymn! (Stage);
+
+impl From<char> for Bell {
+    fn from (c : char) -> Bell {
+        match BELL_NAMES.find (c) {
+            Some (i) => { Bell::from (i) }
+            None => { panic! ("Illegal bell name '{}'", c) }
+        }
+    }
+}
