@@ -1,5 +1,5 @@
 use crate::types::{ Bell, Stage, Parity };
-use core::ops::Mul;
+use core::ops::{ Mul, Not };
 
 pub struct Change {
     seq : Vec<Bell>
@@ -32,3 +32,18 @@ impl Mul for Change {
         Change { seq : new_seq }
     }
 }
+
+impl Not for Change {
+    type Output = Self;
+
+    fn not (self) -> Self {
+        let mut new_seq : Vec<Bell> = vec![Bell::from (0u32); self.stage ().as_usize ()];
+
+        for i in 0..self.stage ().as_usize () {
+            new_seq [self.seq [i as usize].as_usize ()] = Bell::from (i);
+        }
+
+        Change { seq : new_seq }
+    }
+}
+

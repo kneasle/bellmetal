@@ -14,6 +14,11 @@ impl Parity {
     }
 }
 
+pub type Mask = u64;
+pub const MAX_STAGE : usize = 64;
+
+pub type Row = [Bell];
+
 macro_rules! define_int_synonymn {
     ($type:ident) => {
         #[derive(PartialEq, Copy, Clone)]
@@ -46,5 +51,3 @@ macro_rules! define_int_synonymn {
 define_int_synonymn! (Place);
 define_int_synonymn! (Bell);
 define_int_synonymn! (Stage);
-
-pub type Row = [Bell];
