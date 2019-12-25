@@ -69,6 +69,14 @@ macro_rules! define_int_synonymn {
             pub fn as_usize (&self) -> usize {
                 self.as_u32 () as usize
             }
+
+            pub fn as_char (&self) -> char {
+                if self.0 >= BELL_NAMES.len () as u32 {
+                    panic! ("Bell name '{}' too big to convert to char", self.0);
+                }
+
+                BELL_NAMES.as_bytes () [self.as_usize ()] as char
+            }
         }
     };
 }

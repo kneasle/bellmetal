@@ -1,8 +1,9 @@
 use crate::types::*;
 use core::ops::{ Mul, Not };
 use std::convert::{ From };
+use std::fmt;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq)]
 pub struct Change {
     seq : Vec<Bell>
 }
@@ -44,6 +45,18 @@ impl Change {
             1 => { Parity::Odd }
             _ => { panic! ("Unknown parity") }
         }
+    }
+}
+
+impl fmt::Debug for Change {
+    fn fmt (&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = String::with_capacity (self.stage ().as_usize ());
+
+        for b in &self.seq {
+            s.push (b.as_char ());
+        }
+
+        write! (f, "<{}>", s)
     }
 }
 
@@ -95,6 +108,8 @@ impl From<&str> for Change {
 mod change_tests {
     use crate::change::Change;
     use crate::types::{ Bell, Stage, Parity };
+    
+    use std::fmt::Write;
 
     #[test]
     fn equality () {
@@ -212,5 +227,22 @@ mod change_tests {
         assert_eq! (!Change::from ("12345"), Change::from ("12345"));
         assert_eq! (!Change::from ("1235647890"), Change::from ("1236457890"));
         assert_eq! (!Change::from ("654321"), Change::from ("654321"));
+    }
+    
+    #[test]
+    fn debug_print () {
+        let mut s = String::with_capacity (20);
+        
+        write! (&mut s, "{:?}", Change::from ("")).unwrap ();
+        assert_eq! (s, "<>");
+        s.clear ();
+        
+        write! (&mut s, "{:?}", Change::from ("14325")).unwrap ();
+        assert_eq! (s, "<14325>");
+        s.clear ();
+        
+        write! (&mut s, "{:?}", Change::from ("1678902345ET")).unwrap ();
+        assert_eq! (s, "<1678902345ET>");
+        s.clear ();
     }
 }
