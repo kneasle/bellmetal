@@ -10,6 +10,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Build
-      run: cargo build bellmetal --verbose
+      run: cd bellmetal; cargo build --verbose
     - name: Run tests
-      run: cargo test bellmetal --verbose
+      run: cd bellmetal; cargo test --verbose
