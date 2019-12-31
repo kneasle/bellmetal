@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Move Dir
-      run: cd bellmetal
+      run: cd bellmetal;
            ls -l
     - name: Build
       run: cargo build --verbose
