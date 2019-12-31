@@ -14,26 +14,26 @@ impl Change {
     }
 
     fn parity (&self) -> Parity {
-        let mut mask : Mask = 0 as Mask;
+        let mut mask = Mask::empty ();
         let mut bells_fixed = 0;
 
         let mut total_cycle_length = 0;
 
-        let stage = self.stage ().as_u32 ();
+        let stage = self.stage ().as_number ();
 
         while bells_fixed < stage {
             let mut bell = 0;
-
-            while mask & ((1 as Mask) << bell) != 0 as Mask {
+                
+            while mask.get (bell) {
                 bell += 1;
             }
 
             total_cycle_length += 1; // Make sure that the parity is correct
 
-            while mask & ((1 as Mask) << bell) == 0 as Mask {
-                mask |= (1 as Mask) << bell;
-
-                bell = self.seq [bell as usize].as_u32 ();
+            while !mask.get (bell) {
+                mask.add (bell);
+                
+                bell = self.seq [bell as usize].as_number ();
 
                 total_cycle_length += 1;
                 bells_fixed += 1;
