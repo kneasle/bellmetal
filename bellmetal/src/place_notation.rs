@@ -1,72 +1,228 @@
 use crate::types::*;
 use crate::consts;
 use crate::types::MaskMethods;
+use crate::change::Change;
+use std::cmp::PartialEq;
+use std::fmt;
 
-pub struct PlaceNotation<'a> {
-    notation : &'a str,
+pub struct PlaceNotation {
+    // notation : &'a str,
     places : Mask,
     stage : Stage
 }
 
-pub fn generate (notation : &str, stage : Stage) -> PlaceNotation {
-    let mut places = Mask::empty ();
-    
-    if notation == "X" || notation == "x" || notation == "" {
+impl PartialEq for PlaceNotation {
+    fn eq (&self, other : &Self) -> bool {
+        self.places == other.places && self.stage == other.stage
+    }
+}
+
+impl Eq for PlaceNotation { }
+
+impl fmt::Debug for PlaceNotation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = String::with_capacity (Mask::limit () as usize);
+
+        for i in 0..self.stage.as_usize () {
+            if self.places.get (i as Number) {
+                s.push (Bell::from (i).as_char ());
+            }
+        }
+
+        if s.len () == 0 {
+            s.push ('x');
+        }
+
+        write! (f, "{}", s)
+    }
+}
+
+impl PlaceNotation {
+    pub fn transposition (&self) -> Change {
+        let stage = self.stage.as_usize ();
+        let mut bell_vec : Vec<Bell> = Vec::with_capacity (stage);
+
+        let mut i = 0;
+        
+        while i < stage {
+            if self.places.get (i as u32) || self.places.get (i as u32 + 1) {
+                bell_vec.push (Bell::from (i));
+
+                i += 1;
+            } else {
+                bell_vec.push (Bell::from (i + 1));
+                bell_vec.push (Bell::from (i));
+                i += 2;
+            }
+        }
+
+        Change { seq : bell_vec }
+    }
+
+    pub fn is_cross (notation : char) -> bool {
+        notation == 'X' || notation == 'x' || notation == '-'
+    }
+
+    pub fn cross (stage : Stage) -> PlaceNotation {
         if stage.as_u32 () & 1u32 != 0 {
             panic! ("Non-even stage used with a cross notation");
         }
+
+        PlaceNotation { places : Mask::empty (), stage : stage }
+    }
+
+    pub fn from_string (notation : &str, stage : Stage) -> PlaceNotation {
+        let mut places = Mask::empty ();
         
-        // Nothing to be done here, since places defaults to 0
-    } else { // Should decode bell names as places
-        for c in notation.chars () {
-            if !consts::is_bell_name (c) {
-                panic! ("Unknown bell name '{}' found in place notation '{}'", c, notation);
+        if notation == "X" || notation == "x" || notation == "-" {
+            if stage.as_u32 () & 1u32 != 0 {
+                panic! ("Non-even stage used with a cross notation");
+            }
+            
+            // Nothing to be done here, since places defaults to 0
+        } else { // Should decode bell names as places
+            for c in notation.chars () {
+                if !consts::is_bell_name (c) {
+                    panic! ("Unknown bell name '{}' found in place notation '{}'", c, notation);
+                }
+
+                places.add (consts::name_to_number (c));
             }
 
-            places.add (consts::name_to_number (c));
-        }
+            // Add implicit places (lower place)
+            let mut lowest_place = 0 as Number;
 
-        // Add implicit places (lower place)
-        let mut lowest_place = 0 as Number;
+            while !places.get (lowest_place) {
+                lowest_place += 1;
+            }
 
-        while !places.get (lowest_place) {
-            lowest_place += 1;
-        }
+            if lowest_place & 1 == 1 {
+                places.add (0 as Number);
+            }
 
-        if lowest_place & 1 == 1 {
-            places.add (0 as Number);
-        }
+            // Add implicit places (higher place)
+            let mut highest_place = stage.as_number ();
 
-        // Add implicit places (higher place)
-        let mut highest_place = stage.as_number ();
-
-        while !places.get (highest_place) {
-            highest_place -= 1;
+            while !places.get (highest_place) {
+                highest_place -= 1;
+            }
+            
+            if (stage.as_number () - highest_place) & 1 == 0 {
+                places.add (stage.as_number () - 1);
+            }
         }
         
-        if (stage.as_number () - highest_place) & 1 == 0 {
-            places.add (stage.as_number () - 1);
+        PlaceNotation { places : places, stage : stage }
+    }
+
+    pub fn from_multiple_string<'a> (string : &str, stage : Stage) -> Vec<PlaceNotation> {
+        let mut string_buff = String::with_capacity (Mask::limit () as usize);
+        let mut place_notations : Vec<PlaceNotation> = Vec::with_capacity (string.len ());
+
+        macro_rules! add_place_not {
+            () => {
+                place_notations.push (PlaceNotation::from_string (&string_buff, stage));
+                string_buff.clear ();
+            }
         }
+
+        for c in string.chars () {
+            if c == '.' || c == ' ' {
+                add_place_not! ();
+            } else if PlaceNotation::is_cross (c) {
+                if string_buff.len () != 0 {
+                    add_place_not! ();
+                }
+                
+                place_notations.push (PlaceNotation::cross (stage));
+            } else {
+                string_buff.push (c);
+            }
+        }
+
+        add_place_not! ();
+
+        place_notations
     }
-    
-    PlaceNotation { notation : notation, places : places, stage : stage }
-}
-
-pub fn split (string : &str, stage : Stage) -> Vec<PlaceNotation> {
-    let mut string_buff = String::with_capacity (Mask::limit () as usize);
-    let mut places_mask = Mask::empty ();
-
-    for c in string.chars () {
-        print! ("{}", c);
-    }
-
-    vec![]
 }
 
 #[cfg(test)]
 pub mod pn_tests {
+    use crate::types::*;
+    use crate::place_notation::PlaceNotation;
+    use crate::change::Change;
+
     #[test]
     fn equality () {
+        assert! (
+            PlaceNotation::from_string ("14", Stage::MINIMUS)
+            ==
+            PlaceNotation::from_string ("14", Stage::MINIMUS)
+        );
+        
+        assert! (
+            PlaceNotation::from_string ("14", Stage::MINIMUS)
+            !=
+            PlaceNotation::from_string ("14", Stage::DOUBLES)
+        );
+        
+        assert! (
+            PlaceNotation::from_string ("14", Stage::MAJOR)
+            !=
+            PlaceNotation::from_string ("1458", Stage::MAJOR)
+        );
+    }
 
+    #[test]
+    fn implicit_places () {
+        assert_eq! (
+            PlaceNotation::from_string ("4", Stage::TRIPLES),
+            PlaceNotation::from_string ("147", Stage::TRIPLES)
+        );
+
+        assert_eq! (
+            PlaceNotation::from_string ("47", Stage::CATERS),
+            PlaceNotation::from_string ("147", Stage::CATERS)
+        );
+
+        assert_eq! (
+            PlaceNotation::from_string ("45", Stage::MAJOR),
+            PlaceNotation::from_string ("1458", Stage::MAJOR)
+        );
+    }
+
+    #[test]
+    fn transpositions () {
+        assert_eq! (
+            PlaceNotation::from_string ("4", Stage::TRIPLES).transposition (),
+            Change::from ("1324657")
+        );
+        
+        assert_eq! (
+            PlaceNotation::from_string ("x", Stage::MAJOR).transposition (),
+            Change::from ("21436587")
+        );
+        
+        assert_eq! (
+            PlaceNotation::from_string ("135", Stage::DOUBLES).transposition (),
+            Change::from ("12345")
+        );
+    }
+
+    #[test]
+    fn split_many () {
+        fn test (string : &str, stage : Stage, result : Change)  {
+            let mut accum : Change = Change::rounds (stage);
+
+            for c in PlaceNotation::from_multiple_string (string, stage).iter () {
+                accum = accum * c.transposition ();
+            }
+
+            assert_eq! (accum, result);
+        }
+
+        test ("x16", Stage::MINOR, Change::from ("241635"));
+        test ("3.145.5.1.5.1.5.1.5.1", Stage::DOUBLES, Change::from ("12435")); // Some bizarre doubles method
+        test ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", Stage::TRIPLES, Change::from ("4623751")); // Scientific Triples
     }
 }

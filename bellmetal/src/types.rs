@@ -34,6 +34,7 @@ impl Not for Parity {
 
 type MaskType = u64;
 
+#[derive(PartialEq, Eq)]
 pub struct MaskStruct {
     pub mask : MaskType
 }
@@ -43,6 +44,8 @@ pub type Mask = MaskStruct;
 pub trait MaskMethods {
     fn empty () -> Self;
     fn limit () -> Number;
+
+    fn from_bitmask (value : u64) -> Mask;
 
     fn get (&self, value : Number) -> bool;
     fn del (&mut self, value : Number) -> ();
@@ -68,6 +71,10 @@ impl MaskMethods for MaskStruct {
 
     fn limit () -> Number {
         64
+    }
+
+    fn from_bitmask (value : u64) -> Mask {
+        Mask { mask : value }
     }
 
     fn get (&self, value : Number) -> bool {
@@ -98,7 +105,7 @@ mod mask_tests {
 
     #[test]
     fn get () {
-        let mask = Mask { mask : 0b10001_1000u64 };
+        let mask = Mask::from_bitmask (0b0001_0001_1000u64);
 
         assert! (!mask.get (0));
         assert! (mask.get (3));
@@ -108,7 +115,7 @@ mod mask_tests {
 
     #[test]
     fn add () {
-        let mut mask = Mask { mask : 0b10001_1000u64 };
+        let mut mask = Mask::from_bitmask (0b0001_0001_1000u64);
 
         assert! (!mask.get (0));
         assert! (mask.get (3));
@@ -116,8 +123,27 @@ mod mask_tests {
         assert! (!mask.get (25));
 
         mask.add (25);
+        mask.add (4);
 
+        assert! (mask.get (4));
         assert! (mask.get (25));
+        assert! (!mask.get (26));
+    }
+
+    #[test]
+    fn del () {
+        let mut mask = Mask::from_bitmask (0b1001_1000u64);
+
+        assert! (!mask.get (0));
+        assert! (mask.get (3));
+        assert! (mask.get (4));
+        assert! (!mask.get (25));
+
+        mask.del (3);
+        mask.del (0);
+
+        assert! (!mask.get (3));
+        assert! (!mask.get (0));
     }
 }
 
@@ -177,6 +203,34 @@ macro_rules! define_int_synonymn {
 define_int_synonymn! (Place);
 define_int_synonymn! (Bell);
 define_int_synonymn! (Stage);
+
+impl Stage {
+    pub const SINGLES : Stage = Stage (3);
+    pub const MINIMUS : Stage = Stage (4);
+    
+    pub const DOUBLES : Stage = Stage (5);
+    pub const MINOR : Stage = Stage (6);
+    pub const TRIPLES : Stage = Stage (7);
+    pub const MAJOR : Stage = Stage (8);
+   
+    pub const CATERS : Stage = Stage (9);
+    pub const ROYAL : Stage = Stage (10);
+    pub const CINQUES : Stage = Stage (11);
+    pub const MAXIMUS : Stage = Stage (12);
+   
+    pub const SEXTUPLES : Stage = Stage (13);
+    pub const FOURTEEN : Stage = Stage (14);
+    pub const SEPTUPLES : Stage = Stage (15);
+    pub const SIXTEEN : Stage = Stage (16);
+   
+    pub const OCTUPLES : Stage = Stage (17);
+    pub const EIGHTEEN : Stage = Stage (18);
+    pub const NONUPLES : Stage = Stage (19);
+    pub const TWENTY : Stage = Stage (20);
+   
+    pub const DECUPLES : Stage = Stage (21);
+    pub const TWENTY_TWO : Stage = Stage (22);
+}
 
 impl From<char> for Bell {
     fn from (c : char) -> Bell {

@@ -5,7 +5,7 @@ use std::fmt;
 
 #[derive(PartialEq)]
 pub struct Change {
-    seq : Vec<Bell>
+    pub seq : Vec<Bell>
 }
 
 impl Change {
@@ -45,6 +45,16 @@ impl Change {
             1 => { Parity::Odd }
             _ => { panic! ("Unknown parity") }
         }
+    }
+
+    pub fn rounds (stage : Stage) -> Change {
+        let mut seq : Vec<Bell> = Vec::with_capacity (stage.as_usize ());
+
+        for i in 0..stage.as_usize () {
+            seq.push (Bell::from (i));
+        }
+
+        Change { seq : seq }
     }
 }
 
