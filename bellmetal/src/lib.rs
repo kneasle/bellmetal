@@ -6,3 +6,4 @@ pub mod method;
 pub mod place_notation;
 pub mod touch;
 pub mod types;
+pub mod utils;

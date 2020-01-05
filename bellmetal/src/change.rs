@@ -3,17 +3,17 @@ use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub struct Change {
     pub seq : Vec<Bell>
 }
 
 impl Change {
-    fn stage (&self) -> Stage {
+    pub fn stage (&self) -> Stage {
         Stage::from (self.seq.len ())
     }
 
-    fn parity (&self) -> Parity {
+    pub fn parity (&self) -> Parity {
         let mut mask = Mask::empty ();
         let mut bells_fixed = 0;
 
