@@ -34,7 +34,7 @@ impl Not for Parity {
 
 type MaskType = u64;
 
-#[derive(PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct MaskStruct {
     pub mask : MaskType
 }

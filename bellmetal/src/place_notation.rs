@@ -5,6 +5,7 @@ use crate::change::Change;
 use std::cmp::PartialEq;
 use std::fmt;
 
+#[derive(Copy, Clone)]
 pub struct PlaceNotation {
     // notation : &'a str,
     places : Mask,
@@ -118,6 +119,8 @@ impl PlaceNotation {
     pub fn from_multiple_string<'a> (string : &str, stage : Stage) -> Vec<PlaceNotation> {
         let mut string_buff = String::with_capacity (Mask::limit () as usize);
         let mut place_notations : Vec<PlaceNotation> = Vec::with_capacity (string.len ());
+        let mut comma_index = 0usize;
+        let mut has_found_comma = false;
 
         macro_rules! add_place_not {
             () => {
@@ -129,6 +132,11 @@ impl PlaceNotation {
         for c in string.chars () {
             if c == '.' || c == ' ' {
                 add_place_not! ();
+            } else if c == ',' {
+                add_place_not! ();
+                
+                has_found_comma = true;
+                comma_index = place_notations.len ();
             } else if PlaceNotation::is_cross (c) {
                 if string_buff.len () != 0 {
                     add_place_not! ();
@@ -142,7 +150,44 @@ impl PlaceNotation {
 
         add_place_not! ();
 
-        place_notations
+        // Deal with strings with comma in them
+        if has_found_comma {
+            println! (" >> {}", comma_index);
+
+            let mut reordered_place_notations : Vec<PlaceNotation> = Vec::with_capacity (
+                comma_index * 2 + (place_notations.len () - comma_index) * 2 - 2
+            );
+
+            macro_rules! add {
+                ($x : expr) => {
+                    reordered_place_notations.push (place_notations [$x].clone ());
+                }
+            }
+            
+            // Before the comma forwards
+            for i in 0..comma_index {
+                add! (i);
+            }
+
+            // Before the comma backwards
+            for i in 0..comma_index - 1 {
+                add! (comma_index - 2 - i);
+            }
+            
+            // After the comma forwards
+            for i in comma_index..place_notations.len () {
+                add! (i);
+            }
+
+            // After the comma backwards
+            for i in 0..place_notations.len () - comma_index - 1 {
+                add! (place_notations.len () - 2 - i);
+            }
+
+            reordered_place_notations
+        } else {
+            place_notations
+        }
     }
 }
 
@@ -224,5 +269,7 @@ pub mod pn_tests {
         test ("x16", Stage::MINOR, Change::from ("241635"));
         test ("3.145.5.1.5.1.5.1.5.1", Stage::DOUBLES, Change::from ("12435")); // Some bizarre doubles method
         test ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", Stage::TRIPLES, Change::from ("4623751")); // Scientific Triples
+        test ("x12,16", Stage::MINOR, Change::from ("142635"));
+        test ("3,1.E.1.E.1.E.1.E.1.E.1", Stage::CINQUES, Change::from ("12537496E80"));
     }
 }
