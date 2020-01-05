@@ -266,10 +266,10 @@ pub mod pn_tests {
             assert_eq! (accum, result);
         }
 
-        test ("x16", Stage::MINOR, Change::from ("241635"));
-        test ("3.145.5.1.5.1.5.1.5.1", Stage::DOUBLES, Change::from ("12435")); // Some bizarre doubles method
+        test ("x16", Stage::MINOR, Change::from ("241635")); // Original Minor
+        test ("3.145.5.1.5.1.5.1.5.1", Stage::DOUBLES, Change::from ("12435")); // Gnu Bob Doubles
         test ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", Stage::TRIPLES, Change::from ("4623751")); // Scientific Triples
-        test ("x12,16", Stage::MINOR, Change::from ("142635"));
-        test ("3,1.E.1.E.1.E.1.E.1.E.1", Stage::CINQUES, Change::from ("12537496E80"));
+        test ("x12,16", Stage::MINOR, Change::from ("142635")); // Bastow Minor
+        test ("3,1.E.1.E.1.E.1.E.1.E.1", Stage::CINQUES, Change::from ("12537496E80")); // Grandsire Cinques
     }
 }
