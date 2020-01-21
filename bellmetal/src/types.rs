@@ -90,63 +90,6 @@ impl MaskMethods for MaskStruct {
     }
 }
 
-#[cfg(test)]
-mod mask_tests {
-    use crate::types::*;
-
-    #[test]
-    fn empty_limit () {
-        let mask = Mask::empty ();
-
-        for i in 0..Mask::limit () {
-            assert! (!mask.get (i));
-        }
-    }
-
-    #[test]
-    fn get () {
-        let mask = Mask::from_bitmask (0b0001_0001_1000u64);
-
-        assert! (!mask.get (0));
-        assert! (mask.get (3));
-        assert! (mask.get (4));
-        assert! (!mask.get (25));
-    }
-
-    #[test]
-    fn add () {
-        let mut mask = Mask::from_bitmask (0b0001_0001_1000u64);
-
-        assert! (!mask.get (0));
-        assert! (mask.get (3));
-        assert! (mask.get (4));
-        assert! (!mask.get (25));
-
-        mask.add (25);
-        mask.add (4);
-
-        assert! (mask.get (4));
-        assert! (mask.get (25));
-        assert! (!mask.get (26));
-    }
-
-    #[test]
-    fn del () {
-        let mut mask = Mask::from_bitmask (0b1001_1000u64);
-
-        assert! (!mask.get (0));
-        assert! (mask.get (3));
-        assert! (mask.get (4));
-        assert! (!mask.get (25));
-
-        mask.del (3);
-        mask.del (0);
-
-        assert! (!mask.get (3));
-        assert! (!mask.get (0));
-    }
-}
-
 pub type Number = u32;
 
 macro_rules! define_int_synonymn {
@@ -238,5 +181,62 @@ impl From<char> for Bell {
             Some (i) => { Bell::from (i) }
             None => { panic! ("Illegal bell name '{}'", c) }
         }
+    }
+}
+
+#[cfg(test)]
+mod mask_tests {
+    use crate::types::*;
+
+    #[test]
+    fn empty_limit () {
+        let mask = Mask::empty ();
+
+        for i in 0..Mask::limit () {
+            assert! (!mask.get (i));
+        }
+    }
+
+    #[test]
+    fn get () {
+        let mask = Mask::from_bitmask (0b0001_0001_1000u64);
+
+        assert! (!mask.get (0));
+        assert! (mask.get (3));
+        assert! (mask.get (4));
+        assert! (!mask.get (25));
+    }
+
+    #[test]
+    fn add () {
+        let mut mask = Mask::from_bitmask (0b0001_0001_1000u64);
+
+        assert! (!mask.get (0));
+        assert! (mask.get (3));
+        assert! (mask.get (4));
+        assert! (!mask.get (25));
+
+        mask.add (25);
+        mask.add (4);
+
+        assert! (mask.get (4));
+        assert! (mask.get (25));
+        assert! (!mask.get (26));
+    }
+
+    #[test]
+    fn del () {
+        let mut mask = Mask::from_bitmask (0b1001_1000u64);
+
+        assert! (!mask.get (0));
+        assert! (mask.get (3));
+        assert! (mask.get (4));
+        assert! (!mask.get (25));
+
+        mask.del (3);
+        mask.del (0);
+
+        assert! (!mask.get (3));
+        assert! (!mask.get (0));
     }
 }
