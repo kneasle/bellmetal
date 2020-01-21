@@ -1,4 +1,5 @@
 use crate::types::*;
+use crate::permutation::Permutation;
 use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
@@ -6,6 +7,16 @@ use std::fmt;
 #[derive(PartialEq, Clone)]
 pub struct Change {
     pub seq : Vec<Bell>
+}
+
+impl Permutation for Change {
+    fn stage (&self) -> Stage {
+        Stage::from (self.seq.len ())
+    }
+
+    fn bell_at (&self, place : Place) -> Bell {
+        self.seq [place.as_usize ()]
+    }
 }
 
 impl Change {
@@ -81,7 +92,7 @@ impl Mul for Change {
         let mut new_seq : Vec<Bell> = Vec::with_capacity (self.stage ().as_usize ());
 
         for i in 0..self.stage ().as_usize () {
-            new_seq.push (self.seq [rhs.seq [i].as_usize ()]);
+            new_seq.push (self.seq [rhs.bell_at (Place::from (i)).as_usize ()]);
         }
 
         Change { seq : new_seq }

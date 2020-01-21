@@ -3,6 +3,7 @@
 pub mod change;
 pub mod consts;
 pub mod method;
+pub mod permutation;
 pub mod place_notation;
 pub mod touch;
 pub mod types;
