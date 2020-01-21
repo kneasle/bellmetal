@@ -57,7 +57,8 @@ impl Change {
             _ => { panic! ("Unknown parity") }
         }
     }
-
+    
+    // "Static" methods
     pub fn rounds (stage : Stage) -> Change {
         let mut seq : Vec<Bell> = Vec::with_capacity (stage.as_usize ());
 
