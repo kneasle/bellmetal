@@ -95,6 +95,44 @@ impl Change {
             into.seq.push (self.seq [rhs.bell_at (Place::from (i)).as_usize ()]);
         }
     }
+
+    pub fn is_full_cyclic (&self) -> bool {
+        let stage = self.stage ().as_usize ();
+
+        if stage == 0 {
+            return false;
+        }
+
+        let start = self.seq [0].as_usize ();
+
+        for i in 0..stage {
+            if self.seq [i].as_usize () != (start + i) % stage {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    pub fn is_fixed_treble_cyclic (&self) -> bool {
+        let stage = self.stage ().as_usize ();
+        
+        if stage <= 2 || self.seq [0].as_usize () != 0 {
+            return false;
+        }
+
+        let start = self.seq [1].as_usize ();
+
+        for i in 0..stage - 1 {
+            let expected_bell = if start + i >= stage { start + i - stage + 1 } else { start + i };
+            
+            if self.seq [i + 1].as_usize () != expected_bell {
+                return false;
+            }
+        }
+
+        true
+    }
     
     // "Static" methods
     pub fn rounds (stage : Stage) -> Change {
@@ -206,8 +244,8 @@ impl ChangeAccumulator {
 
     pub fn reset (&mut self) {
         for i in 0..self.stage.as_usize () {
-            self.change_1 [i] = Bell::from (i);
-            self.change_2 [i] = Bell::from (i);
+            self.change_1.seq [i] = Bell::from (i);
+            self.change_2.seq [i] = Bell::from (i);
             
             self.using_second_change = false;
         }
@@ -351,6 +389,18 @@ mod change_tests {
         assert_eq! (!Change::from ("12345"), Change::from ("12345"));
         assert_eq! (!Change::from ("1235647890"), Change::from ("1236457890"));
         assert_eq! (!Change::from ("654321"), Change::from ("654321"));
+    }
+    
+    #[test]
+    fn cyclicness_tests () {
+        assert! (Change::from ("12345").is_full_cyclic ());
+        assert! (Change::from ("5678901234").is_full_cyclic ());
+        assert! (!Change::from ("42513").is_full_cyclic ());
+
+        assert! (Change::from ("123456789").is_fixed_treble_cyclic ());
+        assert! (Change::from ("134562").is_fixed_treble_cyclic ());
+        assert! (!Change::from ("4567123").is_fixed_treble_cyclic ());
+        assert! (!Change::from ("42513").is_fixed_treble_cyclic ());
     }
     
     #[test]
