@@ -1,4 +1,6 @@
 use crate::types::{ Stage, Bell, Number };
+use crate::place_notation::PlaceNotation;
+use crate::change::Change;
 
 pub struct Row {
     pub index : u32
@@ -28,6 +30,74 @@ impl Touch {
         }
 
         s
+    }
+}
+
+impl From<&Vec<PlaceNotation>> for Touch {
+    fn from (place_notations : &Vec<PlaceNotation>) -> Touch {
+        let length = place_notations.len () + 1;
+
+        if length == 1 {
+            panic! ("Touch must be made of at least one place notation");
+        }
+
+        let stage = {
+            let mut stage = None;
+
+            for p in place_notations {
+                match stage {
+                    Some (s) => {
+                        if s != p.stage {
+                            panic! ("Every place notation of a touch must be of the same stage");
+                        }
+                    }
+                    None => { stage = Some (p.stage) }
+                }
+            }
+
+            stage.unwrap ().as_usize ()
+        };
+
+        let bells = {
+            let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
+            
+            let mut change = Change::rounds (Stage::from (stage));
+            
+            macro_rules! add_change {
+                () => {
+                    for b in &change.seq {
+                        bells.push (*b);
+                    }
+                }
+            }
+            
+            // This will cause a lot of heap allocations, but I don't expect it will be called
+            // a lot - however if this function is a bottleneck, then this might be a good
+            // place to optimise
+            
+            add_change! ();
+            for p in place_notations {
+                change = change * p.transposition ();
+                add_change! ();
+            }
+
+            bells
+        };
+
+        let mut rows : Vec<Row> = Vec::with_capacity (length);
+        
+        for i in 0..length {
+            rows.push (Row {
+                index : i as Number
+            });
+        }
+        
+        Touch { 
+            stage : Stage::from (stage),
+            length : length as Number,
+            bells : bells,
+            rows : rows
+        }
     }
 }
 

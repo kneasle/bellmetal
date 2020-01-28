@@ -7,9 +7,8 @@ use std::fmt;
 
 #[derive(Copy, Clone)]
 pub struct PlaceNotation {
-    // notation : &'a str,
-    places : Mask,
-    stage : Stage
+    pub places : Mask,
+    pub stage : Stage
 }
 
 impl PartialEq for PlaceNotation {
@@ -190,6 +189,48 @@ impl PlaceNotation {
         }
     }
 }
+
+
+
+
+struct PlaceNotationIterator<'a> {
+    place_notation : &'a PlaceNotation,
+    index : Number,
+    should_hunt_up : bool
+}
+
+impl <'a> Iterator for PlaceNotationIterator<'a> {
+    type Item = Number;
+
+    fn next (&mut self) -> Option<Number> {
+        if self.index == self.place_notation.stage.as_number () {
+            return None;
+        }
+        
+        let mut output = 0 as Number;
+    
+        if self.place_notation.places.get (self.index) {
+            output = self.index;
+
+            self.should_hunt_up = false;
+        } else {
+            if self.should_hunt_up {
+                output = self.index - 1;
+            } else {
+                output = self.index + 1;
+            }
+            
+            self.should_hunt_up = !self.should_hunt_up;
+        }
+
+        self.index += 1;
+        
+        return Some (output);
+    }
+}
+
+
+
 
 #[cfg(test)]
 pub mod pn_tests {

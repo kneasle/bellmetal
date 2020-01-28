@@ -1,5 +1,5 @@
 use crate::types::*;
-use crate::permutation::Permutation;
+use crate::transposition::Transposition;
 use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
@@ -9,7 +9,7 @@ pub struct Change {
     pub seq : Vec<Bell>
 }
 
-impl Permutation for Change {
+impl Transposition for Change {
     fn stage (&self) -> Stage {
         Stage::from (self.seq.len ())
     }
@@ -57,6 +57,32 @@ impl Change {
             _ => { panic! ("Unknown parity") }
         }
     }
+
+    pub fn multiply (&self, rhs : impl Transposition) -> Change {
+        if self.stage () != rhs.stage () {
+            panic! ("Can't use transpositions of different stages!");
+        }
+
+        let mut new_seq : Vec<Bell> = Vec::with_capacity (self.stage ().as_usize ());
+
+        for i in 0..self.stage ().as_usize () {
+            new_seq.push (self.seq [rhs.bell_at (Place::from (i)).as_usize ()]);
+        }
+
+        Change { seq : new_seq }
+    }
+    
+    pub fn multiply_into (&self, rhs : impl Transposition, into : &mut Change) {
+        if self.stage () != rhs.stage () {
+            panic! ("Can't use transpositions of different stages!");
+        }
+
+        into.seq.clear ();
+
+        for i in 0..self.stage ().as_usize () {
+            into.seq.push (self.seq [rhs.bell_at (Place::from (i)).as_usize ()]);
+        }
+    }
     
     // "Static" methods
     pub fn rounds (stage : Stage) -> Change {
@@ -85,18 +111,8 @@ impl fmt::Debug for Change {
 impl Mul for Change {
     type Output = Self;
 
-    fn mul (self, rhs : Self) -> Self {
-        if self.stage () != rhs.stage () {
-            panic! ("Can't multiply changes of different stages!");
-        }
-
-        let mut new_seq : Vec<Bell> = Vec::with_capacity (self.stage ().as_usize ());
-
-        for i in 0..self.stage ().as_usize () {
-            new_seq.push (self.seq [rhs.bell_at (Place::from (i)).as_usize ()]);
-        }
-
-        Change { seq : new_seq }
+    fn mul (self, rhs : Change) -> Self {
+        self.multiply (rhs)
     }
 }
 
@@ -125,6 +141,50 @@ impl From<&str> for Change {
         Change { seq : new_seq }
     }
 }
+
+
+
+
+
+
+
+
+struct ChangeAccumulator {
+    change_1 : Change,
+    change_2 : Change,
+    stage : Stage,
+    using_second_change : bool
+}
+
+impl ChangeAccumulator {
+    pub fn new (stage : Stage) -> ChangeAccumulator {
+        ChangeAccumulator { 
+            change_1 : Change::rounds (stage), 
+            change_2 : Change::rounds (stage),
+            stage : stage,
+            using_second_change : false
+        }
+    }
+
+    pub fn total (&self) -> &Change {
+        if self.using_second_change {
+            &(self.change_2)
+        } else {
+            &(self.change_1)
+        }
+    }
+
+    pub fn accumulate (&mut self, iter : impl Transposition) {
+        if self.using_second_change {
+            self.change_2.multiply_into (iter, &mut self.change_1)
+        } else {
+            self.change_1.multiply_into (iter, &mut self.change_2)
+        }
+    }
+} 
+
+
+
 
 #[cfg(test)]
 mod change_tests {
@@ -236,6 +296,17 @@ mod change_tests {
         assert_eq! (Change::from ("13425678") * Change::from ("13425678"), Change::from ("14235678"));
         assert_eq! (Change::from ("543216") * Change::from ("543216"), Change::from ("123456"));
         assert_eq! (Change::from ("132546") * Change::from ("123546"), Change::from ("132456"));
+    }
+
+    #[test]
+    fn multiply_into () {
+        let mut change = Change::rounds (Stage::MAJOR);
+
+        Change::from ("15678234").multiply_into (Change::from ("13456782"), &mut change);
+        assert_eq! (change, Change::from ("16782345"));
+
+        Change::from ("15678234").multiply_into (Change::from ("87654321"), &mut change);
+        assert_eq! (change, Change::from ("43287651"));
     }
     
     #[test]
