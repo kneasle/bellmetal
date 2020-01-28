@@ -72,6 +72,18 @@ impl Change {
         Change { seq : new_seq }
     }
     
+    pub fn pre_multiply_into (&self, lhs : impl Transposition, into : &mut Change) {
+        if self.stage () != lhs.stage () {
+            panic! ("Can't use transpositions of different stages!");
+        }
+
+        into.seq.clear ();
+
+        for i in 0..self.stage ().as_usize () {
+            into.seq.push (lhs.bell_at (Place::from (self.seq [i].as_number ())));
+        }
+    }
+    
     pub fn multiply_into (&self, rhs : impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
@@ -149,7 +161,7 @@ impl From<&str> for Change {
 
 
 
-struct ChangeAccumulator {
+pub struct ChangeAccumulator {
     change_1 : Change,
     change_2 : Change,
     stage : Stage,
@@ -174,11 +186,21 @@ impl ChangeAccumulator {
         }
     }
 
-    pub fn accumulate (&mut self, iter : impl Transposition) {
+    pub fn accumulate (&mut self, transposition : impl Transposition) {
         if self.using_second_change {
-            self.change_2.multiply_into (iter, &mut self.change_1)
+            self.change_2.multiply_into (transposition, &mut self.change_1)
         } else {
-            self.change_1.multiply_into (iter, &mut self.change_2)
+            self.change_1.multiply_into (transposition, &mut self.change_2)
+        }
+
+        self.using_second_change = !self.using_second_change;
+    }
+
+    pub fn pre_accumulate (&mut self, iter : impl Transposition) {
+        if self.using_second_change {
+            self.change_2.pre_multiply_into (iter, &mut self.change_1)
+        } else {
+            self.change_1.pre_multiply_into (iter, &mut self.change_2)
         }
     }
 } 

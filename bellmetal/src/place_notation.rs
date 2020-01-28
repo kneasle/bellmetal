@@ -236,7 +236,7 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
 pub mod pn_tests {
     use crate::types::*;
     use crate::place_notation::PlaceNotation;
-    use crate::change::Change;
+    use crate::change::{ Change, ChangeAccumulator };
 
     #[test]
     fn equality () {
@@ -296,15 +296,27 @@ pub mod pn_tests {
     }
 
     #[test]
-    fn split_many () {
+    fn split_many_and_change_accum () {
         fn test (string : &str, stage : Stage, result : Change)  {
+            let split_notation = PlaceNotation::from_multiple_string (string, stage);
+            
+            // Naive and extremely ineffecient accumulation
             let mut accum : Change = Change::rounds (stage);
-
-            for c in PlaceNotation::from_multiple_string (string, stage).iter () {
+            
+            for c in &split_notation {
                 accum = accum * c.transposition ();
             }
 
             assert_eq! (accum, result);
+
+            // Much faster accumulation function
+            let mut change_accum = ChangeAccumulator::new (stage);
+
+            for c in split_notation {
+                change_accum.accumulate (c.transposition ()); // TODO: Implement an iterator conversion for Transposition
+            }
+
+            assert_eq! (*change_accum.total (), result);
         }
 
         test ("x16", Stage::MINOR, Change::from ("241635")); // Original Minor
