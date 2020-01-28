@@ -170,8 +170,8 @@ pub struct ChangeAccumulator {
 
 impl ChangeAccumulator {
     pub fn new (stage : Stage) -> ChangeAccumulator {
-        ChangeAccumulator { 
-            change_1 : Change::rounds (stage), 
+        ChangeAccumulator {
+            change_1 : Change::rounds (stage),
             change_2 : Change::rounds (stage),
             stage : stage,
             using_second_change : false
@@ -203,7 +203,7 @@ impl ChangeAccumulator {
             self.change_1.pre_multiply_into (iter, &mut self.change_2)
         }
     }
-} 
+}
 
 
 
@@ -219,16 +219,16 @@ mod change_tests {
     fn equality () {
         assert! (
             Change { seq : vec![
-                Bell::from (1), 
-                Bell::from (0), 
-                Bell::from (3), 
+                Bell::from (1),
+                Bell::from (0),
+                Bell::from (3),
                 Bell::from (2)
-            ] } 
-            == 
+            ] }
+            ==
             Change { seq : vec![
-                Bell::from (1), 
-                Bell::from (0), 
-                Bell::from (3), 
+                Bell::from (1),
+                Bell::from (0),
+                Bell::from (3),
                 Bell::from (2)
             ] }
         );
@@ -236,16 +236,16 @@ mod change_tests {
         // Different bells
         assert! (
             Change { seq : vec![
-                Bell::from (1), 
-                Bell::from (0), 
-                Bell::from (2), 
+                Bell::from (1),
+                Bell::from (0),
+                Bell::from (2),
                 Bell::from (3)
-            ] } 
-            != 
+            ] }
+            !=
             Change { seq : vec![
-                Bell::from (1), 
-                Bell::from (0), 
-                Bell::from (3), 
+                Bell::from (1),
+                Bell::from (0),
+                Bell::from (3),
                 Bell::from (2)
             ] }
         );
@@ -253,17 +253,17 @@ mod change_tests {
         // Different stage
         assert! (
             Change { seq : vec![
-                Bell::from (1), 
-                Bell::from (0), 
-                Bell::from (3), 
+                Bell::from (1),
+                Bell::from (0),
+                Bell::from (3),
                 Bell::from (2),
                 Bell::from (4)
-            ] } 
-            != 
+            ] }
+            !=
             Change { seq : vec![
-                Bell::from (1), 
-                Bell::from (0), 
-                Bell::from (3), 
+                Bell::from (1),
+                Bell::from (0),
+                Bell::from (3),
                 Bell::from (2)
             ] }
         );
@@ -275,9 +275,9 @@ mod change_tests {
         assert_eq! (
             Change::from ("2143"),
             Change { seq : vec![
-                Bell::from (1), 
-                Bell::from (0), 
-                Bell::from (3), 
+                Bell::from (1),
+                Bell::from (0),
+                Bell::from (3),
                 Bell::from (2)
             ] }
         );

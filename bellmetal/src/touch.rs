@@ -92,7 +92,7 @@ impl From<&Vec<PlaceNotation>> for Touch {
             });
         }
         
-        Touch { 
+        Touch {
             stage : Stage::from (stage),
             length : length as Number,
             bells : bells,
@@ -146,7 +146,7 @@ impl From<&str> for Touch {
             });
         }
         
-        Touch { 
+        Touch {
             stage : Stage::from (stage),
             length : length as Number,
             bells : bells,
