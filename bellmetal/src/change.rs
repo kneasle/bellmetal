@@ -58,7 +58,7 @@ impl Change {
         }
     }
 
-    pub fn multiply (&self, rhs : impl Transposition) -> Change {
+    pub fn multiply (&self, rhs : &impl Transposition) -> Change {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
@@ -72,7 +72,7 @@ impl Change {
         Change { seq : new_seq }
     }
     
-    pub fn pre_multiply_into (&self, lhs : impl Transposition, into : &mut Change) {
+    pub fn pre_multiply_into (&self, lhs : &impl Transposition, into : &mut Change) {
         if self.stage () != lhs.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
@@ -84,7 +84,7 @@ impl Change {
         }
     }
     
-    pub fn multiply_into (&self, rhs : impl Transposition, into : &mut Change) {
+    pub fn multiply_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
@@ -162,7 +162,7 @@ impl Mul for Change {
     type Output = Self;
 
     fn mul (self, rhs : Change) -> Self {
-        self.multiply (rhs)
+        self.multiply (&rhs)
     }
 }
 
@@ -224,7 +224,7 @@ impl ChangeAccumulator {
         }
     }
 
-    pub fn accumulate (&mut self, transposition : impl Transposition) {
+    pub fn accumulate (&mut self, transposition : &impl Transposition) {
         if self.using_second_change {
             self.change_2.multiply_into (transposition, &mut self.change_1)
         } else {
@@ -234,11 +234,27 @@ impl ChangeAccumulator {
         self.using_second_change = !self.using_second_change;
     }
 
-    pub fn pre_accumulate (&mut self, iter : impl Transposition) {
+    pub fn pre_accumulate (&mut self, iter : &impl Transposition) {
         if self.using_second_change {
             self.change_2.pre_multiply_into (iter, &mut self.change_1)
         } else {
             self.change_1.pre_multiply_into (iter, &mut self.change_2)
+        }
+    }
+
+    pub fn set (&mut self, change : &Change) {
+        if self.stage != change.stage () {
+            panic! ("Can't write a change of the wrong stage into accumulator");
+        }
+        
+        if self.using_second_change {
+            for i in 0..self.stage.as_usize () {
+                self.change_2.seq [i] = change.seq [i];
+            }
+        } else {
+            for i in 0..self.stage.as_usize () {
+                self.change_1.seq [i] = change.seq [i];
+            }
         }
     }
 
@@ -371,10 +387,10 @@ mod change_tests {
     fn multiply_into () {
         let mut change = Change::rounds (Stage::MAJOR);
 
-        Change::from ("15678234").multiply_into (Change::from ("13456782"), &mut change);
+        Change::from ("15678234").multiply_into (&Change::from ("13456782"), &mut change);
         assert_eq! (change, Change::from ("16782345"));
 
-        Change::from ("15678234").multiply_into (Change::from ("87654321"), &mut change);
+        Change::from ("15678234").multiply_into (&Change::from ("87654321"), &mut change);
         assert_eq! (change, Change::from ("43287651"));
     }
     

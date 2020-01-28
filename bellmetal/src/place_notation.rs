@@ -313,7 +313,7 @@ pub mod pn_tests {
             let mut change_accum = ChangeAccumulator::new (stage);
 
             for c in split_notation {
-                change_accum.accumulate (c.transposition ()); // TODO: Implement an iterator conversion for Transposition
+                change_accum.accumulate (&c.transposition ()); // TODO: Implement an iterator conversion for Transposition
             }
 
             assert_eq! (*change_accum.total (), result);
