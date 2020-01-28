@@ -133,6 +133,16 @@ impl Change {
 
         true
     }
+
+    pub fn is_rounds (&self) -> bool {
+        for i in 0..self.stage ().as_usize () {
+            if self.seq [i].as_usize () != i {
+                return false;
+            }
+        }
+
+        true
+    }
     
     // "Static" methods
     pub fn rounds (stage : Stage) -> Change {
@@ -417,6 +427,15 @@ mod change_tests {
         assert! (Change::from ("134562").is_fixed_treble_cyclic ());
         assert! (!Change::from ("4567123").is_fixed_treble_cyclic ());
         assert! (!Change::from ("42513").is_fixed_treble_cyclic ());
+    }
+
+    #[test]
+    fn rounds_test () {
+        assert! (Change::from ("1234567890E").is_rounds ());
+        assert! (Change::from ("1").is_rounds ());
+        assert! (Change::from ("").is_rounds ());
+        assert! (!Change::from ("7584012369").is_rounds ());
+        assert! (!Change::from ("4567123").is_rounds ());
     }
     
     #[test]
