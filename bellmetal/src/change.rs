@@ -203,6 +203,15 @@ impl ChangeAccumulator {
             self.change_1.pre_multiply_into (iter, &mut self.change_2)
         }
     }
+
+    pub fn reset (&mut self) {
+        for i in 0..self.stage.as_usize () {
+            self.change_1 [i] = Bell::from (i);
+            self.change_2 [i] = Bell::from (i);
+            
+            self.using_second_change = false;
+        }
+    }
 }
 
 
