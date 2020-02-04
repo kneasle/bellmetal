@@ -485,6 +485,7 @@ mod change_tests {
         assert! (Change::from ("12345").is_full_cyclic ());
         assert! (Change::from ("5678901234").is_full_cyclic ());
         assert! (!Change::from ("42513").is_full_cyclic ());
+        assert! (!Change::from ("14567234").is_full_cyclic ());
 
         assert! (Change::from ("123456789").is_fixed_treble_cyclic ());
         assert! (Change::from ("134562").is_fixed_treble_cyclic ());
