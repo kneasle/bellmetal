@@ -96,6 +96,46 @@ impl Change {
         }
     }
 
+    pub fn multiply_inverse_into (&self, rhs : &impl Transposition, into : &mut Change) {
+        if self.stage () != rhs.stage () {
+            panic! ("Can't use transpositions of different stages!");
+        }
+        
+        for i in 0..self.stage ().as_usize () {
+            into.seq [rhs.bell_at (Place::from (i)).as_usize ()] = self.seq [i];
+        }
+    }
+
+    pub fn inverse (&self) -> Change {
+        let mut new_seq : Vec<Bell> = vec![Bell::from (0u32); self.stage ().as_usize ()];
+
+        for i in 0..self.stage ().as_usize () {
+            new_seq [self.seq [i as usize].as_usize ()] = Bell::from (i);
+        }
+
+        Change { seq : new_seq }
+    }
+
+    pub fn pow (&self, exponent : i32) -> Change {
+        if exponent == 0 {
+            return Change::rounds (self.stage ());
+        }
+
+        let mut accumulator = ChangeAccumulator::new (self.stage ());
+        
+        if exponent > 0 {
+            for _ in 0..exponent as usize {
+                accumulator.accumulate (self);
+            }
+        } else {
+            for _ in 0..(-exponent) as usize {
+                accumulator.accumulate_inverse (self);
+            }
+        }
+
+        accumulator.total ().clone ()
+    }
+
     pub fn is_full_cyclic (&self) -> bool {
         let stage = self.stage ().as_usize ();
 
@@ -180,13 +220,7 @@ impl Not for Change {
     type Output = Self;
 
     fn not (self) -> Self {
-        let mut new_seq : Vec<Bell> = vec![Bell::from (0u32); self.stage ().as_usize ()];
-
-        for i in 0..self.stage ().as_usize () {
-            new_seq [self.seq [i as usize].as_usize ()] = Bell::from (i);
-        }
-
-        Change { seq : new_seq }
+        self.inverse ()
     }
 }
 
@@ -239,6 +273,16 @@ impl ChangeAccumulator {
             self.change_2.multiply_into (transposition, &mut self.change_1)
         } else {
             self.change_1.multiply_into (transposition, &mut self.change_2)
+        }
+
+        self.using_second_change = !self.using_second_change;
+    }
+
+    pub fn accumulate_inverse (&mut self, transposition : &impl Transposition) {
+        if self.using_second_change {
+            self.change_2.multiply_inverse_into (transposition, &mut self.change_1)
+        } else {
+            self.change_1.multiply_inverse_into (transposition, &mut self.change_2)
         }
 
         self.using_second_change = !self.using_second_change;
@@ -402,6 +446,23 @@ mod change_tests {
 
         Change::from ("15678234").multiply_into (&Change::from ("87654321"), &mut change);
         assert_eq! (change, Change::from ("43287651"));
+    }
+
+    #[test]
+    fn multiply_inverse_into () {
+        let mut change = Change::rounds (Stage::MAJOR);
+
+        Change::from ("15678234").multiply_inverse_into (&Change::from ("18234567"), &mut change);
+        assert_eq! (change, Change::from ("16782345"));
+
+        Change::from ("15678234").multiply_inverse_into (&Change::from ("87654321"), &mut change);
+        assert_eq! (change, Change::from ("43287651"));
+    }
+
+    #[test]
+    fn exponentiation () {
+        assert_eq! (Change::from ("18765432").pow (2i32), Change::rounds (Stage::from (8)));
+        assert_eq! (Change::from ("912345678").pow (-4), Change::from ("567891234"));
     }
     
     #[test]
