@@ -463,6 +463,8 @@ mod change_tests {
     fn exponentiation () {
         assert_eq! (Change::from ("18765432").pow (2i32), Change::rounds (Stage::from (8)));
         assert_eq! (Change::from ("912345678").pow (-4), Change::from ("567891234"));
+        assert_eq! (Change::from ("134265").pow (2), Change::from ("142356"));
+        assert_eq! (Change::from ("134265").pow (-3), Change::from ("123465"));
     }
     
     #[test]
