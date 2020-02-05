@@ -124,6 +124,10 @@ macro_rules! define_int_synonymn {
                 self.0 as Number
             }
 
+            pub fn as_i32 (&self) -> i32 {
+                self.0 as i32
+            }
+
             pub fn as_u32 (&self) -> u32 {
                 self.0 as u32
             }

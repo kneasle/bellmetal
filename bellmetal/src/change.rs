@@ -174,6 +174,18 @@ impl Change {
         true
     }
 
+    pub fn is_backrounds (&self) -> bool {
+        let stage = self.stage ().as_usize ();
+
+        for i in 0..stage {
+            if self.seq [i].as_usize () != stage - 1 - i {
+                return false;
+            }
+        }
+
+        true
+    }
+
     pub fn is_rounds (&self) -> bool {
         for i in 0..self.stage ().as_usize () {
             if self.seq [i].as_usize () != i {
@@ -182,6 +194,124 @@ impl Change {
         }
 
         true
+    }
+    
+    // Music scoring (follows roughly what CompLib does)
+    pub fn music_score (&self) -> usize {
+        Change::run_length_to_score (self.run_length_off_front ()) 
+            + Change::run_length_to_score (self.run_length_off_back ())
+    }
+
+    fn run_length_to_score (length : usize) -> usize {
+        if length < 4 {
+            return 0;
+        }
+
+        let x = length - 3;
+        
+        // Triangular numbers = n * (n + 1) / 2
+        (x * (x + 1)) >> 1
+    }
+
+    fn run_length_off_front (&self) -> usize {
+        let stage = self.stage ().as_usize ();
+
+        if stage <= 1 {
+            return stage;
+        }
+
+        let mut last = self.seq [0].as_number ();
+        let mut i = 1;
+
+        while i < stage && (
+            self.seq [i].as_i32 () - last as i32 == -1 
+         || self.seq [i].as_i32 () - last as i32 == 1
+        ) {
+            last = self.seq [i].as_number ();
+
+            i += 1;
+        }
+        
+        i
+    }
+    
+    fn run_length_off_back (&self) -> usize {
+        let stage = self.stage ().as_usize ();
+
+        if stage <= 1 {
+            return stage;
+        }
+
+        let mut last = self.seq [stage - 1].as_number ();
+        let mut i = 1;
+
+        while i < stage && (
+            self.seq [stage - 1 - i].as_i32 () - last as i32 == -1 
+         || self.seq [stage - 1 - i].as_i32 () - last as i32 == 1
+        ) {
+            last = self.seq [stage - 1 - i].as_number ();
+
+            i += 1;
+        }
+        
+        i
+    }
+
+    // Pretty printing
+    pub fn pretty_string (&self) -> String {
+        let stage = self.stage ().as_usize ();
+
+        let mut string = String::with_capacity (stage * 3); // Seems a good length
+
+        let run_front = {
+            let x = self.run_length_off_front ();
+
+            if x >= 4 { x } else { 0 }
+        };
+
+        let run_back = {
+            let x = self.run_length_off_back ();
+
+            if x >= 4 { x } else { 0 }
+        };
+
+        let mut was_last_char_highlighted = false;
+        let mut last_char_colour = 0;
+
+        let colours = ["0", "91", "96"];
+
+        for i in 0..stage {
+            // Useful vars
+            let bell = self.seq [i];
+
+            let char_colour = if bell.as_usize () == 0 {
+                1
+            } else if bell.as_usize () == stage - 1 {
+                2
+            } else {
+                0
+            };
+            
+            let should_be_highlighted = i < run_front || (stage - 1 - i) < run_back;
+            
+            // Push the escape codes
+            if last_char_colour != char_colour || was_last_char_highlighted != should_be_highlighted {
+                string.push_str ("\x1b[");
+                string.push_str (colours [char_colour]);
+                string.push (';');
+                string.push_str (if should_be_highlighted { "42" } else { "49" });
+                string.push ('m');
+            }
+
+            string.push (bell.as_char ());
+
+            was_last_char_highlighted = should_be_highlighted;
+            last_char_colour = char_colour;
+        }
+
+        string.push_str ("\x1b[0m"); // Always reset the formatting
+
+        string
     }
     
     // "Static" methods
@@ -494,12 +624,47 @@ mod change_tests {
     }
 
     #[test]
+    fn backrounds_test () {
+        assert! (Change::from ("4321").is_backrounds ());
+        assert! (Change::from ("1").is_backrounds ());
+        assert! (Change::from ("").is_backrounds ());
+        assert! (!Change::from ("7584012369").is_backrounds ());
+        assert! (!Change::from ("4567123").is_backrounds ());
+    }
+
+    #[test]
     fn rounds_test () {
         assert! (Change::from ("1234567890E").is_rounds ());
         assert! (Change::from ("1").is_rounds ());
         assert! (Change::from ("").is_rounds ());
         assert! (!Change::from ("7584012369").is_rounds ());
         assert! (!Change::from ("4567123").is_rounds ());
+    }
+
+    #[test]
+    fn music_run_lengths () {
+        assert_eq! (Change::from ("14238765").run_length_off_front (), 1);
+        assert_eq! (Change::from ("12346578").run_length_off_front (), 4);
+        assert_eq! (Change::from ("12345678").run_length_off_front (), 8);
+        assert_eq! (Change::from ("76543218").run_length_off_front (), 7);
+        
+        assert_eq! (Change::from ("81765432").run_length_off_back (), 6);
+        assert_eq! (Change::from ("14238765").run_length_off_back (), 4);
+        assert_eq! (Change::from ("76543218").run_length_off_back (), 1);
+        assert_eq! (Change::from ("1234567890").run_length_off_back (), 10);
+    }
+
+    #[test]
+    fn music_scoring () {
+        assert_eq! (Change::from ("12347568").music_score (), 1);
+        assert_eq! (Change::from ("567894231").music_score (), 3);
+        assert_eq! (Change::from ("1234908765").music_score (), 2);
+        assert_eq! (Change::from ("1234560978").music_score (), 6);
+        assert_eq! (Change::from ("1234560987").music_score (), 7);
+        assert_eq! (Change::from ("1234").music_score (), 2);
+        assert_eq! (Change::from ("15234").music_score (), 0);
+        assert_eq! (Change::from ("9876543210").music_score (), 21);
+        assert_eq! (Change::from ("0987654321").music_score (), 56);
     }
     
     #[test]
