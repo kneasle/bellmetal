@@ -302,7 +302,7 @@ impl Change {
                 string.push_str (if should_be_highlighted { "42" } else { "49" });
                 string.push ('m');
             }
-
+            
             string.push (bell.as_char ());
 
             was_last_char_highlighted = should_be_highlighted;
@@ -666,6 +666,15 @@ mod change_tests {
         assert_eq! (Change::from ("9876543210").music_score (), 21);
         assert_eq! (Change::from ("0987654321").music_score (), 56);
     }
+
+    /* #[test]
+    fn pretty_print () {
+        println! ("{}", Change::from ("12346578").pretty_string ());
+        println! ("{}", Change::from ("87654312TE09").pretty_string ());
+        println! ("{}", Change::from ("13245678").pretty_string ());
+
+        assert! (false);
+    } */
     
     #[test]
     fn debug_print () {
