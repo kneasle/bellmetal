@@ -207,6 +207,7 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
             return None;
         }
         
+        #[allow(unused_assignments)]
         let mut output = 0 as Number;
     
         if self.place_notation.places.get (self.index) {

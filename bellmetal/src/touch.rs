@@ -6,7 +6,7 @@ pub struct Row {
     pub index : u32
 }
 
-struct Touch {
+pub struct Touch {
     pub stage : Stage,
     pub length : Number,
     bells : Vec<Bell>,
