@@ -16,6 +16,19 @@ pub struct Touch {
 }
 
 impl Touch {
+    fn leftover_change (&self) -> Change {
+        let stage = self.stage.as_usize ();
+
+        let mut seq : Vec<Bell> = Vec::with_capacity (stage);
+        let start = self.rows [self.length as usize + 1].index as usize * stage;
+
+        for i in 0..stage {
+            seq.push (self.bells [start + i]);
+        }
+
+        Change { seq : seq }
+    }
+
     fn to_string (&self) -> String {
         let stage = self.stage.as_number ();
 
