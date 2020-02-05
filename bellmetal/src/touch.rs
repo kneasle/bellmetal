@@ -8,7 +8,9 @@ pub struct Row {
 
 pub struct Touch {
     pub stage : Stage,
+    // NOTE: The touch always stores one more change than this, so that it knows where to continue from 
     pub length : Number,
+
     bells : Vec<Bell>,
     rows : Vec<Row>
 }
@@ -94,7 +96,8 @@ impl From<&Vec<PlaceNotation>> for Touch {
         
         Touch {
             stage : Stage::from (stage),
-            length : length as Number,
+            length : length as Number - 1,
+
             bells : bells,
             rows : rows
         }
