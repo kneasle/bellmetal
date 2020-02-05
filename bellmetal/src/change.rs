@@ -6,7 +6,7 @@ use std::fmt;
 
 #[derive(PartialEq, Clone)]
 pub struct Change {
-    pub seq : Vec<Bell>
+    seq : Vec<Bell>
 }
 
 impl Transposition for Change {
@@ -20,6 +20,13 @@ impl Transposition for Change {
 }
 
 impl Change {
+    pub fn iterator<'a> (&'a self) -> ChangeIterator<'a> {
+        ChangeIterator {
+            bells : &self.seq [..],
+            place : 0
+        }
+    }
+
     pub fn stage (&self) -> Stage {
         Stage::from (self.seq.len ())
     }
@@ -324,6 +331,10 @@ impl Change {
 
         Change { seq : seq }
     }
+
+    pub fn new (bell_vec : Vec<Bell>) -> Change {
+        Change { seq : bell_vec }
+    }
 }
 
 impl fmt::Debug for Change {
@@ -363,6 +374,32 @@ impl From<&str> for Change {
         }
 
         Change { seq : new_seq }
+    }
+}
+
+
+
+
+
+
+pub struct ChangeIterator<'a> {
+    bells : &'a [Bell],
+    place : usize
+}
+
+impl Iterator for ChangeIterator<'_> {
+    type Item = Bell;
+
+    fn next (&mut self) -> Option<Bell> {
+        if self.place >= self.bells.len () {
+            return None;
+        }
+
+        let bell = self.bells [self.place];
+
+        self.place += 1;
+
+        Some (bell)
     }
 }
 

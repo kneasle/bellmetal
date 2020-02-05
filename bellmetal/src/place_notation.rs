@@ -56,7 +56,7 @@ impl PlaceNotation {
             }
         }
 
-        Change { seq : bell_vec }
+        Change::new (bell_vec)
     }
 
     pub fn is_cross (notation : char) -> bool {

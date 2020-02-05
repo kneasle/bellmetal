@@ -25,8 +25,8 @@ impl Touch {
         for i in 0..stage {
             seq.push (self.bells [start + i]);
         }
-
-        Change { seq : seq }
+        
+        Change::new (seq)
     }
 
     fn to_string (&self) -> String {
@@ -80,8 +80,8 @@ impl From<&Vec<PlaceNotation>> for Touch {
             
             macro_rules! add_change {
                 () => {
-                    for b in &change.seq {
-                        bells.push (*b);
+                    for b in change.iterator (){
+                        bells.push (b);
                     }
                 }
             }
