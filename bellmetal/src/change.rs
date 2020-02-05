@@ -21,10 +21,7 @@ impl Transposition for Change {
 
 impl Change {
     pub fn iterator<'a> (&'a self) -> ChangeIterator<'a> {
-        ChangeIterator {
-            bells : &self.seq [..],
-            place : 0
-        }
+        ChangeIterator::new (&self)
     }
 
     pub fn stage (&self) -> Stage {
@@ -383,24 +380,34 @@ impl From<&str> for Change {
 
 
 pub struct ChangeIterator<'a> {
-    bells : &'a [Bell],
-    place : usize
+    change : &'a Change,
+    index : usize
+}
+
+impl ChangeIterator<'_> {
+    fn new<'a> (change : &'a Change) -> ChangeIterator<'a> {
+        ChangeIterator {
+            change : change,
+            index : 0
+        }
+    }
 }
 
 impl Iterator for ChangeIterator<'_> {
     type Item = Bell;
 
     fn next (&mut self) -> Option<Bell> {
-        if self.place >= self.bells.len () {
+        if self.index >= self.change.stage ().as_usize () {
             return None;
         }
 
-        let bell = self.bells [self.place];
+        let bell = self.change.bell_at (Place::from (self.index));
 
-        self.place += 1;
+        self.index += 1;
 
         Some (bell)
     }
+
 }
 
 
