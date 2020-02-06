@@ -5,6 +5,7 @@ use crate::transposition::Transposition;
 
 pub struct Row<'a> {
     index : usize,
+    is_ruled_off : bool,
     bells : &'a [Bell]
 }
 
@@ -13,6 +14,11 @@ impl Transposition for Row<'_> {
         self.bells
     }
 }
+
+
+
+
+
 
 pub struct Touch {
     pub stage : Stage,
@@ -25,17 +31,25 @@ pub struct Touch {
 }
 
 impl Touch {
-    fn get_row_at (&self, index : usize) -> Row {
+    fn row_iterator<'a> (&'a self) -> RowIterator<'a> {
+        RowIterator::new (self)
+    }
+
+    fn row_at (&self, index : usize) -> Row {
         let stage = self.stage.as_usize ();
 
         Row {
             index : index,
+            is_ruled_off : match self.ruleoffs.binary_search (&index) {
+                Ok (_) => { true }
+                Err (_) => { false }
+            },
             bells : &self.bells [index * stage .. (index + 1) * stage]
         }
     }
 
     fn leftover_row (&self) -> Row {
-        self.get_row_at (self.length)
+        self.row_at (self.length)
     }
 
     fn to_string (&self) -> String {
@@ -57,8 +71,8 @@ impl Touch {
     }
 }
 
-impl From<&Vec<PlaceNotation>> for Touch {
-    fn from (place_notations : &Vec<PlaceNotation>) -> Touch {
+impl From<&[PlaceNotation]> for Touch {
+    fn from (place_notations : &[PlaceNotation]) -> Touch {
         let length = place_notations.len () + 1;
 
         if length == 1 {
@@ -164,6 +178,63 @@ impl From<&str> for Touch {
         }
     }
 }
+
+
+
+
+
+
+struct RowIterator<'a> {
+    touch : &'a Touch,
+    row_index : usize,
+    ruleoff_index : usize
+}
+
+impl RowIterator<'_> {
+    fn new (touch : &Touch) -> RowIterator {
+        RowIterator {
+            touch : touch,
+            row_index : 0,
+            ruleoff_index : 0
+        }
+    }
+}
+
+impl <'a> Iterator for RowIterator<'a> {
+    type Item = Row<'a>;
+
+    fn next (&mut self) -> Option<Row<'a>> {
+        let stage = self.touch.stage.as_usize ();
+        let index = self.row_index;
+
+        if index < self.touch.length {
+            let is_ruleoff = if self.ruleoff_index >= self.touch.ruleoffs.len () { false } 
+                            else { self.touch.ruleoffs [self.ruleoff_index] == index };
+
+            let row = Row {
+                index : index,
+                is_ruled_off : is_ruleoff,
+                bells : &self.touch.bells [index * stage .. (index + 1) * stage]
+            };
+
+            self.row_index += 1;
+            if is_ruleoff {
+                self.ruleoff_index += 1;
+            }
+
+            Some (row)
+        } else {
+            None
+        }
+    }
+}
+
+
+
+
+
+
+
 
 #[cfg(test)]
 mod touch_tests {
