@@ -1,18 +1,18 @@
-use crate::types::{ Stage, Bell, Number };
+use crate::types::{ Stage, Bell };
 use crate::place_notation::PlaceNotation;
 use crate::change::Change;
 
-pub struct Row {
-    pub index : u32
+pub struct Row<'a> {
+    index : u32,
+    bells : &'a [Bell]
 }
 
 pub struct Touch {
     pub stage : Stage,
-    // NOTE: The touch always stores one more change than this, so that it knows where to continue from 
-    pub length : Number,
+    // The touch always stores one more change than this, so that it knows where to continue from 
+    pub length : usize,
 
-    bells : Vec<Bell>,
-    rows : Vec<Row>
+    bells : Vec<Bell>
 }
 
 impl Touch {
@@ -20,7 +20,7 @@ impl Touch {
         let stage = self.stage.as_usize ();
 
         let mut seq : Vec<Bell> = Vec::with_capacity (stage);
-        let start = self.rows [self.length as usize + 1].index as usize * stage;
+        let start = (self.length + 1) * stage;
 
         for i in 0..stage {
             seq.push (self.bells [start + i]);
@@ -30,16 +30,16 @@ impl Touch {
     }
 
     fn to_string (&self) -> String {
-        let stage = self.stage.as_number ();
+        let stage = self.stage.as_usize ();
 
-        let mut s = String::with_capacity ((stage * self.length + self.length - 1) as usize);
+        let mut s = String::with_capacity (stage * self.length + self.length - 1);
 
-        for i in 0..self.rows.len () {
-            for j in 0..stage as usize {
-                s.push (self.bells [i * (stage as usize) + j].as_char ());
+        for i in 0..self.length {
+            for j in 0..stage {
+                s.push (self.bells [i * stage + j].as_char ());
             }
             
-            if i != self.rows.len () - 1 {
+            if i != self.length - 1 {
                 s.push ('\n');
             }
         }
@@ -98,21 +98,12 @@ impl From<&Vec<PlaceNotation>> for Touch {
 
             bells
         };
-
-        let mut rows : Vec<Row> = Vec::with_capacity (length);
-        
-        for i in 0..length {
-            rows.push (Row {
-                index : i as Number
-            });
-        }
         
         Touch {
             stage : Stage::from (stage),
-            length : length as Number - 1,
+            length : length - 1,
 
             bells : bells,
-            rows : rows
         }
     }
 }
@@ -153,20 +144,12 @@ impl From<&str> for Touch {
 
             bells
         };
-
-        let mut rows : Vec<Row> = Vec::with_capacity (length);
-        
-        for i in 0..length {
-            rows.push (Row {
-                index : i as Number
-            });
-        }
         
         Touch {
             stage : Stage::from (stage),
-            length : length as Number,
-            bells : bells,
-            rows : rows
+            length : length,
+
+            bells : bells
         }
     }
 }
