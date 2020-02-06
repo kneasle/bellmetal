@@ -18,7 +18,7 @@ pub struct Touch {
 }
 
 impl Touch {
-    fn get_row_at<'a> (&'a self, index : usize) -> Row<'a> {
+    fn get_row_at (&self, index : usize) -> Row {
         let stage = self.stage.as_usize ();
 
         Row {
@@ -27,7 +27,7 @@ impl Touch {
         }
     }
 
-    fn leftover_row<'a> (&'a self) -> Row<'a> {
+    fn leftover_row (&self) -> Row {
         self.get_row_at (self.length)
     }
 
