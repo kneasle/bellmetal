@@ -1,10 +1,17 @@
 use crate::types::{ Stage, Bell };
 use crate::place_notation::PlaceNotation;
 use crate::change::Change;
+use crate::transposition::Transposition;
 
 pub struct Row<'a> {
     index : usize,
     bells : &'a [Bell]
+}
+
+impl Transposition for Row<'_> {
+    fn slice (&self) -> &[Bell] {
+        self.bells
+    }
 }
 
 pub struct Touch {

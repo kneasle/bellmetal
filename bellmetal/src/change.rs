@@ -10,10 +10,6 @@ pub struct Change {
 }
 
 impl Transposition for Change {
-    fn stage (&self) -> Stage {
-        Stage::from (self.seq.len ())
-    }
-
     fn slice (&self) -> &[Bell] {
         &self.seq [..]
     }

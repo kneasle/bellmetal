@@ -1,8 +1,11 @@
 use crate::types::*;
 
 pub trait Transposition {
-    fn stage (&self) -> Stage;
     fn slice (&self) -> &[Bell];
+
+    fn stage (&self) -> Stage {
+        Stage::from (self.slice ().len ())
+    }
 
     fn bell_at (&self, place : Place) -> Bell {
         self.slice () [place.as_usize ()]
