@@ -14,8 +14,8 @@ impl Transposition for Change {
         Stage::from (self.seq.len ())
     }
 
-    fn bell_at (&self, place : Place) -> Bell {
-        self.seq [place.as_usize ()]
+    fn slice (&self) -> &[Bell] {
+        &self.seq [..]
     }
 }
 
@@ -26,40 +26,6 @@ impl Change {
 
     pub fn stage (&self) -> Stage {
         Stage::from (self.seq.len ())
-    }
-
-    pub fn parity (&self) -> Parity {
-        let mut mask = Mask::empty ();
-        let mut bells_fixed = 0;
-
-        let mut total_cycle_length = 0;
-
-        let stage = self.stage ().as_number ();
-
-        while bells_fixed < stage {
-            let mut bell = 0;
-                
-            while mask.get (bell) {
-                bell += 1;
-            }
-
-            total_cycle_length += 1; // Make sure that the parity is correct
-
-            while !mask.get (bell) {
-                mask.add (bell);
-                
-                bell = self.seq [bell as usize].as_number ();
-
-                total_cycle_length += 1;
-                bells_fixed += 1;
-            }
-        }
-        
-        match total_cycle_length & 1 {
-            0 => { Parity::Even },
-            1 => { Parity::Odd }
-            _ => { panic! ("Unknown parity") }
-        }
     }
 
     pub fn multiply (&self, rhs : &impl Transposition) -> Change {
@@ -138,184 +104,6 @@ impl Change {
         }
 
         accumulator.total ().clone ()
-    }
-
-    pub fn is_full_cyclic (&self) -> bool {
-        let stage = self.stage ().as_usize ();
-
-        if stage == 0 {
-            return false;
-        }
-
-        let start = self.seq [0].as_usize ();
-
-        for i in 0..stage {
-            if self.seq [i].as_usize () != (start + i) % stage {
-                return false;
-            }
-        }
-
-        true
-    }
-
-    pub fn is_fixed_treble_cyclic (&self) -> bool {
-        let stage = self.stage ().as_usize ();
-        
-        if stage <= 2 || self.seq [0].as_usize () != 0 {
-            return false;
-        }
-
-        let start = self.seq [1].as_usize ();
-
-        for i in 0..stage - 1 {
-            let expected_bell = if start + i >= stage { start + i - stage + 1 } else { start + i };
-            
-            if self.seq [i + 1].as_usize () != expected_bell {
-                return false;
-            }
-        }
-
-        true
-    }
-
-    pub fn is_backrounds (&self) -> bool {
-        let stage = self.stage ().as_usize ();
-
-        for i in 0..stage {
-            if self.seq [i].as_usize () != stage - 1 - i {
-                return false;
-            }
-        }
-
-        true
-    }
-
-    pub fn is_rounds (&self) -> bool {
-        for i in 0..self.stage ().as_usize () {
-            if self.seq [i].as_usize () != i {
-                return false;
-            }
-        }
-
-        true
-    }
-    
-    // Music scoring (follows roughly what CompLib does)
-    pub fn music_score (&self) -> usize {
-        Change::run_length_to_score (self.run_length_off_front ()) 
-            + Change::run_length_to_score (self.run_length_off_back ())
-    }
-
-    fn run_length_to_score (length : usize) -> usize {
-        if length < 4 {
-            return 0;
-        }
-
-        let x = length - 3;
-        
-        // Triangular numbers = n * (n + 1) / 2
-        (x * (x + 1)) >> 1
-    }
-
-    fn run_length_off_front (&self) -> usize {
-        let stage = self.stage ().as_usize ();
-
-        if stage <= 1 {
-            return stage;
-        }
-
-        let mut last = self.seq [0].as_number ();
-        let mut i = 1;
-
-        while i < stage && (
-            self.seq [i].as_i32 () - last as i32 == -1 
-         || self.seq [i].as_i32 () - last as i32 == 1
-        ) {
-            last = self.seq [i].as_number ();
-
-            i += 1;
-        }
-        
-        i
-    }
-    
-    fn run_length_off_back (&self) -> usize {
-        let stage = self.stage ().as_usize ();
-
-        if stage <= 1 {
-            return stage;
-        }
-
-        let mut last = self.seq [stage - 1].as_number ();
-        let mut i = 1;
-
-        while i < stage && (
-            self.seq [stage - 1 - i].as_i32 () - last as i32 == -1 
-         || self.seq [stage - 1 - i].as_i32 () - last as i32 == 1
-        ) {
-            last = self.seq [stage - 1 - i].as_number ();
-
-            i += 1;
-        }
-        
-        i
-    }
-
-    // Pretty printing
-    pub fn pretty_string (&self) -> String {
-        let stage = self.stage ().as_usize ();
-
-        let mut string = String::with_capacity (stage * 3); // Seems a good length
-
-        let run_front = {
-            let x = self.run_length_off_front ();
-
-            if x >= 4 { x } else { 0 }
-        };
-
-        let run_back = {
-            let x = self.run_length_off_back ();
-
-            if x >= 4 { x } else { 0 }
-        };
-
-        let mut was_last_char_highlighted = false;
-        let mut last_char_colour = 0;
-
-        let colours = ["0", "91", "96"];
-
-        for i in 0..stage {
-            // Useful vars
-            let bell = self.seq [i];
-
-            let char_colour = if bell.as_usize () == 0 {
-                1
-            } else if bell.as_usize () == stage - 1 {
-                2
-            } else {
-                0
-            };
-            
-            let should_be_highlighted = i < run_front || (stage - 1 - i) < run_back;
-            
-            // Push the escape codes
-            if last_char_colour != char_colour || was_last_char_highlighted != should_be_highlighted {
-                string.push_str ("\x1b[");
-                string.push_str (colours [char_colour]);
-                string.push (';');
-                string.push_str (if should_be_highlighted { "42" } else { "49" });
-                string.push ('m');
-            }
-            
-            string.push (bell.as_char ());
-
-            was_last_char_highlighted = should_be_highlighted;
-            last_char_colour = char_colour;
-        }
-
-        string.push_str ("\x1b[0m"); // Always reset the formatting
-
-        string
     }
     
     // "Static" methods
@@ -503,6 +291,7 @@ impl ChangeAccumulator {
 mod change_tests {
     use crate::change::Change;
     use crate::types::{ Bell, Stage, Parity };
+    use crate::transposition::Transposition;
     
     use std::fmt::Write;
 
@@ -684,7 +473,7 @@ mod change_tests {
         assert! (!Change::from ("7584012369").is_rounds ());
         assert! (!Change::from ("4567123").is_rounds ());
     }
-
+    
     #[test]
     fn music_run_lengths () {
         assert_eq! (Change::from ("14238765").run_length_off_front (), 1);
