@@ -200,7 +200,7 @@ impl RowIterator<'_> {
     }
 }
 
-impl <'a> Iterator for RowIterator<'a> {
+impl<'a> Iterator for RowIterator<'a> {
     type Item = Row<'a>;
 
     fn next (&mut self) -> Option<Row<'a>> {
