@@ -27,17 +27,8 @@ impl Touch {
         }
     }
 
-    fn leftover_change (&self) -> Change {
-        let stage = self.stage.as_usize ();
-
-        let mut seq : Vec<Bell> = Vec::with_capacity (stage);
-        let start = (self.length + 1) * stage;
-
-        for i in 0..stage {
-            seq.push (self.bells [start + i]);
-        }
-        
-        Change::new (seq)
+    fn leftover_row<'a> (&'a self) -> Row<'a> {
+        self.get_row_at (self.length)
     }
 
     fn to_string (&self) -> String {
