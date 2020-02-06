@@ -12,7 +12,6 @@ pub trait Transposition {
         let bells = self.slice ();
         let stage = bells.len ();
 
-
         let mut mask = Mask::empty ();
         let mut bells_fixed = 0;
 
