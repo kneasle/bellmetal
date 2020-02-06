@@ -3,19 +3,30 @@ use crate::place_notation::PlaceNotation;
 use crate::change::Change;
 
 pub struct Row<'a> {
-    index : u32,
+    index : usize,
     bells : &'a [Bell]
 }
 
 pub struct Touch {
     pub stage : Stage,
-    // The touch always stores one more change than this, so that it knows where to continue from 
     pub length : usize,
 
-    bells : Vec<Bell>
+    // This will have length 1 more than Touch.length, since it also stores the 'left-over' change
+    // that would be the first change after the touch finishes
+    bells : Vec<Bell>,
+    ruleoffs : Vec<usize>
 }
 
 impl Touch {
+    fn get_row_at<'a> (&'a self, index : usize) -> Row<'a> {
+        let stage = self.stage.as_usize ();
+
+        Row {
+            index : index,
+            bells : &self.bells [index * stage .. (index + 1) * stage]
+        }
+    }
+
     fn leftover_change (&self) -> Change {
         let stage = self.stage.as_usize ();
 
@@ -104,6 +115,7 @@ impl From<&Vec<PlaceNotation>> for Touch {
             length : length - 1,
 
             bells : bells,
+            ruleoffs : Vec::with_capacity (0)
         }
     }
 }
@@ -149,7 +161,8 @@ impl From<&str> for Touch {
             stage : Stage::from (stage),
             length : length,
 
-            bells : bells
+            bells : bells,
+            ruleoffs : Vec::with_capacity (0)
         }
     }
 }
