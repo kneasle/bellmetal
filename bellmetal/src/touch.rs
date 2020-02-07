@@ -294,8 +294,6 @@ trait TouchIterator {
 #[cfg(test)]
 mod touch_tests {
     use crate::touch::Touch;
-    use crate::change::Change;
-    use crate::types::*;
     use crate::transposition::Transposition;
 
     #[test]
