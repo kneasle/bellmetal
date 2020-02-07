@@ -234,6 +234,61 @@ impl<'a> Iterator for RowIterator<'a> {
 
 
 
+struct TransfiguredTouchIterator<'a> {
+    transposition : &'a Change,
+    touch : &'a Touch,
+
+    next_bell_index : usize,
+    next_ruleoff_index : usize
+}
+
+impl TransfiguredTouchIterator<'_> {
+    pub fn new<'a> (change : &'a Change, touch : &'a Touch) -> TransfiguredTouchIterator<'a> {
+        TransfiguredTouchIterator {
+            transposition : change,
+            touch : touch,
+
+            next_bell_index : 0,
+            next_ruleoff_index : 0
+        }
+    }
+}
+
+impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
+    fn next_bell (&mut self) -> Option<Bell> {
+        if self.next_bell_index >= self.touch.length * self.touch.stage.as_usize () {
+            return None;
+        }
+
+        let bell = self.touch.bells [self.next_bell_index];
+
+        self.next_bell_index += 1;
+
+        Some (bell)
+    }
+
+    fn next_ruleoff (&mut self) -> Option<usize> {
+        if self.next_ruleoff_index >= self.touch.ruleoffs.len () {
+            return None;
+        }
+
+        let index = self.touch.ruleoffs [self.next_ruleoff_index];
+
+        self.next_ruleoff_index += 1;
+
+        Some (index)
+    }
+}
+
+trait TouchIterator {
+    fn next_bell (&mut self) -> Option<Bell>;
+    fn next_ruleoff (&mut self) -> Option<usize>;
+}
+
+
+
+
+
 
 
 #[cfg(test)]
