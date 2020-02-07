@@ -26,7 +26,7 @@ pub struct Touch {
 
     bells : Vec<Bell>,
     ruleoffs : Vec<usize>,
-    leftover_change : Change
+    pub leftover_change : Change
 }
 
 impl Touch {
