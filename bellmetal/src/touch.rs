@@ -1,6 +1,6 @@
 use crate::types::{ Stage, Bell };
 use crate::place_notation::PlaceNotation;
-use crate::change::Change;
+use crate::change::{ Change, ChangeAccumulator };
 use crate::transposition::Transposition;
 
 pub struct Row<'a> {
@@ -99,23 +99,19 @@ impl From<&[PlaceNotation]> for Touch {
         let bells = {
             let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
             
-            let mut change = Change::rounds (Stage::from (stage));
-            
+            let mut accumulator : ChangeAccumulator = ChangeAccumulator::new (Stage::from (stage));
+
             macro_rules! add_change {
                 () => {
-                    for b in change.iterator (){
+                    for b in accumulator.total ().iterator () {
                         bells.push (b);
                     }
                 }
             }
             
-            // This will cause a lot of heap allocations, but I don't expect it will be called
-            // a lot - however if this function is a bottleneck, then this might be a good
-            // place to optimise
-            
             add_change! ();
             for p in place_notations {
-                change = change * p.transposition ();
+                accumulator.accumulate_iterator (p.iterator ());
                 add_change! ();
             }
 

@@ -42,6 +42,10 @@ impl Change {
         if self.stage () != lhs.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
+        
+        if self.stage () != into.stage () {
+            panic! ("Can't use transpositions of different stages!");
+        }
 
         into.seq.clear ();
 
@@ -50,9 +54,31 @@ impl Change {
         }
     }
     
+    pub fn multiply_iterator_into<I> (&self, rhs : I, into : &mut Change) where I : Iterator<Item = Bell> {
+        if self.stage () != into.stage () {
+            panic! ("Can't multiply into a change of the wrong stage");
+        }
+
+        into.seq.clear ();
+        
+        let mut i = 0;
+
+        for b in rhs {
+            into.seq.push (self.seq [b.as_usize ()]);
+
+            i += 1;
+        }
+
+        assert_eq! (i, into.stage ().as_usize ());
+    }
+    
     pub fn multiply_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
+        }
+        
+        if self.stage () != into.stage () {
+            panic! ("Can't multiply into a change of the wrong stage");
         }
 
         into.seq.clear ();
@@ -65,6 +91,10 @@ impl Change {
     pub fn multiply_inverse_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
+        }
+        
+        if self.stage () != into.stage () {
+            panic! ("Can't multiply into a change of the wrong stage");
         }
         
         for i in 0..self.stage ().as_usize () {
@@ -226,11 +256,21 @@ impl ChangeAccumulator {
         }
     }
 
+    pub fn accumulate_iterator<I> (&mut self, iterator : I) where I : Iterator<Item = Bell> {
+        if self.using_second_change {
+            self.change_2.multiply_iterator_into (iterator, &mut self.change_1);
+        } else {
+            self.change_1.multiply_iterator_into (iterator, &mut self.change_2);
+        }
+
+        self.using_second_change = !self.using_second_change;
+    }
+
     pub fn accumulate (&mut self, transposition : &impl Transposition) {
         if self.using_second_change {
-            self.change_2.multiply_into (transposition, &mut self.change_1)
+            self.change_2.multiply_into (transposition, &mut self.change_1);
         } else {
-            self.change_1.multiply_into (transposition, &mut self.change_2)
+            self.change_1.multiply_into (transposition, &mut self.change_2);
         }
 
         self.using_second_change = !self.using_second_change;
@@ -238,9 +278,9 @@ impl ChangeAccumulator {
 
     pub fn accumulate_inverse (&mut self, transposition : &impl Transposition) {
         if self.using_second_change {
-            self.change_2.multiply_inverse_into (transposition, &mut self.change_1)
+            self.change_2.multiply_inverse_into (transposition, &mut self.change_1);
         } else {
-            self.change_1.multiply_inverse_into (transposition, &mut self.change_2)
+            self.change_1.multiply_inverse_into (transposition, &mut self.change_2);
         }
 
         self.using_second_change = !self.using_second_change;
@@ -248,9 +288,9 @@ impl ChangeAccumulator {
 
     pub fn pre_accumulate (&mut self, iter : &impl Transposition) {
         if self.using_second_change {
-            self.change_2.pre_multiply_into (iter, &mut self.change_1)
+            self.change_2.pre_multiply_into (iter, &mut self.change_1);
         } else {
-            self.change_1.pre_multiply_into (iter, &mut self.change_2)
+            self.change_1.pre_multiply_into (iter, &mut self.change_2);
         }
     }
 

@@ -38,6 +38,10 @@ impl fmt::Debug for PlaceNotation {
 }
 
 impl PlaceNotation {
+    pub fn iterator (&self) -> PlaceNotationIterator {
+        PlaceNotationIterator::new (self)
+    }
+
     pub fn transposition (&self) -> Change {
         let stage = self.stage.as_usize ();
         let mut bell_vec : Vec<Bell> = Vec::with_capacity (stage);
@@ -193,24 +197,34 @@ impl PlaceNotation {
 
 
 
-struct PlaceNotationIterator<'a> {
+pub struct PlaceNotationIterator<'a> {
     place_notation : &'a PlaceNotation,
-    index : Number,
+    index : usize,
     should_hunt_up : bool
 }
 
-impl <'a> Iterator for PlaceNotationIterator<'a> {
-    type Item = Number;
+impl PlaceNotationIterator<'_> {
+    fn new (place_notation : &PlaceNotation) -> PlaceNotationIterator {
+        PlaceNotationIterator {
+            place_notation : place_notation,
+            index : 0,
+            should_hunt_up : false
+        }
+    }
+}
 
-    fn next (&mut self) -> Option<Number> {
-        if self.index == self.place_notation.stage.as_number () {
+impl <'a> Iterator for PlaceNotationIterator<'a> {
+    type Item = Bell;
+
+    fn next (&mut self) -> Option<Bell> {
+        if self.index == self.place_notation.stage.as_usize () {
             return None;
         }
         
         #[allow(unused_assignments)]
-        let mut output = 0 as Number;
+        let mut output = 0;
     
-        if self.place_notation.places.get (self.index) {
+        if self.place_notation.places.get (self.index as Number) {
             output = self.index;
 
             self.should_hunt_up = false;
@@ -226,7 +240,7 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
 
         self.index += 1;
         
-        return Some (output);
+        return Some (Bell::from (output));
     }
 }
 
@@ -314,7 +328,7 @@ pub mod pn_tests {
             let mut change_accum = ChangeAccumulator::new (stage);
 
             for c in split_notation {
-                change_accum.accumulate (&c.transposition ()); // TODO: Implement an iterator conversion for Transposition
+                change_accum.accumulate_iterator (c.iterator ());
             }
 
             assert_eq! (*change_accum.total (), result);
