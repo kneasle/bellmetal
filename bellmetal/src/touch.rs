@@ -52,6 +52,16 @@ impl Touch {
         self.row_at (self.length)
     }
 
+    pub fn music_score (&self) -> usize {
+        let mut music_score = 0;
+
+        for r in self.row_iterator () {
+            music_score += r.music_score ();
+        }
+
+        music_score
+    }
+
     pub fn pretty_string (&self) -> String {
         let stage = self.stage.as_usize ();
 
