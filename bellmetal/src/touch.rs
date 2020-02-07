@@ -98,7 +98,6 @@ impl From<&[PlaceNotation]> for Touch {
 
         let bells = {
             let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
-            
             let mut accumulator : ChangeAccumulator = ChangeAccumulator::new (Stage::from (stage));
 
             macro_rules! add_change {
