@@ -37,6 +37,16 @@ impl Change {
 
         Change { seq : new_seq }
     }
+
+    pub fn multiply_iterator<I> (&self, rhs : I) -> Change where I : Iterator<Item = Bell> {
+        let mut new_seq : Vec<Bell> = Vec::with_capacity (self.stage ().as_usize ());
+
+        for b in rhs {
+            new_seq.push (self.seq [b.as_usize ()]);
+        }
+
+        Change { seq : new_seq }
+    }
     
     pub fn pre_multiply_into (&self, lhs : &impl Transposition, into : &mut Change) {
         if self.stage () != lhs.stage () {
@@ -430,10 +440,18 @@ mod change_tests {
 
     #[test]
     fn multiplication () {
-        assert_eq! (Change::from ("1324") * Change::from ("4231"), Change::from ("4321"));
-        assert_eq! (Change::from ("13425678") * Change::from ("13425678"), Change::from ("14235678"));
-        assert_eq! (Change::from ("543216") * Change::from ("543216"), Change::from ("123456"));
-        assert_eq! (Change::from ("132546") * Change::from ("123546"), Change::from ("132456"));
+        let changes = [
+            (Change::from ("1324"), Change::from ("4231"), Change::from ("4321")),
+            (Change::from ("13425678"), Change::from ("13425678"), Change::from ("14235678")),
+            (Change::from ("543216"), Change::from ("543216"), Change::from ("123456")),
+            (Change::from ("132546"), Change::from ("123546"), Change::from ("132456"))
+        ];
+
+        for (lhs, rhs, result) in &changes {
+            assert_eq! (lhs.clone () * rhs.clone (), *result);
+
+            assert_eq! (lhs.multiply_iterator (rhs.iterator ()), *result);
+        }
     }
 
     #[test]

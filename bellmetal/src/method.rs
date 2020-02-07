@@ -1,7 +1,8 @@
-use crate::types::Stage;
+use crate::types::{ Stage, Bell };
 use crate::change::Change;
 use crate::place_notation::PlaceNotation;
 use crate::touch::Touch;
+use crate::transposition::Transposition;
 
 pub struct Method<'a> {
     pub name : &'a str,
@@ -14,6 +15,20 @@ pub struct Method<'a> {
 impl<'a> Method<'a> {
     pub fn lead_head (&'a self) -> &'a Change {
         &self.plain_lead.leftover_change
+    }
+
+    pub fn lead_end (&'a self) -> Change {
+        let mut vec : Vec<Bell> = Vec::with_capacity (self.stage.as_usize ());
+        
+        for b in self.plain_lead.row_at (self.plain_lead.length).slice () {
+            vec.push (*b);
+        }
+
+        Change::new (vec)
+    }
+
+    pub fn lead_head_after_call (&'a self, call : &PlaceNotation) -> Change {
+        self.lead_end ().multiply_iterator (call.iterator ())
     }
 }
 
