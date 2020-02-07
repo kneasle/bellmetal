@@ -286,7 +286,7 @@ impl ChangeAccumulator {
 #[cfg(test)]
 mod change_tests {
     use crate::change::Change;
-    use crate::types::{ Bell, Stage, Parity };
+    use crate::types::{ Bell, Stage, Place, Parity };
     use crate::transposition::Transposition;
     
     use std::fmt::Write;
@@ -437,6 +437,26 @@ mod change_tests {
         assert_eq! (!Change::from ("12345"), Change::from ("12345"));
         assert_eq! (!Change::from ("1235647890"), Change::from ("1236457890"));
         assert_eq! (!Change::from ("654321"), Change::from ("654321"));
+    }
+
+    #[test]
+    fn iterators () {
+        let changes = vec! [
+            Change::from ("12345"),
+            Change::from ("7298324516"),
+            Change::from (""),
+            Change::from ("0987123456")
+        ];
+
+        for c in changes {
+            let mut x = 0;
+
+            for b in c.iterator () {
+                assert_eq! (b, c.bell_at (Place::from (x)));
+
+                x += 1;
+            }
+        }
     }
     
     #[test]
