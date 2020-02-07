@@ -294,6 +294,34 @@ trait TouchIterator {
 #[cfg(test)]
 mod touch_tests {
     use crate::touch::Touch;
+    use crate::change::Change;
+    use crate::types::*;
+    use crate::transposition::Transposition;
+
+    #[test]
+    fn row_iterator () {
+        for s in vec! [
+            "123456\n214365\n123456",
+            "123\n213\n231\n321\n312\n132\n123",
+            "1"
+        ] {
+            let mut chars = s.chars ();
+            let touch = Touch::from (s);
+
+            for row in touch.row_iterator () {
+                for b in row.slice () {
+                    match chars.next () {
+                        Some (c) => { assert_eq! (b.as_char (), c); }
+                        None => { panic! ("Touch yielded too many bells"); }
+                    }
+                }
+
+                chars.next (); // Consume the newlines
+            }
+
+            assert_eq! (chars.next (), None);
+        }
+    }
 
     #[test]
     fn string_conversions () {
