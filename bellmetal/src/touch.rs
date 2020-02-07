@@ -52,6 +52,20 @@ impl Touch {
         self.row_at (self.length)
     }
 
+    pub fn pretty_string (&self) -> String {
+        let stage = self.stage.as_usize ();
+
+        let mut s = String::with_capacity (stage * self.length * 2);
+
+        for r in self.row_iterator () {
+            r.write_pretty_string (&mut s);
+
+            s.push ('\n');
+        }
+
+        s
+    }
+
     pub fn to_string (&self) -> String {
         let stage = self.stage.as_usize ();
 
@@ -179,7 +193,7 @@ impl From<&str> for Touch {
 
 
 
-struct RowIterator<'a> {
+pub struct RowIterator<'a> {
     touch : &'a Touch,
     row_index : usize,
     ruleoff_index : usize
@@ -296,7 +310,39 @@ mod touch_tests {
         for s in vec! [
             "123456\n214365\n123456",
             "123\n213\n231\n321\n312\n132\n123",
-            "1"
+            "1",
+            "12345678
+21436587
+12346857
+21438675
+24136857
+42316587
+24135678
+42315768
+24351786
+42537168
+45231786
+54327168
+45237618
+54326781
+45362718
+54637281
+56473821
+65748312
+56784321
+65873412
+56783142
+65871324
+68573142
+86751324
+68715342
+86175432
+68714523
+86174253
+81672435
+18764253
+81674523
+18765432" // First lead of Deva
         ] {
             let mut chars = s.chars ();
             let touch = Touch::from (s);

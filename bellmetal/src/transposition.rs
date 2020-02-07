@@ -171,11 +171,17 @@ pub trait Transposition {
 
     // Pretty printing
     fn pretty_string (&self) -> String {
+        let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
+        
+        self.write_pretty_string (&mut string);
+
+        string
+    }
+
+    fn write_pretty_string (&self, string : &mut String) {
         let bells = self.slice ();
 
         let stage = bells.len ();
-
-        let mut string = String::with_capacity (stage * 3); // Seems a good length
 
         let run_front = {
             let x = self.run_length_off_front ();
@@ -224,8 +230,6 @@ pub trait Transposition {
         }
 
         string.push_str ("\x1b[0m"); // Always reset the formatting
-
-        string
     }
 }
 
