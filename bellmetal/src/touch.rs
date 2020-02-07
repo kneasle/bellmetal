@@ -24,10 +24,9 @@ pub struct Touch {
     pub stage : Stage,
     pub length : usize,
 
-    // This will have length 1 more than Touch.length, since it also stores the 'left-over' change
-    // that would be the first change after the touch finishes
     bells : Vec<Bell>,
-    ruleoffs : Vec<usize>
+    ruleoffs : Vec<usize>,
+    leftover_change : Change
 }
 
 impl Touch {
@@ -46,10 +45,6 @@ impl Touch {
             },
             bells : &self.bells [index * stage .. (index + 1) * stage]
         }
-    }
-
-    pub fn leftover_row (&self) -> Row {
-        self.row_at (self.length)
     }
 
     pub fn music_score (&self) -> usize {
@@ -79,7 +74,7 @@ impl Touch {
     pub fn to_string (&self) -> String {
         let stage = self.stage.as_usize ();
 
-        let mut s = String::with_capacity (stage * self.length + self.length - 1);
+        let mut s = String::with_capacity (stage * self.length + self.length);
 
         for i in 0..self.length {
             for j in 0..stage {
@@ -97,9 +92,9 @@ impl Touch {
 
 impl From<&[PlaceNotation]> for Touch {
     fn from (place_notations : &[PlaceNotation]) -> Touch {
-        let length = place_notations.len () + 1;
+        let length = place_notations.len ();
 
-        if length == 1 {
+        if length == 0 {
             panic! ("Touch must be made of at least one place notation");
         }
 
@@ -119,34 +114,25 @@ impl From<&[PlaceNotation]> for Touch {
 
             stage.unwrap ().as_usize ()
         };
+            
+        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
+        let mut accumulator : ChangeAccumulator = ChangeAccumulator::new (Stage::from (stage));
 
-        let bells = {
-            let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
-            let mut accumulator : ChangeAccumulator = ChangeAccumulator::new (Stage::from (stage));
-
-            macro_rules! add_change {
-                () => {
-                    for b in accumulator.total ().iterator () {
-                        bells.push (b);
-                    }
-                }
+        for p in place_notations {
+            for b in accumulator.total ().iterator () {
+                bells.push (b);
             }
             
-            add_change! ();
-            for p in place_notations {
-                accumulator.accumulate_iterator (p.iterator ());
-                add_change! ();
-            }
-
-            bells
-        };
+            accumulator.accumulate_iterator (p.iterator ());
+        }
         
         Touch {
             stage : Stage::from (stage),
             length : length - 1,
 
             bells : bells,
-            ruleoffs : Vec::with_capacity (0)
+            ruleoffs : Vec::with_capacity (0),
+            leftover_change : accumulator.total ().clone ()
         }
     }
 }
@@ -171,29 +157,36 @@ impl From<&str> for Touch {
             }
 
             match potential_stage {
-                Some (s) => { (s, length) }
+                Some (s) => { (s, length - 1) } // The last line will be the leftover_change
                 None => { panic! ("Cannot create an empty touch"); }
             }
         };
         
-        let bells = {
-            let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
-            
-            for line in string.lines () {
+        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
+        let mut leftover_vec : Vec<Bell> = Vec::with_capacity (stage);
+        let mut counter = 0;
+
+        for line in string.lines () {
+            if counter < length {
                 for c in line.chars () {
                     bells.push (Bell::from (c));
                 }
+            } else {
+                for c in line.chars () {
+                    leftover_vec.push (Bell::from (c));
+                }
             }
 
-            bells
-        };
-        
+            counter += 1;
+        }
+
         Touch {
             stage : Stage::from (stage),
             length : length,
 
             bells : bells,
-            ruleoffs : Vec::with_capacity (0)
+            ruleoffs : Vec::with_capacity (0),
+            leftover_change : Change::new (leftover_vec)
         }
     }
 }
@@ -352,7 +345,8 @@ mod touch_tests {
 81672435
 18764253
 81674523
-18765432" // First lead of Deva
+18765432
+17856342" // First lead of Deva
         ] {
             let mut chars = s.chars ();
             let touch = Touch::from (s);
@@ -367,6 +361,14 @@ mod touch_tests {
 
                 chars.next (); // Consume the newlines
             }
+            
+            // Consume the leftover change
+            for b in touch.leftover_change.iterator () {
+                match chars.next () {
+                    Some (c) => { assert_eq! (b.as_char (), c); }
+                    None => { panic! ("Touch yielded too many bells"); }
+                }
+            }
 
             assert_eq! (chars.next (), None);
         }
@@ -379,7 +381,11 @@ mod touch_tests {
             "123\n213\n231\n321\n312\n132\n123",
             "1"
         ] {
-            assert_eq! (Touch::from (s).to_string (), s);
+            let t = Touch::from (s);
+            
+            if t.to_string () != "" {
+                assert_eq! (t.to_string () + "\n" + &t.leftover_change.to_string (), s);
+            }
         }
     }
 }

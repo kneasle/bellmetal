@@ -169,6 +169,17 @@ pub trait Transposition {
         true
     }
 
+    // To string
+    fn to_string (&self) -> String {
+        let mut string = String::with_capacity (self.slice ().len ());
+
+        for i in self.slice () {
+            string.push (i.as_char ());
+        }
+
+        string
+    }
+
     // Pretty printing
     fn pretty_string (&self) -> String {
         let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
