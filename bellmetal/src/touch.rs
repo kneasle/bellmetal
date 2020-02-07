@@ -31,11 +31,11 @@ pub struct Touch {
 }
 
 impl Touch {
-    fn row_iterator<'a> (&'a self) -> RowIterator<'a> {
+    pub fn row_iterator<'a> (&'a self) -> RowIterator<'a> {
         RowIterator::new (self)
     }
 
-    fn row_at (&self, index : usize) -> Row {
+    pub fn row_at (&self, index : usize) -> Row {
         let stage = self.stage.as_usize ();
 
         Row {
@@ -48,11 +48,11 @@ impl Touch {
         }
     }
 
-    fn leftover_row (&self) -> Row {
+    pub fn leftover_row (&self) -> Row {
         self.row_at (self.length)
     }
 
-    fn to_string (&self) -> String {
+    pub fn to_string (&self) -> String {
         let stage = self.stage.as_usize ();
 
         let mut s = String::with_capacity (stage * self.length + self.length - 1);
