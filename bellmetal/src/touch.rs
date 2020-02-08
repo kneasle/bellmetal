@@ -67,7 +67,15 @@ impl Touch {
         let mut s = String::with_capacity (stage * self.length * 2);
 
         for r in self.row_iterator () {
-            r.write_pretty_string (&mut s);
+            r.write_pretty_string (false, &mut s);
+
+            if r.is_ruled_off {
+                s.push ('\n');
+
+                for _ in 0..stage {
+                    s.push ('-');
+                }
+            }
 
             s.push ('\n');
         }
@@ -98,7 +106,8 @@ impl Touch {
     pub fn from_iterator<I> (iterator : &mut I) -> Touch where I : TouchIterator, I : Sized {
         let stage = iterator.stage ().as_usize ();
         let length = iterator.length ();
-
+        
+        // Generate bells
         let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
         
         loop {
@@ -108,12 +117,22 @@ impl Touch {
             }
         }
 
+        // Generate ruleoffs
+        let mut ruleoffs : Vec<usize> = Vec::with_capacity (iterator.number_of_ruleoffs ());
+
+        loop {
+            match iterator.next_ruleoff () {
+                Some (r) => { ruleoffs.push (r); }
+                None => { break; }
+            }
+        }
+
         Touch {
             stage : Stage::from (stage),
             length : length,
             
             bells : bells,
-            ruleoffs : Vec::with_capacity (0),
+            ruleoffs : ruleoffs,
             
             leftover_change : iterator.leftover_change ()
         }
@@ -258,7 +277,7 @@ impl<'a> Iterator for RowIterator<'a> {
                 is_ruled_off : is_ruleoff,
                 bells : &self.touch.bells [index * stage .. (index + 1) * stage]
             };
-
+                
             self.row_index += 1;
             if is_ruleoff {
                 self.ruleoff_index += 1;
@@ -281,6 +300,8 @@ pub trait TouchIterator {
 
     fn length (&self) -> usize;
     fn stage (&self) -> Stage;
+
+    fn number_of_ruleoffs (&self) -> usize;
 
     fn leftover_change (&self) -> Change;
 }
@@ -337,6 +358,10 @@ impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
 
     fn length (&self) -> usize {
         self.touch.length
+    }
+
+    fn number_of_ruleoffs (&self) -> usize {
+        self.touch.ruleoffs.len ()
     }
 
     fn stage (&self) -> Stage {

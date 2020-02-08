@@ -124,6 +124,8 @@ pub struct SingleMethodTouchIterator<'a> {
     lead_index : usize,    // How many leads through the touch we are
     sub_lead_index : usize, // How many bells through the lead we are
 
+    ruleoff_index : usize, // How many ruleoffs have been read
+
     bells_per_lead : usize // This takes 2 function calls to calculate so is worth caching
 }
 
@@ -143,6 +145,7 @@ impl SingleMethodTouchIterator<'_> {
             lead_head_accumulator : ChangeAccumulator::new (method.stage),
             lead_index : 0,
             sub_lead_index : 0,
+            ruleoff_index : 1,
 
             bells_per_lead : method.lead_length () * method.stage.as_usize ()
         }
@@ -152,6 +155,10 @@ impl SingleMethodTouchIterator<'_> {
 impl<'a> TouchIterator for SingleMethodTouchIterator<'a> {
     fn length (&self) -> usize {
         self.method.lead_length () * self.call_list.len ()
+    }
+
+    fn number_of_ruleoffs (&self) -> usize {
+        self.call_list.len ()
     }
 
     fn stage (&self) -> Stage {
@@ -188,7 +195,15 @@ impl<'a> TouchIterator for SingleMethodTouchIterator<'a> {
     }
 
     fn next_ruleoff (&mut self) -> Option<usize> {
-        None
+        if self.ruleoff_index >= self.call_list.len () {
+            return None;
+        }
+
+        let v = self.method.lead_length () * self.ruleoff_index - 1;
+
+        self.ruleoff_index += 1;
+
+        Some (v)
     }
 
     fn leftover_change (&self) -> Change {

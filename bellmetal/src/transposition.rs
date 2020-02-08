@@ -184,12 +184,12 @@ pub trait Transposition {
     fn pretty_string (&self) -> String {
         let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
         
-        self.write_pretty_string (&mut string);
+        self.write_pretty_string (false, &mut string);
 
         string
     }
 
-    fn write_pretty_string (&self, string : &mut String) {
+    fn write_pretty_string (&self, underline : bool, string : &mut String) {
         let bells = self.slice ();
 
         let stage = bells.len ();
@@ -209,7 +209,7 @@ pub trait Transposition {
         let mut was_last_char_highlighted = false;
         let mut last_char_colour = 0;
 
-        let colours = ["0", "91", "96"];
+        let colours = ["97", "91", "96"];
 
         for i in 0..stage {
             // Useful vars
@@ -228,6 +228,9 @@ pub trait Transposition {
             // Push the escape codes
             if last_char_colour != char_colour || was_last_char_highlighted != should_be_highlighted {
                 string.push_str ("\x1b[");
+                if underline {
+                    string.push_str ("4;");
+                }
                 string.push_str (colours [char_colour]);
                 string.push (';');
                 string.push_str (if should_be_highlighted { "42" } else { "49" });
