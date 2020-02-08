@@ -1,8 +1,64 @@
 use crate::types::{ Stage, Bell };
-use crate::change::Change;
+use crate::change::{ Change };
 use crate::place_notation::PlaceNotation;
 use crate::touch::Touch;
 use crate::transposition::Transposition;
+
+
+
+
+pub struct Call {
+    pub place_notations : Vec<PlaceNotation>,
+    pub transposition : Change,
+    pub notation : char,
+    pub stage : Stage
+}
+
+impl Call {
+    pub fn from_place_notation_string (notation : char, string : &str, stage : Stage) -> Call {
+        let place_notations = PlaceNotation::from_multiple_string (string, stage);
+
+        if place_notations.len () == 0 {
+            panic! ("Can't have a call with empty place notation array");
+        }
+
+        Call {
+            transposition : PlaceNotation::overall_transposition (&place_notations),
+            place_notations : place_notations,
+            notation : notation,
+            stage : stage
+        }
+    }
+
+    pub fn new (notation : char, place_notations : Vec<PlaceNotation>) -> Call {
+        if place_notations.len () == 0 {
+            panic! ("Can't have a call with empty place notation array");
+        }
+
+        let stage = {
+            let mut stage = None;
+
+            for pn in &place_notations {
+                match stage {
+                    None => { stage = Some (pn.stage); }
+                    Some (s) => { assert_eq! (pn.stage, s); }
+                }
+            }
+
+            stage.unwrap ()
+        };
+        
+        Call {
+            transposition : PlaceNotation::overall_transposition (&place_notations),
+            place_notations : place_notations,
+            notation : notation,
+            stage : stage
+        }
+    }
+}
+
+
+
 
 pub struct Method<'a> {
     pub name : &'a str,
@@ -27,8 +83,8 @@ impl<'a> Method<'a> {
         Change::new (vec)
     }
 
-    pub fn lead_head_after_call (&'a self, call : &PlaceNotation) -> Change {
-        self.lead_end ().multiply_iterator (call.iterator ())
+    pub fn lead_head_after_call (&'a self, call : &Call) -> Change {
+        self.lead_end ().multiply (&call.transposition)
     }
 }
 

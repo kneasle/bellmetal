@@ -1,7 +1,7 @@
 use crate::types::*;
 use crate::consts;
 use crate::types::MaskMethods;
-use crate::change::Change;
+use crate::change::{ Change, ChangeAccumulator };
 use std::cmp::PartialEq;
 use std::fmt;
 
@@ -62,7 +62,9 @@ impl PlaceNotation {
 
         Change::new (bell_vec)
     }
+}
 
+impl PlaceNotation {
     pub fn is_cross (notation : char) -> bool {
         notation == 'X' || notation == 'x' || notation == '-'
     }
@@ -155,8 +157,6 @@ impl PlaceNotation {
 
         // Deal with strings with comma in them
         if has_found_comma {
-            println! (" >> {}", comma_index);
-
             let mut reordered_place_notations : Vec<PlaceNotation> = Vec::with_capacity (
                 comma_index * 2 + (place_notations.len () - comma_index) * 2 - 2
             );
@@ -191,6 +191,20 @@ impl PlaceNotation {
         } else {
             place_notations
         }
+    }
+
+    pub fn overall_transposition (pns : &[PlaceNotation]) -> Change {
+        if pns.len () == 0 {
+            panic! ("Can't find overall transposition of empty PlaceNotation list");
+        }
+
+        let mut accum = ChangeAccumulator::new (pns [0].stage);
+
+        for pn in pns {
+            accum.accumulate_iterator (pn.iterator ());
+        }
+        
+        accum.total ().clone ()
     }
 }
 
@@ -327,11 +341,14 @@ pub mod pn_tests {
             // Much faster accumulation function
             let mut change_accum = ChangeAccumulator::new (stage);
 
-            for c in split_notation {
+            for c in &split_notation {
                 change_accum.accumulate_iterator (c.iterator ());
             }
 
             assert_eq! (*change_accum.total (), result);
+
+            // Built-in accum function
+            assert_eq! (PlaceNotation::overall_transposition (&split_notation), result);
         }
 
         test ("x16", Stage::MINOR, Change::from ("241635")); // Original Minor
