@@ -61,6 +61,72 @@ impl Touch {
         music_score
     }
 
+    pub fn pretty_string_multi_column (&self, columns : usize) -> String {
+        let stage = self.stage.as_usize ();
+        let rows_per_column = self.length / columns;
+
+        let mut lines : Vec<String> = Vec::with_capacity (rows_per_column * 2 + 1);
+        
+        let mut row_number : usize = 0;
+        let mut line_number : usize = 0;
+
+        for r in self.row_iterator () {
+            // Start new column if required, and add the row to the bottom of the last column
+            if row_number == rows_per_column {
+                if line_number == lines.len () {
+                    lines.push (String::with_capacity (200));
+                } else {
+                    lines [line_number].push_str ("    ");
+                }
+
+                r.write_pretty_string (false, &mut lines [line_number]);
+                
+                line_number = 0;
+                row_number = 0;
+            }
+            
+            // Push the row
+            if line_number == lines.len () {
+                lines.push (String::with_capacity (200));
+            } else {
+                lines [line_number].push_str ("    ");
+            }
+
+            r.write_pretty_string (false, &mut lines [line_number]);
+            
+            line_number += 1;
+            
+            // Push the ruleoff
+            if r.is_ruled_off {
+                if line_number == lines.len () {
+                    lines.push (String::with_capacity (200));
+                } else {
+                    lines [line_number].push_str ("    ");
+                }
+
+                for _ in 0..stage {
+                    lines [line_number].push ('-');
+                }
+                
+                line_number += 1;
+            }
+            
+            // Update the row_counter
+            row_number += 1;
+        }
+
+        // Add the leftover change
+        if line_number == lines.len () {
+            lines.push (String::with_capacity (200));
+        } else {
+            lines [line_number].push_str ("    ");
+        }
+
+        self.leftover_change.write_pretty_string (false, &mut lines [line_number]);
+
+        lines.join ("\n")
+    }
+
     pub fn pretty_string (&self) -> String {
         let stage = self.stage.as_usize ();
 
@@ -103,6 +169,49 @@ impl Touch {
 }
 
 impl Touch {
+    pub fn from_iterator_multipart<I> (iterator : &mut I, part_ends : &[Change]) -> Touch 
+            where I : TouchIterator, I : Sized {
+        let num_parts = part_ends.len ();
+        
+        let stage = iterator.stage ().as_usize ();
+        let length = iterator.length () * num_parts;
+        
+        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
+        let mut ruleoffs : Vec<usize> = Vec::with_capacity (iterator.number_of_ruleoffs () * num_parts);
+
+        let mut part_start_index = 0;
+        
+        for c in part_ends {
+            iterator.reset ();
+            
+            loop {
+                match iterator.next_bell () {
+                    Some (b) => { bells.push (c.bell_at (Place::from (b.as_usize ()))); }
+                    None => { break; }
+                }
+            }
+
+            loop {
+                match iterator.next_ruleoff () {
+                    Some (r) => { ruleoffs.push (r + part_start_index); }
+                    None => { break; }
+                }
+            }
+
+            part_start_index += iterator.length ();
+        }
+
+        Touch {
+            stage : Stage::from (stage),
+            length : length,
+            
+            bells : bells,
+            ruleoffs : ruleoffs,
+            
+            leftover_change : Change::rounds (Stage::from (stage))
+        }
+    }
+
     pub fn from_iterator<I> (iterator : &mut I) -> Touch where I : TouchIterator, I : Sized {
         let stage = iterator.stage ().as_usize ();
         let length = iterator.length ();
@@ -297,6 +406,7 @@ impl<'a> Iterator for RowIterator<'a> {
 pub trait TouchIterator {
     fn next_bell (&mut self) -> Option<Bell>;
     fn next_ruleoff (&mut self) -> Option<usize>;
+    fn reset (&mut self);
 
     fn length (&self) -> usize;
     fn stage (&self) -> Stage;
@@ -354,6 +464,11 @@ impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
         self.next_ruleoff_index += 1;
 
         Some (index)
+    }
+
+    fn reset (&mut self) {
+        self.next_bell_index = 0;
+        self.next_ruleoff_index = 0;
     }
 
     fn length (&self) -> usize {

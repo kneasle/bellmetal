@@ -206,6 +206,14 @@ impl<'a> TouchIterator for SingleMethodTouchIterator<'a> {
         Some (v)
     }
 
+    fn reset (&mut self) {
+        self.lead_head_accumulator.reset ();
+
+        self.lead_index = 0;
+        self.sub_lead_index = 0;
+        self.ruleoff_index = 1;
+    }
+
     fn leftover_change (&self) -> Change {
         if !self.is_finished () {
             panic! ("Can't generate leftover_change until the iterator is finished");
