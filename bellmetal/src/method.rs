@@ -1,7 +1,7 @@
-use crate::types::{ Stage, Bell };
-use crate::change::{ Change };
+use crate::types::{ Stage, Bell, Place };
+use crate::change::{ Change, ChangeAccumulator };
 use crate::place_notation::PlaceNotation;
-use crate::touch::Touch;
+use crate::touch::{ Touch, TouchIterator };
 use crate::transposition::Transposition;
 
 
@@ -69,6 +69,10 @@ pub struct Method<'a> {
 }
 
 impl<'a> Method<'a> {
+    pub fn lead_length (&'a self) -> usize {
+        self.plain_lead.length
+    }
+
     pub fn lead_head (&'a self) -> &'a Change {
         &self.plain_lead.leftover_change
     }
@@ -76,7 +80,7 @@ impl<'a> Method<'a> {
     pub fn lead_end (&'a self) -> Change {
         let mut vec : Vec<Bell> = Vec::with_capacity (self.stage.as_usize ());
         
-        for b in self.plain_lead.row_at (self.plain_lead.length).slice () {
+        for b in self.plain_lead.row_at (self.plain_lead.length - 1).slice () {
             vec.push (*b);
         }
 
@@ -110,11 +114,136 @@ impl Method<'_> {
 
 
 
+pub struct SingleMethodTouchIterator<'a> {
+    method : &'a Method<'a>,
+    call_types : &'a [Call],
+    call_list : &'a [usize],
+
+    lead_head_accumulator : ChangeAccumulator,
+
+    lead_index : usize,    // How many leads through the touch we are
+    sub_lead_index : usize, // How many bells through the lead we are
+
+    bells_per_lead : usize // This takes 2 function calls to calculate so is worth caching
+}
+
+impl<'a> SingleMethodTouchIterator<'a> {
+    fn is_finished (&'a self) -> bool {
+        self.lead_index >= self.call_list.len ()
+    }
+}
+
+impl SingleMethodTouchIterator<'_> {
+    pub fn new<'a> (method : &'a Method, call_types : &'a [Call], call_list : &'a [usize]) -> SingleMethodTouchIterator<'a> {
+        SingleMethodTouchIterator {
+            method : method,
+            call_types : call_types,
+            call_list : call_list,
+
+            lead_head_accumulator : ChangeAccumulator::new (method.stage),
+            lead_index : 0,
+            sub_lead_index : 0,
+
+            bells_per_lead : method.lead_length () * method.stage.as_usize ()
+        }
+    }
+}
+
+impl<'a> TouchIterator for SingleMethodTouchIterator<'a> {
+    fn length (&self) -> usize {
+        self.method.lead_length () * self.call_list.len ()
+    }
+
+    fn stage (&self) -> Stage {
+        self.method.stage
+    }
+
+    fn next_bell (&mut self) -> Option<Bell> {
+        if self.is_finished () {
+            return None;
+        }
+
+        let bell = self.lead_head_accumulator.total ().bell_at (
+            Place::from (self.method.plain_lead.bell_at (self.sub_lead_index).as_usize ())
+        );
+
+        self.sub_lead_index += 1;
+
+        if self.sub_lead_index == self.bells_per_lead {
+            if self.call_list [self.lead_index] == 0 {
+                self.lead_head_accumulator.accumulate (self.method.lead_head ());
+            } else {
+                self.lead_head_accumulator.accumulate (
+                    &self.method.lead_head_after_call (
+                        &self.call_types [self.call_list [self.lead_index] - 1]
+                    )
+                );
+            }
+
+            self.lead_index += 1;
+            self.sub_lead_index = 0;
+        }
+
+        Some (bell)
+    }
+
+    fn next_ruleoff (&mut self) -> Option<usize> {
+        None
+    }
+
+    fn leftover_change (&self) -> Change {
+        if !self.is_finished () {
+            panic! ("Can't generate leftover_change until the iterator is finished");
+        }
+
+        self.lead_head_accumulator.total ().clone ()
+    }
+}
+
+
+
+
+
+
 #[cfg(test)]
 mod tests {
     use crate::method::Method;
     use crate::types::Stage;
     use crate::change::Change;
+
+    #[test]
+    fn lead_lengths () {
+        assert_eq! (
+            Method::from_string ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_length (),
+            14
+        );
+
+        assert_eq! (
+            Method::from_string (
+                "Cambridge Surprise Maximus",
+                "x3Tx14x125Tx36x147Tx58x169Tx70x18x9Tx10xET,12",
+                Stage::MAXIMUS
+            ).lead_length (),
+            48
+        );
+    }
+
+    #[test]
+    fn lead_ends () {
+        assert_eq! (
+            Method::from_string ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_end (),
+            Change::from ("1325476")
+        );
+
+        assert_eq! (
+            Method::from_string (
+                "Cambridge Surprise Maximus",
+                "x3Tx14x125Tx36x147Tx58x169Tx70x18x9Tx10xET,12",
+                Stage::MAXIMUS
+            ).lead_end (),
+            Change::from ("1537294E6T80")
+        );
+    }
 
     #[test]
     fn lead_heads () {

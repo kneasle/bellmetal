@@ -1,4 +1,4 @@
-use crate::types::{ Stage, Bell };
+use crate::types::{ Stage, Bell, Place };
 use crate::place_notation::PlaceNotation;
 use crate::change::{ Change, ChangeAccumulator };
 use crate::transposition::Transposition;
@@ -47,6 +47,10 @@ impl Touch {
         }
     }
 
+    pub fn bell_at (&self, index : usize) -> Bell {
+        self.bells [index]
+    }
+
     pub fn music_score (&self) -> usize {
         let mut music_score = 0;
 
@@ -90,6 +94,32 @@ impl Touch {
     }
 }
 
+impl Touch {
+    pub fn from_iterator<I> (iterator : &mut I) -> Touch where I : TouchIterator, I : Sized {
+        let stage = iterator.stage ().as_usize ();
+        let length = iterator.length ();
+
+        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
+        
+        loop {
+            match iterator.next_bell () {
+                Some (b) => { bells.push (b); }
+                None => { break; }
+            }
+        }
+
+        Touch {
+            stage : Stage::from (stage),
+            length : length,
+            
+            bells : bells,
+            ruleoffs : Vec::with_capacity (0),
+            
+            leftover_change : iterator.leftover_change ()
+        }
+    }
+}
+
 impl From<&[PlaceNotation]> for Touch {
     fn from (place_notations : &[PlaceNotation]) -> Touch {
         let length = place_notations.len ();
@@ -128,7 +158,7 @@ impl From<&[PlaceNotation]> for Touch {
         
         Touch {
             stage : Stage::from (stage),
-            length : length - 1,
+            length : length,
 
             bells : bells,
             ruleoffs : Vec::with_capacity (0),
@@ -245,9 +275,23 @@ impl<'a> Iterator for RowIterator<'a> {
 
 
 
+pub trait TouchIterator {
+    fn next_bell (&mut self) -> Option<Bell>;
+    fn next_ruleoff (&mut self) -> Option<usize>;
+
+    fn length (&self) -> usize;
+    fn stage (&self) -> Stage;
+
+    fn leftover_change (&self) -> Change;
+}
+
+
+
+
+
 
 struct TransfiguredTouchIterator<'a> {
-    transposition : &'a Change,
+    start_change : &'a Change,
     touch : &'a Touch,
 
     next_bell_index : usize,
@@ -257,7 +301,7 @@ struct TransfiguredTouchIterator<'a> {
 impl TransfiguredTouchIterator<'_> {
     pub fn new<'a> (change : &'a Change, touch : &'a Touch) -> TransfiguredTouchIterator<'a> {
         TransfiguredTouchIterator {
-            transposition : change,
+            start_change : change,
             touch : touch,
 
             next_bell_index : 0,
@@ -272,7 +316,7 @@ impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
             return None;
         }
 
-        let bell = self.touch.bells [self.next_bell_index];
+        let bell = self.start_change.bell_at (Place::from (self.touch.bells [self.next_bell_index].as_usize ()));
 
         self.next_bell_index += 1;
 
@@ -290,11 +334,18 @@ impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
 
         Some (index)
     }
-}
 
-trait TouchIterator {
-    fn next_bell (&mut self) -> Option<Bell>;
-    fn next_ruleoff (&mut self) -> Option<usize>;
+    fn length (&self) -> usize {
+        self.touch.length
+    }
+
+    fn stage (&self) -> Stage {
+        self.touch.stage
+    }
+
+    fn leftover_change (&self) -> Change {
+        self.start_change.multiply (&self.touch.leftover_change)
+    }
 }
 
 
