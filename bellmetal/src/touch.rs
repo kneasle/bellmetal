@@ -3,6 +3,8 @@ use crate::place_notation::PlaceNotation;
 use crate::change::{ Change, ChangeAccumulator };
 use crate::transposition::Transposition;
 
+use std::cmp::Ordering;
+
 pub struct Row<'a> {
     index : usize,
     is_ruled_off : bool,
@@ -59,6 +61,52 @@ impl Touch {
         }
 
         music_score
+    }
+
+    pub fn is_true (&self) -> bool {
+        let mut rows : Vec<Row> = self.row_iterator ().collect ();
+        let stage = self.stage.as_usize ();
+
+        rows.sort_by (
+            |a, b| {
+                let mut i = 0;
+
+                loop {
+                    if i == stage {
+                        return Ordering::Equal;
+                    }
+
+                    if a.bells [i] == b.bells [i] {
+                        i += 1;
+                    } else if a.bells [i] < b.bells [i] {
+                        return Ordering::Less;
+                    } else {
+                        return Ordering::Greater;
+                    }
+                }
+            }
+        );
+
+        for i in 1..rows.len () {
+            let mut are_equal = true;
+            
+            let a = &rows [i - 1];
+            let b = &rows [i];
+
+            for p in 0..stage {
+                if a.bells [p] != b.bells [p] {
+                    are_equal = false;
+
+                    break;
+                }
+            }
+
+            if are_equal {
+                return false;
+            }
+        }
+
+        true
     }
 
     pub fn pretty_string_multi_column (&self, columns : usize) -> String {

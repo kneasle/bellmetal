@@ -94,7 +94,7 @@ pub type Number = u32;
 
 macro_rules! define_int_synonymn {
     ($type:ident) => {
-        #[derive(PartialEq, Debug, Copy, Clone)]
+        #[derive(PartialEq, PartialOrd, Debug, Copy, Clone)]
         pub struct $type (Number);
 
         impl From<Number> for $type {
