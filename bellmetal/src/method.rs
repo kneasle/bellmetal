@@ -232,9 +232,11 @@ impl<'a> TouchIterator for SingleMethodTouchIterator<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::method::Method;
-    use crate::types::Stage;
-    use crate::change::Change;
+    use crate::{
+        Method,
+        Stage, 
+        Change
+    };
 
     #[test]
     fn lead_lengths () {

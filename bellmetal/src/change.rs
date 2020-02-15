@@ -335,9 +335,11 @@ impl ChangeAccumulator {
 
 #[cfg(test)]
 mod change_tests {
-    use crate::change::Change;
-    use crate::types::{ Bell, Stage, Place, Parity };
-    use crate::transposition::Transposition;
+    use crate::{ 
+        Change,
+        Bell, Stage, Place, Parity,
+        Transposition
+    };
     
     use std::fmt::Write;
 

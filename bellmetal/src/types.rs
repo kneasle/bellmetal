@@ -190,7 +190,7 @@ impl From<char> for Bell {
 
 #[cfg(test)]
 mod mask_tests {
-    use crate::types::*;
+    use crate::{ Mask, MaskMethods };
 
     #[test]
     fn empty_limit () {

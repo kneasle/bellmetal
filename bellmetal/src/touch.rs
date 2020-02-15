@@ -546,8 +546,7 @@ impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
 
 #[cfg(test)]
 mod touch_tests {
-    use crate::touch::Touch;
-    use crate::transposition::Transposition;
+    use crate::{ Touch, Transposition };
 
     #[test]
     fn row_iterator () {

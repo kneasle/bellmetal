@@ -262,9 +262,11 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
 
 #[cfg(test)]
 pub mod pn_tests {
-    use crate::types::*;
-    use crate::place_notation::PlaceNotation;
-    use crate::change::{ Change, ChangeAccumulator };
+    use crate::{
+        Stage,
+        PlaceNotation,
+        Change, ChangeAccumulator
+    };
 
     #[test]
     fn equality () {

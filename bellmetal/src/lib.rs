@@ -16,4 +16,4 @@ pub use method::{ Method, Call };
 pub use place_notation::PlaceNotation;
 pub use touch::{ Row, Touch, TouchIterator };
 pub use transposition::{ Transposition };
-pub use types::{ Bell, Place, Stage, Number, Mask, MaskMethods };
+pub use types::{ Bell, Place, Parity, Stage, Number, Mask, MaskMethods };
