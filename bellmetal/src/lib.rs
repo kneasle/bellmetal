@@ -14,6 +14,6 @@ pub use change::{ Change, ChangeAccumulator };
 pub use consts::{ MAX_STAGE, BELL_NAMES, is_bell_name, name_to_number };
 pub use method::{ Method, Call };
 pub use place_notation::PlaceNotation;
-pub use touch::{ Row, Touch };
+pub use touch::{ Row, Touch, TouchIterator };
 pub use transposition::{ Transposition };
-pub use types::{ Bell, Place, Stage, Mask };
+pub use types::{ Bell, Place, Stage, Number, Mask, MaskMethods };

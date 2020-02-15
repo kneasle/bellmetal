@@ -1,7 +1,9 @@
-use crate::types::{ Stage, Bell, Place };
-use crate::place_notation::PlaceNotation;
-use crate::change::{ Change, ChangeAccumulator };
-use crate::transposition::Transposition;
+use crate::{
+    Stage, Bell, Place,
+    PlaceNotation,
+    Change, ChangeAccumulator,
+    Transposition
+};
 
 use std::cmp::Ordering;
 

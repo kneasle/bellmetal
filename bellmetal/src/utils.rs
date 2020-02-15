@@ -1,4 +1,4 @@
-use crate::change::Change;
+use crate::Change;
 
 pub fn closure (change : Change) -> Vec<Change> {
     let mut vec : Vec<Change> = Vec::with_capacity (change.stage ().as_usize ());

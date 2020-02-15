@@ -1,5 +1,5 @@
 use crate::types::*;
-use crate::transposition::Transposition;
+use crate::Transposition;
 use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;

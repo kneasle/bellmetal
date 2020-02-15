@@ -1,8 +1,10 @@
-use crate::types::{ Stage, Bell, Place };
-use crate::change::{ Change, ChangeAccumulator };
-use crate::place_notation::PlaceNotation;
-use crate::touch::{ Touch, TouchIterator };
-use crate::transposition::Transposition;
+use crate::{
+    Stage, Bell, Place,
+    Change, ChangeAccumulator,
+    PlaceNotation,
+    Touch, TouchIterator,
+    Transposition
+};
 
 
 

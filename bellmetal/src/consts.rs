@@ -1,4 +1,4 @@
-use crate::types::Number;
+use crate::Number;
 
 pub const MAX_STAGE : usize = 64;
 pub static BELL_NAMES : &str = "1234567890ETABCDFGHJKLMNPRSUVWXYZ";

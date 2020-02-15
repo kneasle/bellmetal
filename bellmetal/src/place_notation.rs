@@ -1,7 +1,6 @@
 use crate::types::*;
 use crate::consts;
-use crate::types::MaskMethods;
-use crate::change::{ Change, ChangeAccumulator };
+use crate::{ Change, ChangeAccumulator, MaskMethods };
 use std::cmp::PartialEq;
 use std::fmt;
 
