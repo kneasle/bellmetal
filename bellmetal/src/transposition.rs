@@ -121,6 +121,26 @@ pub trait Transposition {
         true
     }
 
+    fn is_reverse_full_cyclic (&self) -> bool {
+        let bells = self.slice ();
+
+        let stage = bells.len ();
+
+        if stage == 0 {
+            return false;
+        }
+
+        let start = bells [0].as_usize () + stage;
+
+        for i in 0..stage {
+            if bells [i].as_usize () != (start - i) % stage {
+                return false;
+            }
+        }
+
+        true
+    }
+
     fn is_fixed_treble_cyclic (&self) -> bool {
         let bells = self.slice ();
 
@@ -136,6 +156,31 @@ pub trait Transposition {
             let expected_bell = if start + i >= stage { start + i - stage + 1 } else { start + i };
             
             if bells [i + 1].as_usize () != expected_bell {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    fn is_reverse_fixed_treble_cyclic (&self) -> bool {
+        // This works the same way is 'is_fixed_treble_cyclic', but it iterates backwards
+        // starting with the bell at the back
+
+        let bells = self.slice ();
+
+        let stage = bells.len ();
+        
+        if stage <= 2 || bells [0].as_usize () != 0 {
+            return false;
+        }
+
+        let start = bells [stage - 1].as_usize ();
+
+        for i in 0..stage - 1 {
+            let expected_bell = if start + i >= stage { start + i - stage + 1 } else { start + i };
+
+            if bells [stage - 1 - i].as_usize () != expected_bell {
                 return false;
             }
         }

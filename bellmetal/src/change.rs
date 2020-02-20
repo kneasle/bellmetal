@@ -525,11 +525,22 @@ mod change_tests {
         assert! (Change::from ("5678901234").is_full_cyclic ());
         assert! (!Change::from ("42513").is_full_cyclic ());
         assert! (!Change::from ("14567234").is_full_cyclic ());
-
+        
+        assert! (Change::from ("54321").is_reverse_full_cyclic ());
+        assert! (Change::from ("7654321098").is_reverse_full_cyclic ());
+        assert! (!Change::from ("42513").is_reverse_full_cyclic ());
+        assert! (!Change::from ("14567234").is_reverse_full_cyclic ());
+        
         assert! (Change::from ("123456789").is_fixed_treble_cyclic ());
         assert! (Change::from ("134562").is_fixed_treble_cyclic ());
         assert! (!Change::from ("4567123").is_fixed_treble_cyclic ());
         assert! (!Change::from ("42513").is_fixed_treble_cyclic ());
+        
+        assert! (Change::from ("198765432").is_reverse_fixed_treble_cyclic ());
+        assert! (Change::from ("126543").is_reverse_fixed_treble_cyclic ());
+        assert! (!Change::from ("4567123").is_reverse_fixed_treble_cyclic ());
+        assert! (!Change::from ("3217654").is_reverse_fixed_treble_cyclic ());
+        assert! (!Change::from ("42513").is_reverse_fixed_treble_cyclic ());
     }
 
     #[test]
@@ -575,15 +586,6 @@ mod change_tests {
         assert_eq! (Change::from ("9876543210").music_score (), 21);
         assert_eq! (Change::from ("0987654321").music_score (), 56);
     }
-
-    /* #[test]
-    fn pretty_print () {
-        println! ("{}", Change::from ("12346578").pretty_string ());
-        println! ("{}", Change::from ("87654312TE09").pretty_string ());
-        println! ("{}", Change::from ("13245678").pretty_string ());
-
-        assert! (false);
-    } */
     
     #[test]
     fn debug_print () {
