@@ -471,7 +471,7 @@ pub trait TouchIterator {
 
 
 
-struct TransfiguredTouchIterator<'a> {
+pub struct TransfiguredTouchIterator<'a> {
     start_change : &'a Change,
     touch : &'a Touch,
 
