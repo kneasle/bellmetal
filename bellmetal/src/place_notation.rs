@@ -40,6 +40,25 @@ impl PlaceNotation {
     pub fn iterator (&self) -> PlaceNotationIterator {
         PlaceNotationIterator::new (self)
     }
+    
+    // Returns the place notation that represents this one but with the places reversed
+    // (for example 14 -> 58 in Major, 1 -> 7 in Triples, etc)
+    pub fn reversed (&self) -> PlaceNotation {
+        let stage = self.stage.as_usize ();
+
+        let mut places = Mask::empty ();
+        
+        for i in 0..stage {
+            if self.places.get (i as Number) {
+                places.add ((stage - i - 1) as Number);
+            }
+        }
+
+        PlaceNotation { 
+            places : places, 
+            stage : self.stage
+        }
+    }
 
     pub fn transposition (&self) -> Change {
         let stage = self.stage.as_usize ();
@@ -267,6 +286,29 @@ pub mod pn_tests {
         PlaceNotation,
         Change, ChangeAccumulator
     };
+
+    #[test]
+    fn reversal () {
+        assert_eq! (
+            PlaceNotation::from_string ("x", Stage::MINIMUS).reversed (),
+            PlaceNotation::from_string ("x", Stage::MINIMUS)
+        );
+
+        assert_eq! (
+            PlaceNotation::from_string ("147", Stage::TRIPLES).reversed (),
+            PlaceNotation::from_string ("147", Stage::TRIPLES)
+        );
+
+        assert_eq! (
+            PlaceNotation::from_string ("1", Stage::TRIPLES).reversed (),
+            PlaceNotation::from_string ("7", Stage::TRIPLES)
+        );
+
+        assert_eq! (
+            PlaceNotation::from_string ("14", Stage::MAJOR).reversed (),
+            PlaceNotation::from_string ("58", Stage::MAJOR)
+        );
+    }
 
     #[test]
     fn equality () {
