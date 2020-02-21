@@ -67,7 +67,7 @@ pub struct Method<'a> {
     pub stage : Stage,
     
     pub place_notation : Vec<PlaceNotation>,
-    plain_lead : Touch
+    pub plain_lead : Touch
 }
 
 impl<'a> Method<'a> {
