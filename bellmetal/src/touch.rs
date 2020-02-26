@@ -23,7 +23,7 @@ impl Transposition for Row<'_> {
 
 
 
-
+#[derive(PartialEq, Debug)]
 pub struct Touch {
     pub stage : Stage,
     pub length : usize,
@@ -568,6 +568,94 @@ impl<'a> TouchIterator for BasicTouchIterator<'a> {
 
 
 
+pub struct ConcatTouchIterator<A, B> where A : TouchIterator, B : TouchIterator {
+    iterator1 : A,
+    iterator2 : B,
+    
+    // Not strictly necessary, but this makes the iterator faster by not calling 
+    // iterator1 after it's finished
+    is_bell_on_1st_iterator : bool,
+    is_ruleoff_on_1st_iterator : bool
+}
+
+impl<A : TouchIterator, B : TouchIterator> ConcatTouchIterator<A, B> {
+    pub fn new (iterator1 : A, iterator2 : B) -> ConcatTouchIterator<A, B> {
+        assert_eq! (iterator1.stage (), iterator2.stage ());
+
+        ConcatTouchIterator {
+            iterator1 : iterator1,
+            iterator2 : iterator2,
+
+            is_bell_on_1st_iterator : true,
+            is_ruleoff_on_1st_iterator : true
+        }
+    }
+}
+
+impl<A : TouchIterator, B : TouchIterator> TouchIterator for ConcatTouchIterator<A, B> {
+    fn next_bell (&mut self) -> Option<Bell> {
+        if self.is_bell_on_1st_iterator {
+            let v = self.iterator1.next_bell ();
+
+            match v {
+                None => {
+                    self.is_bell_on_1st_iterator = false;
+                }
+                _ => {
+                    return v;
+                }
+            }
+        }
+
+        self.iterator2.next_bell ()
+    }
+    
+    fn next_ruleoff (&mut self) -> Option<usize> {
+        if self.is_ruleoff_on_1st_iterator {
+            let v = self.iterator1.next_ruleoff ();
+
+            match v {
+                None => {
+                    self.is_ruleoff_on_1st_iterator = false;
+                }
+                _ => {
+                    return v;
+                }
+            }
+        }
+
+        self.iterator2.next_ruleoff ()
+    }
+
+    fn reset (&mut self) {
+        self.iterator1.reset ();
+        self.iterator2.reset ();
+
+        self.is_bell_on_1st_iterator = true;
+        self.is_ruleoff_on_1st_iterator = true;
+    }
+
+    fn length (&self) -> usize {
+        self.iterator1.length () + self.iterator2.length ()
+    }
+
+    fn stage (&self) -> Stage {
+        self.iterator1.stage ()
+    }
+
+    fn number_of_ruleoffs (&self) -> usize {
+        self.iterator1.number_of_ruleoffs () + self.iterator2.number_of_ruleoffs ()
+    }
+
+    fn leftover_change (&self) -> Change {
+        self.iterator2.leftover_change ()
+    }
+}
+
+
+
+
+
 pub struct TransfiguredTouchIterator<'a> {
     start_change : &'a Change,
     touch : &'a Touch,
@@ -644,10 +732,61 @@ impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
 #[cfg(test)]
 mod touch_tests {
     use crate::{ Touch, Transposition };
+    
+    #[test]
+    fn basic_iterator () {
+        for s_ref in &TOUCH_STRINGS {
+            let s = *s_ref;
+            let touch = Touch::from (s);
+
+            assert_eq! (Touch::from_iterator (&mut touch.iterator ()), touch);
+        }
+    }
 
     #[test]
     fn row_iterator () {
-        for s in vec! [
+        for s_ref in &TOUCH_STRINGS {
+            let s = *s_ref;
+
+            let mut chars = s.chars ();
+            let touch = Touch::from (s);
+
+            for row in touch.row_iterator () {
+                for b in row.slice () {
+                    match chars.next () {
+                        Some (c) => { assert_eq! (b.as_char (), c); }
+                        None => { panic! ("Touch yielded too many bells"); }
+                    }
+                }
+
+                chars.next (); // Consume the newlines
+            }
+            
+            // Consume the leftover change
+            for b in touch.leftover_change.iterator () {
+                match chars.next () {
+                    Some (c) => { assert_eq! (b.as_char (), c); }
+                    None => { panic! ("Touch yielded too many bells"); }
+                }
+            }
+
+            assert_eq! (chars.next (), None);
+        }
+    }
+
+    #[test]
+    fn string_conversions () {
+        for s_ref in &TOUCH_STRINGS {
+            let s = *s_ref;
+            let t = Touch::from (s);
+            
+            if t.to_string () != "" {
+                assert_eq! (t.to_string () + "\n" + &t.leftover_change.to_string (), s);
+            }
+        }
+    }
+    
+    const TOUCH_STRINGS : [&str; 4] = [
             "123456\n214365\n123456",
             "123\n213\n231\n321\n312\n132\n123",
             "1",
@@ -684,45 +823,5 @@ mod touch_tests {
 81674523
 18765432
 17856342" // First lead of Deva
-        ] {
-            let mut chars = s.chars ();
-            let touch = Touch::from (s);
-
-            for row in touch.row_iterator () {
-                for b in row.slice () {
-                    match chars.next () {
-                        Some (c) => { assert_eq! (b.as_char (), c); }
-                        None => { panic! ("Touch yielded too many bells"); }
-                    }
-                }
-
-                chars.next (); // Consume the newlines
-            }
-            
-            // Consume the leftover change
-            for b in touch.leftover_change.iterator () {
-                match chars.next () {
-                    Some (c) => { assert_eq! (b.as_char (), c); }
-                    None => { panic! ("Touch yielded too many bells"); }
-                }
-            }
-
-            assert_eq! (chars.next (), None);
-        }
-    }
-
-    #[test]
-    fn string_conversions () {
-        for s in vec! [
-            "123456\n214365\n123456",
-            "123\n213\n231\n321\n312\n132\n123",
-            "1"
-        ] {
-            let t = Touch::from (s);
-            
-            if t.to_string () != "" {
-                assert_eq! (t.to_string () + "\n" + &t.leftover_change.to_string (), s);
-            }
-        }
-    }
+    ];
 }
