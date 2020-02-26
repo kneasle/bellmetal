@@ -38,6 +38,10 @@ impl Touch {
         RowIterator::new (self)
     }
 
+    pub fn iterator<'a> (&'a self) -> BasicTouchIterator<'a> {
+        BasicTouchIterator::new (self)
+    }
+
     pub fn row_at (&self, index : usize) -> Row {
         let stage = self.stage.as_usize ();
 
@@ -491,6 +495,74 @@ pub trait TouchIterator {
     fn leftover_change (&self) -> Change;
 }
 
+
+
+
+
+pub struct BasicTouchIterator<'a> {
+    touch : &'a Touch,
+
+    next_bell_index : usize,
+    next_ruleoff_index : usize
+}
+
+impl BasicTouchIterator<'_> {
+    pub fn new<'a> (touch : &'a Touch) -> BasicTouchIterator<'a> {
+        BasicTouchIterator {
+            touch : touch,
+
+            next_bell_index : 0,
+            next_ruleoff_index : 0
+        }
+    }
+}
+
+impl<'a> TouchIterator for BasicTouchIterator<'a> {
+    fn next_bell (&mut self) -> Option<Bell> {
+        if self.next_bell_index >= self.touch.length * self.touch.stage.as_usize () {
+            return None;
+        }
+
+        let bell = self.touch.bells [self.next_bell_index];
+
+        self.next_bell_index += 1;
+
+        Some (bell)
+    }
+
+    fn next_ruleoff (&mut self) -> Option<usize> {
+        if self.next_ruleoff_index >= self.touch.ruleoffs.len () {
+            return None;
+        }
+
+        let index = self.touch.ruleoffs [self.next_ruleoff_index];
+
+        self.next_ruleoff_index += 1;
+
+        Some (index)
+    }
+
+    fn reset (&mut self) {
+        self.next_bell_index = 0;
+        self.next_ruleoff_index = 0;
+    }
+
+    fn length (&self) -> usize {
+        self.touch.length
+    }
+
+    fn number_of_ruleoffs (&self) -> usize {
+        self.touch.ruleoffs.len ()
+    }
+
+    fn stage (&self) -> Stage {
+        self.touch.stage
+    }
+
+    fn leftover_change (&self) -> Change {
+        self.touch.leftover_change.clone ()
+    }
+}
 
 
 
