@@ -568,87 +568,101 @@ impl<'a> TouchIterator for BasicTouchIterator<'a> {
 
 
 
-pub struct ConcatTouchIterator<A, B> where A : TouchIterator, B : TouchIterator {
-    iterator1 : A,
-    iterator2 : B,
+pub struct ConcatTouchIterator<'a> {
+    iterators : &'a mut [&'a mut dyn TouchIterator],
     
-    // Not strictly necessary, but this makes the iterator faster by not calling 
-    // iterator1 after it's finished
-    is_bell_on_1st_iterator : bool,
-    is_ruleoff_on_1st_iterator : bool
+    bell_iterator_index : usize,
+    ruleoff_iterator_index : usize
 }
 
-impl<A : TouchIterator, B : TouchIterator> ConcatTouchIterator<A, B> {
-    pub fn new (iterator1 : A, iterator2 : B) -> ConcatTouchIterator<A, B> {
-        assert_eq! (iterator1.stage (), iterator2.stage ());
+impl ConcatTouchIterator<'_> {
+    pub fn new<'a> (iterators : &'a mut [&'a mut dyn TouchIterator]) -> ConcatTouchIterator<'a> {
+        assert! (iterators.len () > 0);
+
+        let stage = iterators [0].stage ();
+        for i in iterators.iter () {
+            assert_eq! (stage, i.stage ());
+        }
 
         ConcatTouchIterator {
-            iterator1 : iterator1,
-            iterator2 : iterator2,
-
-            is_bell_on_1st_iterator : true,
-            is_ruleoff_on_1st_iterator : true
+            iterators : iterators,
+            
+            bell_iterator_index : 0,
+            ruleoff_iterator_index : 0
         }
     }
 }
 
-impl<A : TouchIterator, B : TouchIterator> TouchIterator for ConcatTouchIterator<A, B> {
+impl<'a> TouchIterator for ConcatTouchIterator<'a> {
     fn next_bell (&mut self) -> Option<Bell> {
-        if self.is_bell_on_1st_iterator {
-            let v = self.iterator1.next_bell ();
-
-            match v {
-                None => {
-                    self.is_bell_on_1st_iterator = false;
+        loop {
+            if self.bell_iterator_index > self.iterators.len () {
+                return None;
+            }
+        
+            match self.iterators [self.bell_iterator_index].next_bell () {
+                Some (x) => { 
+                    return Some (x);
                 }
-                _ => {
-                    return v;
+                None => {
+                    self.bell_iterator_index += 1;
                 }
             }
         }
-
-        self.iterator2.next_bell ()
     }
     
     fn next_ruleoff (&mut self) -> Option<usize> {
-        if self.is_ruleoff_on_1st_iterator {
-            let v = self.iterator1.next_ruleoff ();
-
-            match v {
-                None => {
-                    self.is_ruleoff_on_1st_iterator = false;
+        loop {
+            if self.ruleoff_iterator_index > self.iterators.len () {
+                return None;
+            }
+        
+            match self.iterators [self.ruleoff_iterator_index].next_ruleoff () {
+                Some (x) => { 
+                    return Some (x);
                 }
-                _ => {
-                    return v;
+                None => {
+                    self.ruleoff_iterator_index += 1;
                 }
             }
         }
-
-        self.iterator2.next_ruleoff ()
     }
 
     fn reset (&mut self) {
-        self.iterator1.reset ();
-        self.iterator2.reset ();
+        for i in 0..self.iterators.len () {
+            self.iterators [i].reset ();
+        }
 
-        self.is_bell_on_1st_iterator = true;
-        self.is_ruleoff_on_1st_iterator = true;
+        self.bell_iterator_index = 0;
+        self.ruleoff_iterator_index = 0;
     }
 
     fn length (&self) -> usize {
-        self.iterator1.length () + self.iterator2.length ()
+        let mut sum = 0;
+
+        for i in self.iterators.iter () {
+            sum += i.length ();
+        }
+
+        sum
     }
 
     fn stage (&self) -> Stage {
-        self.iterator1.stage ()
+        self.iterators [0].stage ()
     }
 
     fn number_of_ruleoffs (&self) -> usize {
-        self.iterator1.number_of_ruleoffs () + self.iterator2.number_of_ruleoffs ()
+        let mut sum = 0;
+
+        for i in self.iterators.iter () {
+            sum += i.number_of_ruleoffs ();
+        }
+
+        sum
     }
 
     fn leftover_change (&self) -> Change {
-        self.iterator2.leftover_change ()
+        self.iterators [self.iterators.len () - 1].leftover_change ()
     }
 }
 
