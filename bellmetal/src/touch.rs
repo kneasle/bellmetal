@@ -216,9 +216,115 @@ impl Touch {
 
         s
     }
+
+    // Functions defined to increase performance by avoiding memory allocations
+    pub fn overwrite_from_place_notations (&mut self, place_notations : &[PlaceNotation]) {
+        let length = place_notations.len ();
+
+        if length == 0 {
+            panic! ("Touch must be made of at least one place notation");
+        }
+
+        let stage = {
+            let mut stage = None;
+
+            for p in place_notations {
+                match stage {
+                    Some (s) => {
+                        if s != p.stage {
+                            panic! ("Every place notation of a touch must be of the same stage");
+                        }
+                    }
+                    None => { stage = Some (p.stage) }
+                }
+            }
+
+            stage.unwrap ().as_usize ()
+        };
+       
+        // Bells
+        self.bells.clear ();
+        self.bells.reserve (length * stage);
+
+        let mut accumulator : ChangeAccumulator = ChangeAccumulator::new (Stage::from (stage));
+
+        for p in place_notations {
+            for b in accumulator.total ().iterator () {
+                self.bells.push (b);
+            }
+            
+            accumulator.accumulate_iterator (p.iterator ());
+        }
+        
+        // Ruleoffs
+        self.ruleoffs.clear ();
+        
+        // Constants
+        self.stage = Stage::from (stage);
+        self.length = length;
+
+        accumulator.total ().copy_into (&mut self.leftover_change);
+    }
+
+    pub fn overwrite_from_string (&mut self, string : &str) {
+        let (stage, length) = {
+            let mut length = 0;
+            let mut potential_stage = None;
+
+            for line in string.lines () {
+                match potential_stage {
+                    Some (s) => {
+                        if s != line.len () {
+                            panic! ("Every row of a stage must be the same length");
+                        }
+                    }
+                    None => { potential_stage = Some (line.len ()); }
+                }
+
+                length += 1;
+            }
+
+            match potential_stage {
+                Some (s) => { (s, length - 1) } // The last line will be the leftover_change
+                None => { panic! ("Cannot create an empty touch"); }
+            }
+        };
+        
+        // Constants
+        self.length = length;
+        self.stage = Stage::from (stage);
+        
+        self.bells.clear ();
+        self.bells.reserve (length * stage);
+
+        let mut counter = 0;
+
+        for line in string.lines () {
+            if counter < length {
+                for c in line.chars () {
+                    self.bells.push (Bell::from (c));
+                }
+            } else {
+                self.leftover_change.overwrite_from_string (line);
+            }
+
+            counter += 1;
+        }
+    }
 }
 
 impl Touch {
+    pub fn empty () -> Touch {
+        Touch {
+            stage : Stage::ZERO,
+            length : 0usize,
+
+            bells : Vec::with_capacity (0),
+            ruleoffs : Vec::with_capacity (0),
+            leftover_change : Change::empty ()
+        }
+    }
+
     pub fn from_iterator_multipart<I> (iterator : &mut I, part_ends : &[Change]) -> Touch 
             where I : TouchIterator, I : Sized {
         let num_parts = part_ends.len ();
@@ -300,102 +406,21 @@ impl Touch {
 
 impl From<&[PlaceNotation]> for Touch {
     fn from (place_notations : &[PlaceNotation]) -> Touch {
-        let length = place_notations.len ();
+        let mut touch = Touch::empty ();
 
-        if length == 0 {
-            panic! ("Touch must be made of at least one place notation");
-        }
+        touch.overwrite_from_place_notations (place_notations);
 
-        let stage = {
-            let mut stage = None;
-
-            for p in place_notations {
-                match stage {
-                    Some (s) => {
-                        if s != p.stage {
-                            panic! ("Every place notation of a touch must be of the same stage");
-                        }
-                    }
-                    None => { stage = Some (p.stage) }
-                }
-            }
-
-            stage.unwrap ().as_usize ()
-        };
-            
-        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
-        let mut accumulator : ChangeAccumulator = ChangeAccumulator::new (Stage::from (stage));
-
-        for p in place_notations {
-            for b in accumulator.total ().iterator () {
-                bells.push (b);
-            }
-            
-            accumulator.accumulate_iterator (p.iterator ());
-        }
-        
-        Touch {
-            stage : Stage::from (stage),
-            length : length,
-
-            bells : bells,
-            ruleoffs : Vec::with_capacity (0),
-            leftover_change : accumulator.total ().clone ()
-        }
+        touch
     }
 }
 
 impl From<&str> for Touch {
     fn from (string : &str) -> Touch {
-        let (stage, length) = {
-            let mut length = 0;
-            let mut potential_stage = None;
+        let mut touch = Touch::empty ();
 
-            for line in string.lines () {
-                match potential_stage {
-                    Some (s) => {
-                        if s != line.len () {
-                            panic! ("Every row of a stage must be the same length");
-                        }
-                    }
-                    None => { potential_stage = Some (line.len ()); }
-                }
+        touch.overwrite_from_string (string);
 
-                length += 1;
-            }
-
-            match potential_stage {
-                Some (s) => { (s, length - 1) } // The last line will be the leftover_change
-                None => { panic! ("Cannot create an empty touch"); }
-            }
-        };
-        
-        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
-        let mut leftover_vec : Vec<Bell> = Vec::with_capacity (stage);
-        let mut counter = 0;
-
-        for line in string.lines () {
-            if counter < length {
-                for c in line.chars () {
-                    bells.push (Bell::from (c));
-                }
-            } else {
-                for c in line.chars () {
-                    leftover_vec.push (Bell::from (c));
-                }
-            }
-
-            counter += 1;
-        }
-
-        Touch {
-            stage : Stage::from (stage),
-            length : length,
-
-            bells : bells,
-            ruleoffs : Vec::with_capacity (0),
-            leftover_change : Change::new (leftover_vec)
-        }
+        touch
     }
 }
 

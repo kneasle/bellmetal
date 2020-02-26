@@ -152,6 +152,8 @@ define_int_synonymn! (Bell);
 define_int_synonymn! (Stage);
 
 impl Stage {
+    pub const ZERO : Stage = Stage (0);
+
     pub const SINGLES : Stage = Stage (3);
     pub const MINIMUS : Stage = Stage (4);
     

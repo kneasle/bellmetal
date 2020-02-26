@@ -24,6 +24,15 @@ impl Change {
         Stage::from (self.seq.len ())
     }
 
+    pub fn copy_into (&self, other : &mut Change) {
+        other.seq.clear ();
+        other.seq.reserve (self.seq.len ());
+
+        for b in &self.seq {
+            other.seq.push (*b);
+        }
+    }
+
     pub fn multiply (&self, rhs : &impl Transposition) -> Change {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
@@ -112,6 +121,15 @@ impl Change {
         }
     }
 
+    pub fn overwrite_from_string (&mut self, string : &str) {
+        self.seq.clear ();
+        self.seq.reserve (string.len ());
+
+        for c in string.chars () {
+            self.seq.push (Bell::from (c));
+        }
+    }
+
     pub fn inverse (&self) -> Change {
         let mut new_seq : Vec<Bell> = vec![Bell::from (0u32); self.stage ().as_usize ()];
 
@@ -141,8 +159,15 @@ impl Change {
 
         accumulator.total ().clone ()
     }
-    
-    // "Static" methods
+}
+
+impl Change {
+    pub fn empty () -> Change {
+        Change {
+            seq : Vec::with_capacity (0)
+        }
+    }
+
     pub fn rounds (stage : Stage) -> Change {
         let mut seq : Vec<Bell> = Vec::with_capacity (stage.as_usize ());
 
@@ -188,13 +213,11 @@ impl Not for Change {
 
 impl From<&str> for Change {
     fn from (s : &str) -> Change {
-        let mut new_seq : Vec<Bell> = Vec::with_capacity (s.len ());
+        let mut change = Change::empty ();
 
-        for c in s.chars () {
-            new_seq.push (Bell::from (c));
-        }
+        change.overwrite_from_string (s);
 
-        Change { seq : new_seq }
+        change
     }
 }
 
@@ -413,7 +436,6 @@ mod change_tests {
             Change::from (""),
             Change { seq : vec![] }
         );
-
     }
 
     #[test]
@@ -438,6 +460,24 @@ mod change_tests {
         assert_eq! (Parity::Odd, Change::from ("1234657").parity ());
         assert_eq! (Parity::Odd, Change::from ("2143657890").parity ());
         assert_eq! (Parity::Odd, Change::from ("7654321").parity ());
+    }
+
+    #[test]
+    fn copy_into () {
+        let mut change = Change::empty ();
+        
+        for c in [
+            Change::from ("1234"),
+            Change::from (""),
+            Change::from ("17342685"),
+            Change::from ("85672341"),
+            Change::from ("0987123456"),
+            Change::from ("")
+        ].iter () {
+            c.copy_into (&mut change);
+
+            assert_eq! (*c, change);
+        }
     }
 
     #[test]
