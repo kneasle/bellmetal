@@ -3,7 +3,7 @@ use crate::{
     Change, ChangeAccumulator,
     PlaceNotation,
     Touch, TouchIterator,
-    Transposition
+    Transposition, TranspositionIterator, MultiplicationIterator
 };
 
 
@@ -89,8 +89,20 @@ impl<'a> Method<'a> {
         Change::new (vec)
     }
 
+    pub fn lead_end_slice (&'a self) -> &'a [Bell] {
+        self.plain_lead.slice_at (self.plain_lead.length - 1)
+    }
+
+    pub fn lead_end_iterator (&'a self) -> TranspositionIterator {
+        TranspositionIterator::from_slice (self.lead_end_slice ())
+    }
+
     pub fn lead_head_after_call (&'a self, call : &Call) -> Change {
         self.lead_end ().multiply (&call.transposition)
+    }
+
+    pub fn lead_head_after_call_iterator (&'a self, call : &'a Call) -> MultiplicationIterator<'a> {
+        MultiplicationIterator::new (self.lead_end_slice (), call.transposition.iterator ())
     }
 }
 

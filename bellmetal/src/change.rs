@@ -1,5 +1,5 @@
 use crate::types::*;
-use crate::Transposition;
+use crate::{ Transposition, TranspositionIterator };
 use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
@@ -16,8 +16,8 @@ impl Transposition for Change {
 }
 
 impl Change {
-    pub fn iterator<'a> (&'a self) -> ChangeIterator<'a> {
-        ChangeIterator::new (&self)
+    pub fn iterator<'a> (&'a self) -> TranspositionIterator<'a> {
+        TranspositionIterator::from_transposition (self)
     }
 
     pub fn stage (&self) -> Stage {
@@ -220,44 +220,6 @@ impl From<&str> for Change {
         change
     }
 }
-
-
-
-
-
-
-pub struct ChangeIterator<'a> {
-    change : &'a Change,
-    index : usize
-}
-
-impl ChangeIterator<'_> {
-    fn new<'a> (change : &'a Change) -> ChangeIterator<'a> {
-        ChangeIterator {
-            change : change,
-            index : 0
-        }
-    }
-}
-
-impl Iterator for ChangeIterator<'_> {
-    type Item = Bell;
-
-    fn next (&mut self) -> Option<Bell> {
-        if self.index >= self.change.stage ().as_usize () {
-            return None;
-        }
-
-        let bell = self.change.bell_at (Place::from (self.index));
-
-        self.index += 1;
-
-        Some (bell)
-    }
-
-}
-
-
 
 
 

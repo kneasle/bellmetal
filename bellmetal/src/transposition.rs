@@ -297,6 +297,76 @@ pub trait Transposition {
 
 
 
+
+pub struct TranspositionIterator<'a> {
+    slice : &'a [Bell],
+    index : usize
+}
+
+impl TranspositionIterator<'_> {
+    pub fn from_slice<'a> (slice : &'a [Bell]) -> TranspositionIterator<'a> {
+        TranspositionIterator {
+            slice : slice,
+            index : 0
+        }
+    }
+
+    pub fn from_transposition<'a> (transposition : &'a impl Transposition) -> TranspositionIterator<'a> {
+        TranspositionIterator::from_slice (transposition.slice ())
+    }
+}
+
+impl Iterator for TranspositionIterator<'_> {
+    type Item = Bell;
+
+    fn next (&mut self) -> Option<Bell> {
+        if self.index >= self.slice.len () {
+            return None;
+        }
+
+        let bell = Bell::from (self.slice [self.index]);
+
+        self.index += 1;
+
+        Some (bell)
+    }
+}
+
+
+
+
+
+
+pub struct MultiplicationIterator<'a> {
+    lhs : &'a [Bell],
+    rhs : TranspositionIterator<'a>
+}
+
+impl MultiplicationIterator<'_> {
+    pub fn new<'a> (lhs : &'a [Bell], rhs : TranspositionIterator<'a>) -> MultiplicationIterator<'a> {
+        MultiplicationIterator {
+            lhs : lhs,
+            rhs : rhs
+        }
+    }
+}
+
+impl<'a> Iterator for MultiplicationIterator<'a> {
+    type Item = Bell;
+
+    fn next (&mut self) -> Option<Bell> {
+        match self.rhs.next () {
+            Some (b) => { Some (self.lhs [b.as_usize ()]) }
+            None => { None }
+        }
+    }
+}
+
+
+
+
+
+
 fn run_length_to_score (length : usize) -> usize {
     if length < 4 {
         return 0;

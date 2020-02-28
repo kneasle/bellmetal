@@ -42,6 +42,36 @@ impl Touch {
         BasicTouchIterator::new (self)
     }
 
+    pub fn append_iterator<'a> (&'a mut self, iterator : &mut impl TouchIterator) {
+        iterator.reset ();
+
+        loop {
+            match iterator.next_bell () {
+                Some (b) => { 
+                    self.bells.push (b);
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+
+        loop {
+            match iterator.next_ruleoff () {
+                Some (b) => { 
+                    self.ruleoffs.push (b);
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+
+        self.length += iterator.length ();
+        
+        self.ruleoffs.push (self.length - 1);
+    }
+
     pub fn row_at (&self, index : usize) -> Row {
         let stage = self.stage.as_usize ();
 
@@ -53,6 +83,12 @@ impl Touch {
             },
             bells : &self.bells [index * stage .. (index + 1) * stage]
         }
+    }
+
+    pub fn slice_at (&self, index : usize) -> &[Bell] {
+        let stage = self.stage.as_usize ();
+
+        &self.bells [index * stage .. (index + 1) * stage]
     }
 
     pub fn bell_at (&self, index : usize) -> Bell {
@@ -67,6 +103,22 @@ impl Touch {
         }
 
         music_score
+    }
+
+    pub fn number_of_4_bell_runs (&self) -> (usize, usize) {
+        let mut run_count_front = 0;
+        let mut run_count_back = 0;
+
+        for r in self.row_iterator () {
+            if r.run_length_off_front () >= 4 {
+                run_count_front += 1;
+            }
+            if r.run_length_off_back () >= 4 {
+                run_count_back += 1;
+            }
+        }
+
+        (run_count_front, run_count_back)
     }
 
     pub fn is_true (&self) -> bool {
@@ -326,6 +378,17 @@ impl Touch {
             bells : Vec::with_capacity (0),
             ruleoffs : Vec::with_capacity (0),
             leftover_change : Change::empty ()
+        }
+    }
+
+    pub fn with_capacity (stage : Stage, change_capacity : usize, ruleoff_capacity : usize) -> Touch {
+        Touch {
+            stage : stage,
+            length : 0usize,
+
+            bells : Vec::with_capacity (change_capacity * stage.as_usize ()),
+            ruleoffs : Vec::with_capacity (ruleoff_capacity),
+            leftover_change : Change::rounds (stage)
         }
     }
 
