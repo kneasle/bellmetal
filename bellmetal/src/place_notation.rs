@@ -98,7 +98,7 @@ impl PlaceNotation {
     pub fn from_string (notation : &str, stage : Stage) -> PlaceNotation {
         let mut places = Mask::empty ();
         
-        if notation == "X" || notation == "x" || notation == "-" {
+        if notation == "" || notation == "X" || notation == "x" || notation == "-" {
             if stage.as_u32 () & 1u32 != 0 {
                 panic! ("Non-even stage used with a cross notation");
             }
