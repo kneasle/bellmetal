@@ -33,8 +33,6 @@ impl PlaceNotation {
         let mut count = 0;
 
         for i in 0..self.stage.as_usize () {
-            println! (" >> {}", i);
-
             if self.places.get (i as Number) {
                 count += 1;
             }
