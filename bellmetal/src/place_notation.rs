@@ -159,6 +159,26 @@ impl PlaceNotation {
         PlaceNotation { places : places, stage : stage }
     }
 
+    pub fn into_multiple_string (place_notations : &Vec<PlaceNotation>, string : &mut String) {
+        let mut was_last_place_notation_cross = true; // Used to decide whether to insert a dot
+
+        for p in place_notations {
+            if p.is_cross () {
+                string.push ('x');
+
+                was_last_place_notation_cross = true;
+            } else {
+                if !was_last_place_notation_cross {
+                    string.push ('.');
+                }
+
+                p.into_string (string);
+
+                was_last_place_notation_cross = false;
+            }
+        }
+    }
+
     pub fn from_multiple_string<'a> (string : &str, stage : Stage) -> Vec<PlaceNotation> {
         let mut string_buff = String::with_capacity (Mask::limit () as usize);
         let mut place_notations : Vec<PlaceNotation> = Vec::with_capacity (string.len ());
@@ -319,7 +339,26 @@ pub mod pn_tests {
     }
 
     #[test]
-    fn string_conversions () {
+    fn multiple_string_conversions () {
+        let mut s = String::with_capacity (100);
+
+        for (string, stage) in &[
+            ("x16", Stage::MINOR), // Original Minor
+            ("3.145.5.1.5.1.5.1.5.1", Stage::DOUBLES), // Gnu Bob Doubles
+            ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", Stage::TRIPLES), // Scientific Triples
+            ("x12x16", Stage::MINOR), // Bastow Minor
+            ("3.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1", Stage::CINQUES) // Grandsire Cinques
+        ] {
+            PlaceNotation::into_multiple_string (&PlaceNotation::from_multiple_string (string, *stage), &mut s);
+
+            assert_eq! (s, *string);
+
+            s.clear ();
+        }
+    }
+
+    #[test]
+    fn single_string_conversions () {
         let mut s = String::with_capacity (10);
 
         for (pn, stage, exp) in &[
