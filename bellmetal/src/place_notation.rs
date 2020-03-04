@@ -22,21 +22,27 @@ impl fmt::Debug for PlaceNotation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut s = String::with_capacity (Mask::limit () as usize);
 
-        for i in 0..self.stage.as_usize () {
-            if self.places.get (i as Number) {
-                s.push (Bell::from (i).as_char ());
-            }
-        }
-
-        if s.len () == 0 {
-            s.push ('x');
-        }
+        self.into_string (&mut s);
 
         write! (f, "{}", s)
     }
 }
 
 impl PlaceNotation {
+    pub fn is_cross (&self) -> bool {
+        let mut count = 0;
+
+        for i in 0..self.stage.as_usize () {
+            println! (" >> {}", i);
+
+            if self.places.get (i as Number) {
+                count += 1;
+            }
+        }
+
+        count == 0
+    }
+
     pub fn iterator (&self) -> PlaceNotationIterator {
         PlaceNotationIterator::new (self)
     }
@@ -80,10 +86,26 @@ impl PlaceNotation {
 
         Change::new (bell_vec)
     }
+
+    pub fn into_string (&self, string : &mut String) {
+        let mut count = 0;
+
+        for i in 0..self.stage.as_usize () {
+            if self.places.get (i as Number) {
+                string.push (Bell::from (i).as_char ());
+                
+                count += 1;
+            }
+        }
+
+        if count == 0 {
+            string.push ('x');
+        }
+    }
 }
 
 impl PlaceNotation {
-    pub fn is_cross (notation : char) -> bool {
+    pub fn is_cross_notation (notation : char) -> bool {
         notation == 'X' || notation == 'x' || notation == '-'
     }
 
@@ -160,7 +182,7 @@ impl PlaceNotation {
                 
                 has_found_comma = true;
                 comma_index = place_notations.len ();
-            } else if PlaceNotation::is_cross (c) {
+            } else if PlaceNotation::is_cross_notation (c) {
                 if string_buff.len () != 0 {
                     add_place_not! ();
                 }
@@ -286,6 +308,39 @@ pub mod pn_tests {
         PlaceNotation,
         Change, ChangeAccumulator
     };
+
+    #[test]
+    fn is_cross () {
+        assert! (PlaceNotation::from_string ("x", Stage::MAXIMUS).is_cross ());
+        assert! (PlaceNotation::from_string ("-", Stage::MAJOR).is_cross ());
+        assert! (PlaceNotation::from_string ("X", Stage::MINOR).is_cross ());
+        assert! (PlaceNotation::from_string ("", Stage::ROYAL).is_cross ());
+        assert! (!PlaceNotation::from_string ("1", Stage::TRIPLES).is_cross ());
+        assert! (!PlaceNotation::from_string ("18", Stage::MAJOR).is_cross ());
+        assert! (!PlaceNotation::from_string ("3", Stage::SINGLES).is_cross ());
+    }
+
+    #[test]
+    fn string_conversions () {
+        let mut s = String::with_capacity (10);
+
+        for (pn, stage, exp) in &[
+            ("x", Stage::MAJOR, "x"),
+            ("123", Stage::SINGLES, "123"),
+            ("149", Stage::CINQUES, "149"),
+            ("189", Stage::CATERS, "189"),
+            ("45", Stage::MAJOR, "1458"),
+            ("2", Stage::TRIPLES, "127"),
+            ("", Stage::ROYAL, "x"),
+            ("4", Stage::SIXTEEN, "14"),
+        ] {
+            PlaceNotation::from_string (pn, *stage).into_string (&mut s);
+            
+            assert_eq! (s, *exp);
+
+            s.clear ();
+        }
+    }
 
     #[test]
     fn reversal () {
