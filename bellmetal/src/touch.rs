@@ -631,6 +631,122 @@ impl<'a> TouchIterator for BasicTouchIterator<'a> {
 
 
 
+
+
+pub struct AppendedTouchIterator<'a> {
+    iterators : &'a mut [&'a mut dyn TouchIterator],
+
+    accumulator : ChangeAccumulator,
+    
+    bell_iterator_index : usize,
+    ruleoff_iterator_index : usize
+}
+
+impl AppendedTouchIterator<'_> {
+    pub fn new<'a> (iterators : &'a mut [&'a mut dyn TouchIterator]) -> AppendedTouchIterator<'a> {
+        assert! (iterators.len () > 0);
+
+        let stage = iterators [0].stage ();
+        for i in iterators.iter () {
+            assert_eq! (stage, i.stage ());
+        }
+
+        AppendedTouchIterator {
+            iterators : iterators,
+
+            accumulator : ChangeAccumulator::new (stage),
+            
+            bell_iterator_index : 0,
+            ruleoff_iterator_index : 0
+        }
+    }
+}
+
+impl<'a> TouchIterator for AppendedTouchIterator<'a> {
+    fn next_bell (&mut self) -> Option<Bell> {
+        loop {
+            if self.bell_iterator_index >= self.iterators.len () {
+                return None;
+            }
+        
+            match self.iterators [self.bell_iterator_index].next_bell () {
+                Some (x) => { 
+                    return Some (self.accumulator.total ().slice () [x.as_usize ()]);
+                }
+                None => {
+                    self.accumulator.accumulate (&self.iterators [self.bell_iterator_index].leftover_change ());
+
+                    self.bell_iterator_index += 1;
+                }
+            }
+        }
+    }
+    
+    fn next_ruleoff (&mut self) -> Option<usize> {
+        loop {
+            if self.ruleoff_iterator_index >= self.iterators.len () {
+                return None;
+            }
+        
+            match self.iterators [self.ruleoff_iterator_index].next_ruleoff () {
+                Some (x) => { 
+                    return Some (x);
+                }
+                None => {
+                    self.ruleoff_iterator_index += 1;
+                }
+            }
+        }
+    }
+
+    fn reset (&mut self) {
+        for i in 0..self.iterators.len () {
+            self.iterators [i].reset ();
+        }
+
+        self.accumulator.reset ();
+
+        self.bell_iterator_index = 0;
+        self.ruleoff_iterator_index = 0;
+    }
+
+    fn length (&self) -> usize {
+        let mut sum = 0;
+
+        for i in self.iterators.iter () {
+            sum += i.length ();
+        }
+
+        sum
+    }
+
+    fn stage (&self) -> Stage {
+        self.iterators [0].stage ()
+    }
+
+    fn number_of_ruleoffs (&self) -> usize {
+        let mut sum = 0;
+
+        for i in self.iterators.iter () {
+            sum += i.number_of_ruleoffs ();
+        }
+
+        sum
+    }
+
+    fn leftover_change (&self) -> Change {
+        self.iterators [self.iterators.len () - 1].leftover_change ()
+    }
+}
+
+
+
+
+
+
+
+
+
 pub struct ConcatTouchIterator<'a> {
     iterators : &'a mut [&'a mut dyn TouchIterator],
     
