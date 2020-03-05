@@ -659,7 +659,7 @@ impl ConcatTouchIterator<'_> {
 impl<'a> TouchIterator for ConcatTouchIterator<'a> {
     fn next_bell (&mut self) -> Option<Bell> {
         loop {
-            if self.bell_iterator_index > self.iterators.len () {
+            if self.bell_iterator_index >= self.iterators.len () {
                 return None;
             }
         
@@ -676,7 +676,7 @@ impl<'a> TouchIterator for ConcatTouchIterator<'a> {
     
     fn next_ruleoff (&mut self) -> Option<usize> {
         loop {
-            if self.ruleoff_iterator_index > self.iterators.len () {
+            if self.ruleoff_iterator_index >= self.iterators.len () {
                 return None;
             }
         
