@@ -5,8 +5,108 @@ use crate::{
     ChangeAccumulator
 };
 
+use std::collections::{ HashMap, HashSet };
+
 pub fn one_part_spliced_touch (
-    methods : &[Method], calls : &[Call],
+    methods : &[(&str, Method)], calls : &[(char, Call)],
+    string : &str
+) -> Touch {
+    // Generate hashmaps and vectors from the arrays given
+    let mut method_hashmap : HashMap<&str, usize> = HashMap::with_capacity (methods.len ());
+    let mut method_list : Vec<&Method> = Vec::with_capacity (methods.len ());
+    let mut legit_method_starts : HashSet<char> = HashSet::with_capacity (methods.len ());
+    let mut max_method_length = 0;
+
+    for (i, (notation, method)) in methods.iter ().enumerate () {
+        method_list.push (method);
+        method_hashmap.insert (notation, i);
+
+        legit_method_starts.insert (notation.chars ().next ().unwrap ());
+
+        if notation.len () > max_method_length {
+            max_method_length = notation.len ();
+        }
+    }
+
+    let mut call_hashmap : HashMap<char, usize> = HashMap::with_capacity (calls.len ());
+    let mut call_list : Vec<&Call> = Vec::with_capacity (calls.len ());
+
+    for (i, (notation, call)) in calls.iter ().enumerate () {
+        call_list.push (call);
+        call_hashmap.insert (*notation, i);
+    }
+
+    // Parse the string
+    let mut method_indices : Vec<usize> = Vec::with_capacity (string.len ());
+    let mut call_indices : Vec<usize> = Vec::with_capacity (string.len ());
+
+    {
+        let mut partial_method_name = String::with_capacity (max_method_length);
+        let mut has_consumed_call = true; // A hack to stop it adding an erraneous call at the start
+
+        for c in string.chars () {
+            println! ("\n'{}' '{}'", c, &partial_method_name);
+
+            if partial_method_name.len () == 0 { // We're between method names
+                match call_hashmap.get (&c) {
+                    Some (x) => {
+                        if !has_consumed_call {
+                            call_indices.push (*x + 1);
+
+                            println! ("Consuming call {}", x + 1);
+
+                            has_consumed_call = true;
+
+                            continue;
+                        }
+                    }
+                    None => { 
+                        if !legit_method_starts.contains (&c) {
+                            println! (" >> '{}'", c);
+
+                            // Ignore padding characters between method names
+                            continue;
+                        } 
+                        
+                        if !has_consumed_call {
+                            println! ("Consuming call 0");
+
+                            call_indices.push (0);
+                        }
+                    }
+                }
+            }
+
+            println! ("Here");
+
+            has_consumed_call = false;
+
+            partial_method_name.push (c);
+
+            match method_hashmap.get (&partial_method_name [..]) {
+                Some (x) => {
+                    method_indices.push (*x);
+
+                    partial_method_name.clear ();
+                }
+                None => { }
+            }
+        }
+
+        println! ("{:?}\n{:?}", &method_indices, &call_indices);
+
+        assert_eq! (partial_method_name.len (), 0);
+        assert_eq! (method_indices.len (), call_indices.len ());
+    }
+
+    one_part_spliced_touch_from_indices (
+        &method_list [..], &call_list [..],
+        &method_indices [..], &call_indices [..]
+    )
+}
+
+fn one_part_spliced_touch_from_indices (
+    methods : &[&Method], calls : &[&Call],
     method_indices : &[usize], call_indices : &[usize]
 ) -> Touch {
     // There should be at least one method otherwise the behaviour is undefined
@@ -75,10 +175,19 @@ mod gen_tests {
 
         let bob = Call::from_place_notation_string ('-', "14", Stage::MAJOR);
 
-        let touch = one_part_spliced_touch (
-            &[bristol, plain_bob, cornwall, cambridge, lessness], &[bob],
-            &[0, 1, 2, 3, 0, 4, 0], &[1, 1, 0, 1, 1, 1, 1]
-        );
+        let methods = [
+            ("B", bristol), 
+            ("P", plain_bob),
+            ("Co", cornwall),
+            ("Ca", cambridge),
+            ("E", lessness)
+        ];
+
+        let calls = [
+            ('-', bob)
+        ];
+
+        let touch = one_part_spliced_touch (&methods, &calls [..], "B-P - \0Co Ca\t\n-B** X-E-B-");
         
         // Assuming that it can't screw up and produce exactly the right number of 4-bell runs
         assert_eq! (touch.number_of_4_bell_runs (), (11, 12));
