@@ -93,6 +93,10 @@ pub fn one_part_spliced_touch (
             }
         }
 
+        if !has_consumed_call {
+            call_indices.push (0);
+        }
+
         println! ("{:?}\n{:?}", &method_indices, &call_indices);
 
         assert_eq! (partial_method_name.len (), 0);
@@ -187,9 +191,26 @@ mod gen_tests {
             ('-', bob)
         ];
 
-        let touch = one_part_spliced_touch (&methods, &calls [..], "B-P - \0Co Ca\t\n-B** X-E-B-");
-        
         // Assuming that it can't screw up and produce exactly the right number of 4-bell runs
-        assert_eq! (touch.number_of_4_bell_runs (), (11, 12));
+        assert_eq! (
+            one_part_spliced_touch (
+                &methods, &calls [..], "CoCa"
+            ).number_of_4_bell_runs (),
+            (2, 5)
+        );
+
+        assert_eq! (
+            one_part_spliced_touch (
+                &methods, &calls [..], "   CoXXLDKJFLCa    "
+            ).number_of_4_bell_runs (),
+            (2, 5)
+        );
+
+        assert_eq! (
+            one_part_spliced_touch (
+                &methods, &calls [..], "B-P - \0Co Ca\t\n-B** X-E-B-"
+            ).number_of_4_bell_runs (), 
+            (11, 12)
+        );
     }
 }
