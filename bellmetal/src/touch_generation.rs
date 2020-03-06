@@ -45,15 +45,11 @@ pub fn one_part_spliced_touch (
         let mut has_consumed_call = true; // A hack to stop it adding an erraneous call at the start
 
         for c in string.chars () {
-            println! ("\n'{}' '{}'", c, &partial_method_name);
-
             if partial_method_name.len () == 0 { // We're between method names
                 match call_hashmap.get (&c) {
                     Some (x) => {
                         if !has_consumed_call {
                             call_indices.push (*x + 1);
-
-                            println! ("Consuming call {}", x + 1);
 
                             has_consumed_call = true;
 
@@ -62,22 +58,16 @@ pub fn one_part_spliced_touch (
                     }
                     None => { 
                         if !legit_method_starts.contains (&c) {
-                            println! (" >> '{}'", c);
-
                             // Ignore padding characters between method names
                             continue;
                         } 
                         
                         if !has_consumed_call {
-                            println! ("Consuming call 0");
-
                             call_indices.push (0);
                         }
                     }
                 }
             }
-
-            println! ("Here");
 
             has_consumed_call = false;
 
@@ -96,8 +86,6 @@ pub fn one_part_spliced_touch (
         if !has_consumed_call {
             call_indices.push (0);
         }
-
-        println! ("{:?}\n{:?}", &method_indices, &call_indices);
 
         assert_eq! (partial_method_name.len (), 0);
         assert_eq! (method_indices.len (), call_indices.len ());
