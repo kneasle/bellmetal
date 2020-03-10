@@ -154,15 +154,15 @@ mod gen_tests {
 
     #[test]
     fn one_part_spliced () {
-        let bristol = Method::from_string (
+        let bristol = Method::from_str (
             "Bristol Surprise Major", "-58-14.58-58.36.14-14.58-14-18,18", Stage::MAJOR);
-        let plain_bob = Method::from_string (
+        let plain_bob = Method::from_str (
             "Plain Bob Major", "-18-18-18-18,12", Stage::MAJOR);
-        let cornwall = Method::from_string (
+        let cornwall = Method::from_str (
             "Cornwall Surprise Major", "-56-14-56-38-14-58-14-58,18", Stage::MAJOR);
-        let cambridge = Method::from_string (
+        let cambridge = Method::from_str (
             "Cambridge Surprise Major", "-38-14-1258-36-14-58-16-78,12", Stage::MAJOR);
-        let lessness = Method::from_string (
+        let lessness = Method::from_str (
             "Lessness Surprise Major", "-38-14-56-16-12-58-14-58,12", Stage::MAJOR);
 
         let bob = Call::from_place_notation_string ('-', "14", Stage::MAJOR);

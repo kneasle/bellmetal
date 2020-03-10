@@ -62,24 +62,24 @@ impl Call {
 
 
 
-pub struct Method<'a> {
-    pub name : &'a str,
+pub struct Method {
+    pub name : String,
     pub stage : Stage,
     
     pub place_notation : Vec<PlaceNotation>,
     pub plain_lead : Touch
 }
 
-impl<'a> Method<'a> {
-    pub fn lead_length (&'a self) -> usize {
+impl Method {
+    pub fn lead_length (&self) -> usize {
         self.plain_lead.length
     }
 
-    pub fn lead_head (&'a self) -> &'a Change {
+    pub fn lead_head (&self) -> &Change {
         &self.plain_lead.leftover_change
     }
 
-    pub fn lead_end (&'a self) -> Change {
+    pub fn lead_end (&self) -> Change {
         let mut vec : Vec<Bell> = Vec::with_capacity (self.stage.as_usize ());
         
         for b in self.plain_lead.row_at (self.plain_lead.length - 1).slice () {
@@ -89,25 +89,25 @@ impl<'a> Method<'a> {
         Change::new (vec)
     }
 
-    pub fn lead_end_slice (&'a self) -> &'a [Bell] {
+    pub fn lead_end_slice (&self) -> &[Bell] {
         self.plain_lead.slice_at (self.plain_lead.length - 1)
     }
 
-    pub fn lead_end_iterator (&'a self) -> TranspositionIterator {
+    pub fn lead_end_iterator (&self) -> TranspositionIterator {
         TranspositionIterator::from_slice (self.lead_end_slice ())
     }
 
-    pub fn lead_head_after_call (&'a self, call : &Call) -> Change {
+    pub fn lead_head_after_call (&self, call : &Call) -> Change {
         self.lead_end ().multiply (&call.transposition)
     }
 
-    pub fn lead_head_after_call_iterator (&'a self, call : &'a Call) -> MultiplicationIterator<'a> {
+    pub fn lead_head_after_call_iterator<'a> (&'a self, call : &'a Call) -> MultiplicationIterator<'a> {
         MultiplicationIterator::new (self.lead_end_slice (), call.transposition.iterator ())
     }
 }
 
-impl Method<'_> {
-    pub fn new<'a> (name : &'a str, place_notation : Vec<PlaceNotation>) -> Method {
+impl Method {
+    pub fn new (name : String, place_notation : Vec<PlaceNotation>) -> Method {
         assert! (place_notation.len () > 0);
 
         Method {
@@ -117,8 +117,12 @@ impl Method<'_> {
             place_notation : place_notation
         }
     }
+    
+    pub fn from_str (name : &str, place_notation_str : &str, stage : Stage) -> Method {
+        Method::new (name.to_string (), PlaceNotation::from_multiple_string (place_notation_str, stage))
+    }
 
-    pub fn from_string<'a> (name : &'a str, place_notation_str : &'a str, stage : Stage) -> Method<'a> {
+    pub fn from_string (name : String, place_notation_str : &str, stage : Stage) -> Method {
         Method::new (name, PlaceNotation::from_multiple_string (place_notation_str, stage))
     }
 }
@@ -129,7 +133,7 @@ impl Method<'_> {
 
 
 pub struct SingleMethodTouchIterator<'a> {
-    method : &'a Method<'a>,
+    method : &'a Method,
     call_types : &'a [Call],
     call_list : &'a [usize],
 
@@ -253,12 +257,12 @@ mod tests {
     #[test]
     fn lead_lengths () {
         assert_eq! (
-            Method::from_string ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_length (),
+            Method::from_str ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_length (),
             14
         );
 
         assert_eq! (
-            Method::from_string (
+            Method::from_str (
                 "Cambridge Surprise Maximus",
                 "x3Tx14x125Tx36x147Tx58x169Tx70x18x9Tx10xET,12",
                 Stage::MAXIMUS
@@ -270,12 +274,12 @@ mod tests {
     #[test]
     fn lead_ends () {
         assert_eq! (
-            Method::from_string ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_end (),
+            Method::from_str ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_end (),
             Change::from ("1325476")
         );
 
         assert_eq! (
-            Method::from_string (
+            Method::from_str (
                 "Cambridge Surprise Maximus",
                 "x3Tx14x125Tx36x147Tx58x169Tx70x18x9Tx10xET,12",
                 Stage::MAXIMUS
@@ -287,12 +291,12 @@ mod tests {
     #[test]
     fn lead_heads () {
         assert_eq! (
-            *Method::from_string ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_head (),
+            *Method::from_str ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_head (),
             Change::from ("1352746")
         );
 
         assert_eq! (
-            *Method::from_string (
+            *Method::from_str (
                 "Cambridge Surprise Maximus",
                 "x3Tx14x125Tx36x147Tx58x169Tx70x18x9Tx10xET,12",
                 Stage::MAXIMUS
