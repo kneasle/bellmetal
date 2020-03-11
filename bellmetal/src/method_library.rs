@@ -17,7 +17,7 @@ pub fn serialise_method (method : &Method, string : &mut String) {
     string.push (DELIMITER);
     string.push_str (&method.stage.as_usize ().to_string ());
     string.push (DELIMITER);
-    PlaceNotation::into_multiple_string (&method.place_notation, string);
+    PlaceNotation::into_multiple_string_short (&method.place_notation, string);
 }
 
 #[cfg(test)]
@@ -29,7 +29,10 @@ mod lib_tests {
         let mut s = String::with_capacity (100);
 
         for m in &[
+            Method::from_str ("St Remigius Place Singles", "3.1.3,123", Stage::SINGLES),
             Method::from_str ("Plain Bob Doubles", "5.1.5.1.5,125", Stage::DOUBLES),
+            Method::from_str ("\"Brent\" Surprise Minor", "3456-56.14-56-36.12-12.56,12", Stage::MINOR),
+            Method::from_str ("Zzzzz... Bob Minor", "56.14.1256.36.12.56,16", Stage::MINOR),
             Method::from_str ("Bristol Surprise Major", "-58-14.58-58.36.14-14.58-14-18,18", Stage::MAJOR),
             Method::from_str ("Plain Bob Major", "-18-18-18-18,12", Stage::MAJOR),
             Method::from_str ("Cornwall Surprise Major", "-56-14-56-38-14-58-14-58,18", Stage::MAJOR),
