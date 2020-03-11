@@ -84,6 +84,45 @@ impl PlaceNotation {
 
         Change::new (bell_vec)
     }
+    
+    pub fn into_string_implicit (&self, string : &mut String) {
+        let mut count = 0;
+        let mut is_1sts_made = false;
+        let mut is_nths_made = false;
+        let mut internal_place_count = 0;
+
+        let stage = self.stage.as_usize ();
+
+        for i in 0..stage { // Don't cover implicit places
+            if self.places.get (i as Number) {
+                if i == 0 {
+                    is_1sts_made = true;
+                } else if i == stage - 1 {
+                    is_nths_made = true;
+                } else {
+                    internal_place_count += 1;
+
+                    string.push (Bell::from (i).as_char ());
+                }
+                
+                count += 1;
+            }
+        }
+
+        if count == 0 {
+            string.push ('x');
+        } else {
+            if internal_place_count > 0 {
+                return;
+            }
+
+            if is_1sts_made {
+                string.push (Bell::from (0).as_char ());
+            } else if is_nths_made {
+                string.push (Bell::from (stage - 1).as_char ());
+            }
+        }
+    }
 
     pub fn into_string (&self, string : &mut String) {
         let mut count = 0;
@@ -157,6 +196,26 @@ impl PlaceNotation {
         }
         
         PlaceNotation { places : places, stage : stage }
+    }
+
+    pub fn into_multiple_string_short (place_notations : &Vec<PlaceNotation>, string : &mut String) {
+        let mut was_last_place_notation_cross = true; // Used to decide whether to insert a dot
+
+        for p in place_notations {
+            if p.is_cross () {
+                string.push ('x');
+
+                was_last_place_notation_cross = true;
+            } else {
+                if !was_last_place_notation_cross {
+                    string.push ('.');
+                }
+
+                p.into_string_implicit (string);
+
+                was_last_place_notation_cross = false;
+            }
+        }
     }
 
     pub fn into_multiple_string (place_notations : &Vec<PlaceNotation>, string : &mut String) {
@@ -457,6 +516,34 @@ pub mod pn_tests {
             PlaceNotation::from_string ("135", Stage::DOUBLES).transposition (),
             Change::from ("12345")
         );
+    }
+
+    #[test]
+    fn implicit_places_removal () {
+        let mut s = String::with_capacity (10);
+
+        for (from, stage, to) in &[
+            ("1", Stage::SINGLES, "1"),
+            ("3", Stage::SINGLES, "3"),
+            ("123", Stage::SINGLES, "2"),
+            ("1", Stage::DOUBLES, "1"),
+            ("3", Stage::DOUBLES, "3"),
+            ("5", Stage::DOUBLES, "5"),
+            ("125", Stage::DOUBLES, "2"),
+            ("x", Stage::MINOR, "x"),
+            ("14", Stage::MINOR, "4"),
+            ("16", Stage::MINOR, "1"),
+            ("1456", Stage::MINOR, "45"),
+            ("14", Stage::SIXTEEN, "4"),
+        ] {
+            PlaceNotation::from_string (from, *stage).into_string_implicit (&mut s);
+
+            println! ("{}", from);
+
+            assert_eq! (s, *to);
+
+            s.clear ();
+        }
     }
 
     #[test]
