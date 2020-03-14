@@ -3,6 +3,18 @@ use crate::types::*;
 pub trait Transposition {
     fn slice (&self) -> &[Bell];
 
+    fn naive_hash (&self) -> usize {
+        let mut val = 0;
+        let stage = self.slice ().len ();
+
+        for b in self.slice () {
+            val *= stage;
+            val += b.as_usize ();
+        }
+
+        val
+    }
+
     fn stage (&self) -> Stage {
         Stage::from (self.slice ().len ())
     }
