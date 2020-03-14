@@ -170,7 +170,7 @@ impl Touch {
     }
 
     pub fn is_true (&self) -> bool {
-        NaiveProver { }.is_true (self)
+        NaiveProver { }.prove (self)
     }
 
     pub fn pretty_string_multi_column (&self, columns : usize) -> String {
