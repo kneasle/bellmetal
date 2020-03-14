@@ -2,7 +2,8 @@ use crate::{
     Stage, Bell, Place,
     PlaceNotation,
     Change, ChangeAccumulator,
-    Transposition
+    Transposition,
+    NaiveProver, ProvingContext
 };
 
 use std::cmp::Ordering;
@@ -16,6 +17,53 @@ pub struct Row<'a> {
 impl Transposition for Row<'_> {
     fn slice (&self) -> &[Bell] {
         self.bells
+    }
+}
+
+impl<'a> PartialEq for Row<'a> {
+    fn eq (&self, other : &Self) -> bool {
+        if self.stage () != other.stage () {
+            return false;
+        }
+
+        for p in 0..self.stage ().as_usize () {
+            if self.bells [p] != other.bells [p] {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+impl<'a> Eq for Row<'a> { }
+
+impl<'a> Ord for Row<'a> {
+    fn cmp (&self, other : &Self) -> Ordering {
+        assert_eq! (self.stage (), other.stage ());
+
+        let stage = self.stage ().as_usize ();
+        let mut i = 0;
+
+        loop {
+            if i == stage {
+                return Ordering::Equal;
+            }
+
+            if self.bells [i] == other.bells [i] {
+                i += 1;
+            } else if self.bells [i] < other.bells [i] {
+                return Ordering::Less;
+            } else {
+                return Ordering::Greater;
+            }
+        }
+    }
+}
+
+impl<'a> PartialOrd for Row<'a> {
+    fn partial_cmp (&self, other : &Self) -> Option<Ordering> {
+        Some (self.cmp (other))
     }
 }
 
@@ -122,49 +170,7 @@ impl Touch {
     }
 
     pub fn is_true (&self) -> bool {
-        let mut rows : Vec<Row> = self.row_iterator ().collect ();
-        let stage = self.stage.as_usize ();
-
-        rows.sort_by (
-            |a, b| {
-                let mut i = 0;
-
-                loop {
-                    if i == stage {
-                        return Ordering::Equal;
-                    }
-
-                    if a.bells [i] == b.bells [i] {
-                        i += 1;
-                    } else if a.bells [i] < b.bells [i] {
-                        return Ordering::Less;
-                    } else {
-                        return Ordering::Greater;
-                    }
-                }
-            }
-        );
-
-        for i in 1..rows.len () {
-            let mut are_equal = true;
-            
-            let a = &rows [i - 1];
-            let b = &rows [i];
-
-            for p in 0..stage {
-                if a.bells [p] != b.bells [p] {
-                    are_equal = false;
-
-                    break;
-                }
-            }
-
-            if are_equal {
-                return false;
-            }
-        }
-
-        true
+        NaiveProver { }.is_true (self)
     }
 
     pub fn pretty_string_multi_column (&self, columns : usize) -> String {
