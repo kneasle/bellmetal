@@ -15,7 +15,7 @@ pub mod utils;
 pub use change::{ Change, ChangeAccumulator };
 pub use consts::{ MAX_STAGE, BELL_NAMES, is_bell_name, name_to_number };
 pub use method::{ Method, Call };
-pub use method_library::{ serialise_method, deserialise_method };
+pub use method_library::{ MethodLibrary, serialise_method, deserialise_method };
 pub use place_notation::PlaceNotation;
 pub use touch::{ Row, Touch, BasicTouchIterator, TransfiguredTouchIterator, ConcatTouchIterator, AppendedTouchIterator, TouchIterator };
 pub use transposition::{ Transposition, TranspositionIterator, MultiplicationIterator };

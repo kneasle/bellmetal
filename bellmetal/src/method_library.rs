@@ -1,8 +1,45 @@
 use crate::{ Method, PlaceNotation, Stage };
 
+use std::path::Path;
+use std::fs;
+
 const DELIMITER : char = '|';
 
-pub fn deserialise_method (string : String) -> Method {
+pub struct MethodLibrary {
+    methods : Vec<Method>
+}
+
+impl MethodLibrary {
+    pub fn get_method (&self, string : &str) -> Option<&Method> {
+        for m in &self.methods {
+            if m.name == string {
+                return Some (m);
+            }
+        }
+
+        None
+    }
+}
+
+impl MethodLibrary {
+    pub fn from_string (string : &String) -> MethodLibrary {
+        let mut methods : Vec<Method> = Vec::with_capacity (2000);
+
+        for s in string.lines () {
+            methods.push (deserialise_method (s));
+        }
+
+        MethodLibrary {
+            methods : methods
+        }
+    }
+
+    pub fn from_file (path : &Path) -> MethodLibrary {
+        MethodLibrary::from_string (&fs::read_to_string (&path).expect ("Couldn't read file"))
+    }
+}
+
+pub fn deserialise_method (string : &str) -> Method {
     let mut parts =  string.split (DELIMITER);
 
     let name = parts.next ().unwrap ().to_string ();
@@ -42,7 +79,7 @@ mod lib_tests {
             s.clear ();
             serialise_method (m, &mut s);
 
-            let method = deserialise_method (s.clone ());
+            let method = deserialise_method (&s.clone ());
 
             assert_eq! (method.name, m.name);
             assert_eq! (method.stage, m.stage);
