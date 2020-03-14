@@ -168,11 +168,11 @@ mod gen_tests {
         let bob = Call::from_place_notation_string ('-', "14", Stage::MAJOR);
 
         let methods = [
-            ("B", bristol), 
-            ("P", plain_bob),
-            ("Co", cornwall),
-            ("Ca", cambridge),
-            ("E", lessness)
+            ("B", &bristol), 
+            ("P", &plain_bob),
+            ("Co", &cornwall),
+            ("Ca", &cambridge),
+            ("E", &lessness)
         ];
 
         let calls = [
