@@ -61,8 +61,38 @@ impl MethodLibrary {
         }
     }
 
+    pub fn from_string_filtered (string : &String, stage : Option<Stage>) -> MethodLibrary {
+        let mut stored_methods : Vec<StoredMethod> = Vec::with_capacity (2000);
+        
+        match stage {
+            None => {
+                for l in string.lines () {
+                    stored_methods.push (deserialise_stored_method (l));
+                }
+            }
+            Some (_) => {
+                for l in string.lines () {
+                    match deserialise_stored_method_filtered (l, stage) {
+                        Some (m) => {
+                            stored_methods.push (m);
+                        }
+                        None => { }
+                    }
+                }
+            }
+        }
+
+        MethodLibrary {
+            stored_methods : stored_methods,
+        }
+    }
+
     pub fn from_file (path : &Path) -> MethodLibrary {
         MethodLibrary::from_string (&fs::read_to_string (&path).expect ("Couldn't read file"))
+    }
+
+    pub fn from_file_filtered (path : &Path, stage : Option<Stage>) -> MethodLibrary {
+        MethodLibrary::from_string_filtered (&fs::read_to_string (&path).expect ("Couldn't read file"), stage)
     }
 }
 
@@ -75,23 +105,38 @@ pub fn deserialise_method (string : &str) -> Method {
     deserialise_stored_method (string).to_method ()
 }
 
+fn deserialise_stored_method_filtered (string : &str, stage_filter : Option<Stage>) -> Option<StoredMethod> {
+    let mut parts =  string.split (DELIMITER);
 
+    let stage = Stage::from (parts.next ().unwrap ().parse::<usize> ().unwrap ());
+    match stage_filter {
+        Some (s) => {
+            if stage != s {
+                return None;
+            }
+        }
+        _ => { }
+    }
+    let name = parts.next ().unwrap ().to_string ();
+    let place_notation = PlaceNotation::from_multiple_string (parts.next ().unwrap (), stage);
 
+    Some (StoredMethod::new (name, place_notation, stage))
+}
 
 fn deserialise_stored_method (string : &str) -> StoredMethod {
     let mut parts =  string.split (DELIMITER);
 
-    let name = parts.next ().unwrap ().to_string ();
     let stage = Stage::from (parts.next ().unwrap ().parse::<usize> ().unwrap ());
+    let name = parts.next ().unwrap ().to_string ();
     let place_notation = PlaceNotation::from_multiple_string (parts.next ().unwrap (), stage);
 
     StoredMethod::new (name, place_notation, stage)
 }
 
 pub fn serialise_method (method : &Method, string : &mut String) {
-    string.push_str (&method.name);
-    string.push (DELIMITER);
     string.push_str (&method.stage.as_usize ().to_string ());
+    string.push (DELIMITER);
+    string.push_str (&method.name);
     string.push (DELIMITER);
     PlaceNotation::into_multiple_string_short (&method.place_notation, string);
 }
