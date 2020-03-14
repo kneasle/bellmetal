@@ -8,7 +8,7 @@ use crate::{
 use std::collections::{ HashMap, HashSet };
 
 pub fn one_part_spliced_touch (
-    methods : &[(&str, Method)], calls : &[(char, Call)],
+    methods : &[(&str, &Method)], calls : &[(char, Call)],
     string : &str
 ) -> Touch {
     // Generate hashmaps and vectors from the arrays given
