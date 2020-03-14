@@ -5,15 +5,42 @@ use std::fs;
 
 const DELIMITER : char = '|';
 
+struct StoredMethod {
+    name : String,
+    place_notation : Vec<PlaceNotation>,
+    stage : Stage
+}
+
+impl StoredMethod {
+    pub fn to_method (&self) -> Method {
+        Method::new (self.name.clone (), self.place_notation.clone ())
+    }
+}
+
+impl StoredMethod {
+    pub fn new (name : String, place_notation : Vec<PlaceNotation>, stage : Stage) -> StoredMethod {
+        StoredMethod {
+            name : name,
+            place_notation : place_notation,
+            stage : stage
+        }
+    }
+}
+
+
+
+
+
+
 pub struct MethodLibrary {
-    methods : Vec<Method>
+    stored_methods : Vec<StoredMethod>,
 }
 
 impl MethodLibrary {
-    pub fn get_method (&self, string : &str) -> Option<&Method> {
-        for m in &self.methods {
-            if m.name == string {
-                return Some (m);
+    pub fn get_method (&mut self, string : &str) -> Option<Method> {
+        for stored_method in &self.stored_methods {
+            if stored_method.name == string {
+                return Some (stored_method.to_method ());
             }
         }
 
@@ -23,14 +50,14 @@ impl MethodLibrary {
 
 impl MethodLibrary {
     pub fn from_string (string : &String) -> MethodLibrary {
-        let mut methods : Vec<Method> = Vec::with_capacity (2000);
+        let mut stored_methods : Vec<StoredMethod> = Vec::with_capacity (2000);
 
         for s in string.lines () {
-            methods.push (deserialise_method (s));
+            stored_methods.push (deserialise_stored_method (s));
         }
 
         MethodLibrary {
-            methods : methods
+            stored_methods : stored_methods,
         }
     }
 
@@ -39,14 +66,26 @@ impl MethodLibrary {
     }
 }
 
+
+
+
+
+
 pub fn deserialise_method (string : &str) -> Method {
+    deserialise_stored_method (string).to_method ()
+}
+
+
+
+
+fn deserialise_stored_method (string : &str) -> StoredMethod {
     let mut parts =  string.split (DELIMITER);
 
     let name = parts.next ().unwrap ().to_string ();
     let stage = Stage::from (parts.next ().unwrap ().parse::<usize> ().unwrap ());
     let place_notation = PlaceNotation::from_multiple_string (parts.next ().unwrap (), stage);
 
-    Method::new (name, place_notation)
+    StoredMethod::new (name, place_notation, stage)
 }
 
 pub fn serialise_method (method : &Method, string : &mut String) {
@@ -56,6 +95,12 @@ pub fn serialise_method (method : &Method, string : &mut String) {
     string.push (DELIMITER);
     PlaceNotation::into_multiple_string_short (&method.place_notation, string);
 }
+
+
+
+
+
+
 
 #[cfg(test)]
 mod lib_tests {
