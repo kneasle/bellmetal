@@ -93,6 +93,7 @@ impl ProvingContext for HashProver {
             self.bit_map.set_true (hash);
         }
 
+        // Reset the hash map before returning
         for r in touch.row_iterator () {
             self.bit_map.set_false (r.naive_hash ());
         }
