@@ -153,6 +153,8 @@ define_int_synonymn! (Stage);
 
 impl Stage {
     pub const ZERO : Stage = Stage (0);
+    pub const ONE : Stage = Stage (1);
+    pub const TWO : Stage = Stage (2);
 
     pub const SINGLES : Stage = Stage (3);
     pub const MINIMUS : Stage = Stage (4);
@@ -181,11 +183,65 @@ impl Stage {
     pub const TWENTY_TWO : Stage = Stage (22);
 }
 
+static STAGE_NAMES : [&'static str; 23] = [
+    "Zero", "One", "Two",
+    "Singles", "Minimus",
+    "Doubles", "Minor", "Triples", "Major",
+    "Caters", "Royal", "Cinques", "Maximus",
+    "Sextuples", "Fourteen", "Septuples", "Sixteen",
+    "Octuples", "Eighteen", "Nonuples", "Twenty",
+    "Decuples", "Twenty-Two"
+];
+
+impl Stage {
+    pub fn from_str (string : &str) -> Stage {
+        for (i, s) in STAGE_NAMES.iter ().enumerate () {
+            if *s == string {
+                return Stage::from (i);
+            }
+        }
+
+        panic! ("Unkown stage name '{}'.", string);
+    }
+
+    pub fn to_string (&self) -> String {
+        let mut s = String::with_capacity (20);
+
+        self.into_string (&mut s);
+
+        s
+    }
+
+    pub fn into_string (&self, string : &mut String) {
+        if self.0 as usize >= STAGE_NAMES.len () {
+            string.push_str ("<stage ");
+            string.push_str (&self.0.to_string ());
+            string.push ('>');
+        }
+
+        string.push_str (STAGE_NAMES [self.0 as usize]);
+    }
+}
+
 impl From<char> for Bell {
     fn from (c : char) -> Bell {
         match BELL_NAMES.find (c) {
             Some (i) => { Bell::from (i) }
             None => { panic! ("Illegal bell name '{}'", c) }
+        }
+    }
+}
+
+#[cfg(test)]
+mod stage_tests {
+    use crate::Stage;
+
+    #[test]
+    fn string_conversions () {
+        for i in 0..23 {
+            let s = Stage::from (i);
+
+            assert_eq! (Stage::from_str (&s.to_string ()), s);
         }
     }
 }
