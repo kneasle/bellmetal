@@ -440,25 +440,18 @@ pub mod pn_tests {
 
     #[test]
     fn reversal () {
-        assert_eq! (
-            PlaceNotation::from_string ("x", Stage::MINIMUS).reversed (),
-            PlaceNotation::from_string ("x", Stage::MINIMUS)
-        );
-
-        assert_eq! (
-            PlaceNotation::from_string ("147", Stage::TRIPLES).reversed (),
-            PlaceNotation::from_string ("147", Stage::TRIPLES)
-        );
-
-        assert_eq! (
-            PlaceNotation::from_string ("1", Stage::TRIPLES).reversed (),
-            PlaceNotation::from_string ("7", Stage::TRIPLES)
-        );
-
-        assert_eq! (
-            PlaceNotation::from_string ("14", Stage::MAJOR).reversed (),
-            PlaceNotation::from_string ("58", Stage::MAJOR)
-        );
+        for (original, reversed, stage) in &[
+            ("x", "x", Stage::MINIMUS),
+            ("147", "147", Stage::TRIPLES),
+            ("1", "7", Stage::TRIPLES),
+            ("14", "58", Stage::MAJOR),
+            ("1490", "1270", Stage::ROYAL)
+        ] {
+            assert_eq! (
+                PlaceNotation::from_string (original, *stage).reversed (),
+                PlaceNotation::from_string (reversed, *stage)
+            );
+        }
     }
 
     #[test]
@@ -484,38 +477,32 @@ pub mod pn_tests {
 
     #[test]
     fn implicit_places () {
-        assert_eq! (
-            PlaceNotation::from_string ("4", Stage::TRIPLES),
-            PlaceNotation::from_string ("147", Stage::TRIPLES)
-        );
-
-        assert_eq! (
-            PlaceNotation::from_string ("47", Stage::CATERS),
-            PlaceNotation::from_string ("147", Stage::CATERS)
-        );
-
-        assert_eq! (
-            PlaceNotation::from_string ("45", Stage::MAJOR),
-            PlaceNotation::from_string ("1458", Stage::MAJOR)
-        );
+        for (lhs, rhs, stage) in &[
+            ("4", "147", Stage::TRIPLES),
+            ("47", "147", Stage::CATERS),
+            ("45", "1458", Stage::MAJOR),
+            ("1", "10", Stage::ROYAL)
+        ] {
+            assert_eq! (
+                PlaceNotation::from_string (lhs, *stage),
+                PlaceNotation::from_string (rhs, *stage)
+            );
+        }
     }
 
     #[test]
     fn transpositions () {
-        assert_eq! (
-            PlaceNotation::from_string ("4", Stage::TRIPLES).transposition (),
-            Change::from ("1324657")
-        );
-        
-        assert_eq! (
-            PlaceNotation::from_string ("x", Stage::MAJOR).transposition (),
-            Change::from ("21436587")
-        );
-        
-        assert_eq! (
-            PlaceNotation::from_string ("135", Stage::DOUBLES).transposition (),
-            Change::from ("12345")
-        );
+        for (lhs, rhs) in &[
+            ("4", "1324657"),
+            ("x", "2143658709"),
+            ("x", "21436587"),
+            ("135", "12345")
+        ] {
+            assert_eq! (
+                PlaceNotation::from_string (lhs, Stage::from (rhs.len ())).transposition (),
+                Change::from (*rhs)
+            );
+        }
     }
 
     #[test]
