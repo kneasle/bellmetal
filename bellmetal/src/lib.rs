@@ -21,5 +21,5 @@ pub use place_notation::PlaceNotation;
 pub use proving::{ ProvingContext, NaiveProver, HashProver };
 pub use touch::{ Row, Touch, BasicTouchIterator, TransfiguredTouchIterator, ConcatTouchIterator, AppendedTouchIterator, TouchIterator };
 pub use transposition::{ Transposition, TranspositionIterator, MultiplicationIterator };
-pub use types::{ Bell, Place, Parity, Stage, Number, Mask, MaskMethods };
+pub use types::{ Stroke, Bell, Place, Parity, Stage, Number, Mask, MaskMethods };
 pub use touch_generation::{ one_part_spliced_touch };

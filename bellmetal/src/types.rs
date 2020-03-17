@@ -32,6 +32,31 @@ impl Not for Parity {
     }
 }
 
+
+
+
+#[derive(PartialEq, Debug)]
+pub enum Stroke {
+    Hand = 0,
+    Back = 1
+}
+
+impl Not for Stroke {
+    type Output = Self;
+
+    fn not (self) -> Self {
+        match self {
+            Stroke::Hand => { Stroke::Back }
+            Stroke::Back => { Stroke::Hand }
+        }
+    }
+}
+
+
+
+
+
+
 type MaskType = u64;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
