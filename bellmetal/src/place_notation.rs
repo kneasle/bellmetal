@@ -45,7 +45,7 @@ impl PlaceNotation {
         PlaceNotationIterator::new (self)
     }
     
-    // Returns the place notation that represents this one but with the places reversed
+    // Returns the place notation that represents 'self' but with the places reversed
     // (for example 14 -> 58 in Major, 1 -> 7 in Triples, etc)
     pub fn reversed (&self) -> PlaceNotation {
         let stage = self.stage.as_usize ();
@@ -199,21 +199,97 @@ impl PlaceNotation {
     }
 
     pub fn into_multiple_string_short (place_notations : &Vec<PlaceNotation>, string : &mut String) {
-        let mut was_last_place_notation_cross = true; // Used to decide whether to insert a dot
+        let len = place_notations.len ();
 
-        for p in place_notations {
-            if p.is_cross () {
-                string.push ('x');
+        let is_symmetrical = |i : usize| -> bool {
+            for j in 0..i >> 1 {
+                if place_notations [j] != place_notations [i - j - 1] {
+                    return false;
+                }
+            }
+            for j in 0..(len - i) >> 1 {
+                if place_notations [i + j] != place_notations [len - j - 1] {
+                    return false;
+                }
+            }
 
-                was_last_place_notation_cross = true;
+            true
+        };
+
+        // Decide on the location, if any, of the comma
+        let mut comma_index : Option<usize> = None;
+        
+        if place_notations.len () % 2 == 0 {
+            if is_symmetrical (len - 1) {
+                comma_index = Some (len - 1);
             } else {
-                if !was_last_place_notation_cross {
-                    string.push ('.');
+                for i in (1..len - 1).step_by (2) {
+                    if is_symmetrical (i) {
+                        comma_index = Some (i);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Generate string
+        let mut was_last_place_notation_cross = true; // Used to decide whether to insert a dot
+        
+        match comma_index {
+            Some (x) => {
+                // Before comma
+                for p in &place_notations [..x / 2 + 1] {
+                    if p.is_cross () {
+                        string.push ('x');
+
+                        was_last_place_notation_cross = true;
+                    } else {
+                        if !was_last_place_notation_cross {
+                            string.push ('.');
+                        }
+
+                        p.into_string_implicit (string);
+
+                        was_last_place_notation_cross = false;
+                    }
                 }
 
-                p.into_string_implicit (string);
+                string.push (',');
+                was_last_place_notation_cross = true;
+                
+                // After comma
+                for p in &place_notations [x..x + (len - x) / 2 + 1] {
+                    if p.is_cross () {
+                        string.push ('x');
 
-                was_last_place_notation_cross = false;
+                        was_last_place_notation_cross = true;
+                    } else {
+                        if !was_last_place_notation_cross {
+                            string.push ('.');
+                        }
+
+                        p.into_string_implicit (string);
+
+                        was_last_place_notation_cross = false;
+                    }
+                }
+            }
+            None => {
+                for p in place_notations {
+                    if p.is_cross () {
+                        string.push ('x');
+
+                        was_last_place_notation_cross = true;
+                    } else {
+                        if !was_last_place_notation_cross {
+                            string.push ('.');
+                        }
+
+                        p.into_string_implicit (string);
+
+                        was_last_place_notation_cross = false;
+                    }
+                }
             }
         }
     }
