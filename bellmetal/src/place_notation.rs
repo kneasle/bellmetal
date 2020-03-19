@@ -4,7 +4,7 @@ use crate::{ Change, ChangeAccumulator, MaskMethods };
 use std::cmp::PartialEq;
 use std::fmt;
 
-#[derive(Copy, Clone)]
+#[derive(Hash, Copy, Clone)]
 pub struct PlaceNotation {
     pub places : Mask,
     pub stage : Stage

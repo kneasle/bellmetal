@@ -3,7 +3,7 @@ use std::ops::{ Mul, Not };
 use crate::consts::BELL_NAMES;
 use std::fmt;
 
-#[derive(PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub enum Parity {
     Even = 0,
     Odd = 1
@@ -35,7 +35,7 @@ impl Not for Parity {
 
 
 
-#[derive(PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub enum Stroke {
     Hand = 0,
     Back = 1
@@ -59,7 +59,7 @@ impl Not for Stroke {
 
 type MaskType = u64;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Hash, Copy, Clone, PartialEq, Eq)]
 pub struct MaskStruct {
     pub mask : MaskType
 }
@@ -119,7 +119,7 @@ pub type Number = u32;
 
 macro_rules! define_int_synonymn {
     ($type:ident) => {
-        #[derive(PartialEq, PartialOrd, Debug, Copy, Clone)]
+        #[derive(Hash, Eq, Ord, PartialEq, PartialOrd, Debug, Copy, Clone)]
         pub struct $type (Number);
 
         impl From<Number> for $type {
