@@ -19,7 +19,7 @@ impl PartialEq for PlaceNotation {
 impl Eq for PlaceNotation { }
 
 impl fmt::Debug for PlaceNotation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt (&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut s = String::with_capacity (Mask::limit () as usize);
 
         self.into_string (&mut s);
