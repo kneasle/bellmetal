@@ -33,11 +33,21 @@ impl StoredMethod {
 
 
 pub struct MethodLibrary {
-    stored_methods : Vec<StoredMethod>,
+    stored_methods : Vec<StoredMethod>
 }
 
 impl MethodLibrary {
-    pub fn get_method (&mut self, string : &str) -> Option<Method> {
+    pub fn get_method_by_notation (&self, place_notations : &[PlaceNotation]) -> Option<Method> {
+        for m in &self.stored_methods {
+            if m.place_notation == place_notations {
+                return Some (m.to_method ());
+            }
+        }
+
+        None
+    }
+
+    pub fn get_method (&self, string : &str) -> Option<Method> {
         for stored_method in &self.stored_methods {
             if stored_method.name == string {
                 return Some (stored_method.to_method ());
