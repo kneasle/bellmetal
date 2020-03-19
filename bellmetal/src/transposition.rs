@@ -23,6 +23,16 @@ pub trait Transposition {
         self.slice () [place.as_usize ()]
     }
 
+    fn place_of (&self, bell : Bell) -> Place {
+        for (i, b) in self.slice ().iter ().enumerate () {
+            if *b == bell {
+                return Place::from (i);
+            }
+        }
+
+        panic! ("Bell '{}' not found in change {:?}", bell.as_char (), self.slice ());
+    }
+
     fn parity (&self) -> Parity {
         let bells = self.slice ();
         let stage = bells.len ();
