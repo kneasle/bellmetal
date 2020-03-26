@@ -52,24 +52,7 @@ impl CoursingOrder {
     }
 
     pub fn overwrite_from_iterator (&mut self, iterator : &mut impl CoursingOrderIterator) {
-        let heaviest_bell = {
-            let mut h = 0;
-
-            // Find what the heaviest bell is
-            for _ in 0..iterator.length () {
-                let b = iterator.next ().as_usize ();
-
-                if b > h {
-                    h = b;
-                }
-            }
-
-            Bell::from (h)
-        };
-
-        // Seek to the heaviest bell so the iterator is rotated with a horrendous loop with
-        // side effects in the guard
-        while iterator.next () != heaviest_bell { }
+        let heaviest_bell = iterator.seek_heaviest_bell ();
 
         // Copy the iterator into the vector
         let len = iterator.length ();
@@ -189,6 +172,10 @@ impl CoursingOrder {
         self.into_string (&mut s);
 
         s
+    }
+
+    pub fn to_coursehead (&self) -> Change {
+        BasicCoursingOrderIterator::new (self).to_coursehead ()
     }
 
     pub fn canonical_string (&self) -> String {
@@ -336,8 +323,47 @@ pub trait CoursingOrderIterator {
     fn collect (&mut self) -> CoursingOrder where Self : std::marker::Sized {
         CoursingOrder::from_iterator (self)
     }
-}
 
+    fn seek_heaviest_bell (&mut self) -> Bell {
+        let heaviest_bell = {
+            let mut h = 0;
+
+            // Find what the heaviest bell is
+            for _ in 0..self.length () {
+                let b = self.next ().as_usize ();
+
+                if b > h {
+                    h = b;
+                }
+            }
+
+            Bell::from (h)
+        };
+
+        // Seek to the heaviest bell so the iterator is rotated with a horrendous loop with
+        // side effects in the guard
+        while self.next () != heaviest_bell { }
+
+        heaviest_bell
+    }
+    
+    fn to_coursehead (&mut self) -> Change {
+        let stage = self.length () + 1;
+
+        let mut vec : Vec<Bell> = vec![Bell::from (0);stage];
+
+        let mut iter = PlainCoursingOrderIterator::new (Stage::from (stage));
+
+        iter.seek_heaviest_bell ();
+        self.seek_heaviest_bell ();
+        
+        for _ in 0..self.length () {
+            vec [iter.next ().as_usize ()] = self.next ();
+        }
+
+        Change::new (vec)
+    }
+}
 
 
 
@@ -541,6 +567,26 @@ mod co_tests {
             let co = CoursingOrder::from (*order);
 
             assert_eq! (BasicCoursingOrderIterator::new (&co).collect (), co);
+        }
+    }
+
+    #[test]
+    fn courseheads () {
+        for s in 2..20 {
+            let stage = Stage::from (s);
+
+            assert_eq! (PlainCoursingOrderIterator::new (stage).to_coursehead (), Change::rounds (stage));
+        }
+
+        for coursehead in &[
+            "12",
+            "132456",
+            "17364528",
+            "17654328"
+        ] {
+            let co = Change::from (*coursehead);
+
+            assert_eq! (LeadheadCoursingOrderIterator::new (&co).to_coursehead (), co);
         }
     }
 
