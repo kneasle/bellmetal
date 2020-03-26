@@ -157,6 +157,10 @@ macro_rules! define_int_synonymn {
                 self.0 as u32
             }
 
+            pub fn as_isize (&self) -> isize {
+                self.as_u32 () as isize
+            }
+
             pub fn as_usize (&self) -> usize {
                 self.as_u32 () as usize
             }
