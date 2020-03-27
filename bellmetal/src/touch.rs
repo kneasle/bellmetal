@@ -3,7 +3,8 @@ use crate::{
     PlaceNotation,
     Change, ChangeAccumulator,
     Transposition,
-    NaiveProver, ProvingContext
+    NaiveProver, ProvingContext,
+    Method
 };
 
 use std::cmp::Ordering;
@@ -396,6 +397,26 @@ impl Touch {
             ruleoffs : Vec::with_capacity (ruleoff_capacity),
             leftover_change : Change::rounds (stage)
         }
+    }
+
+    pub fn single_course (method : &Method, course_head : &Change) -> Touch {
+        let mut accumulator = ChangeAccumulator::new (method.stage);
+        let mut touch = Touch::empty ();
+
+        accumulator.set (course_head);
+        touch.stage = method.stage;
+
+        loop {
+            touch.append_iterator (&mut TransfiguredTouchIterator::new (accumulator.total (), &method.plain_lead));
+
+            accumulator.accumulate (method.lead_head ());
+
+            if accumulator.total () == course_head {
+                break;
+            }
+        }
+
+        touch
     }
 
     pub fn from_iterator_multipart<I> (iterator : &mut I, part_ends : &[Change]) -> Touch 
