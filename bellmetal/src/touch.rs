@@ -108,7 +108,7 @@ impl Touch {
         loop {
             match iterator.next_ruleoff () {
                 Some (b) => { 
-                    self.ruleoffs.push (b);
+                    self.ruleoffs.push (self.length + b);
                 }
                 None => {
                     break;
@@ -548,7 +548,7 @@ impl<'a> Iterator for RowIterator<'a> {
 
         if index < self.touch.length {
             let is_ruleoff = if self.ruleoff_index >= self.touch.ruleoffs.len () { false } 
-                            else { self.touch.ruleoffs [self.ruleoff_index] == index };
+                             else { self.touch.ruleoffs [self.ruleoff_index] == index };
 
             let row = Row {
                 index : index,
