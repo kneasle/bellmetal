@@ -4,7 +4,7 @@ use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialOrd, Ord, Eq, PartialEq, Clone)]
 pub struct Change {
     seq : Vec<Bell>
 }
@@ -24,15 +24,6 @@ impl Change {
         Stage::from (self.seq.len ())
     }
 
-    pub fn copy_into (&self, other : &mut Change) {
-        other.seq.clear ();
-        other.seq.reserve (self.seq.len ());
-
-        for b in &self.seq {
-            other.seq.push (*b);
-        }
-    }
-
     pub fn multiply (&self, rhs : &impl Transposition) -> Change {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
@@ -45,6 +36,10 @@ impl Change {
         }
 
         Change { seq : new_seq }
+    }
+
+    pub fn set_bell (&mut self, place : Place, bell : Bell) {
+        self.seq [place.as_usize ()] = bell;
     }
 
     pub fn multiply_iterator<I> (&self, rhs : I) -> Change where I : Iterator<Item = Bell> {
@@ -127,6 +122,17 @@ impl Change {
 
         for c in string.chars () {
             self.seq.push (Bell::from (c));
+        }
+    }
+
+    pub fn overwrite_from (&mut self, other : &impl Transposition) {
+        let slice = other.slice ();
+
+        self.seq.clear ();
+        self.seq.reserve (slice.len ());
+
+        for b in slice.iter () {
+            self.seq.push (*b);
         }
     }
 

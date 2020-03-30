@@ -249,6 +249,10 @@ pub trait Transposition {
         )
     }
 
+    fn copy_into (&self, other : &mut Change) where Self : std::marker::Sized {
+        other.overwrite_from (self);
+    }
+
     // To string
     fn to_string (&self) -> String {
         let mut string = String::with_capacity (self.slice ().len ());
