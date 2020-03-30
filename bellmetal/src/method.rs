@@ -273,35 +273,33 @@ mod tests {
 
     #[test]
     fn lead_ends () {
-        assert_eq! (
-            Method::from_str ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_end (),
-            Change::from ("1325476")
-        );
-
-        assert_eq! (
-            Method::from_str (
-                "Cambridge Surprise Maximus",
-                "x3Tx14x125Tx36x147Tx58x169Tx70x18x9Tx10xET,12",
-                Stage::MAXIMUS
-            ).lead_end (),
-            Change::from ("1537294E6T80")
-        );
+        for (pns, lh) in &[
+            ("7.1.7.1.7.1.7,127", "1325476"), // Plain Bob Triples
+            ("x3x4x25x36x47x58x69x70x8x9x0xE,2", "1537294E6T80"), // Camb S Max
+            ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", "6432571"), // Scientific Triples
+            ("3,1.9.1.5.1", "162483957") // Little Grandsire Caters
+        ] {
+            assert_eq! (
+                Method::from_str ("No Name", pns, Stage::from (lh.len ())).lead_end (),
+                Change::from (*lh)
+            );
+        }
     }
 
     #[test]
     fn lead_heads () {
-        assert_eq! (
-            *Method::from_str ("Plain Bob Triples", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_head (),
-            Change::from ("1352746")
-        );
+        for (pns, lh) in &[
+            ("7.1.7.1.7.1.7,127", "1352746"), // Plain Bob Triples
+            ("x3x4x25x36x47x58x69x70x8x9x0xE,2", "157392E4T608"), // Camb S Max
+            ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", "4623751"), // Scientific Triples
+            ("3,1.9.1.5.1", "126849375") // Little Grandsire Caters
+        ] {
+            assert_eq! (
+                *Method::from_str ("No Name", pns, Stage::from (lh.len ())).lead_head (),
+                Change::from (*lh)
+            );
+        }
+    }
 
-        assert_eq! (
-            *Method::from_str (
-                "Cambridge Surprise Maximus",
-                "x3Tx14x125Tx36x147Tx58x169Tx70x18x9Tx10xET,12",
-                Stage::MAXIMUS
-            ).lead_head (),
-            Change::from ("157392E4T608")
-        );
     }
 }
