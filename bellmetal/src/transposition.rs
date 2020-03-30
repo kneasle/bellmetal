@@ -1,4 +1,5 @@
 use crate::types::*;
+use crate::Change;
 
 pub trait Transposition {
     fn slice (&self) -> &[Bell];
@@ -234,6 +235,18 @@ pub trait Transposition {
         }
 
         true
+    }
+
+    fn reflected (&self) -> Change where Self : std::marker::Sized {
+        let stage_minus_1 = self.slice ().len () - 1;
+
+        Change::new (
+            self.slice ()
+                .iter ()
+                .rev ()
+                .map (|b| Bell::from (stage_minus_1 - b.as_usize ()))
+                .collect ()
+        )
     }
 
     // To string

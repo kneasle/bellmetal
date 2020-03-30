@@ -374,6 +374,26 @@ impl Touch {
             counter += 1;
         }
     }
+
+    pub fn reflected (&self) -> Touch {
+        let mut new_bells : Vec<Bell> = Vec::with_capacity (self.length);
+        let stage = self.stage.as_usize ();
+
+        for r in self.row_iterator () {
+            for b in r.slice ().iter ().rev () {
+                new_bells.push (Bell::from (stage - 1 - b.as_usize ()));
+            }
+        }
+
+        Touch {
+            stage : self.stage,
+            length : self.length,
+
+            bells : new_bells,
+            ruleoffs : self.ruleoffs.clone (),
+            leftover_change : self.leftover_change.reflected ()
+        }
+    }
 }
 
 impl Touch {
@@ -951,7 +971,7 @@ impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
 
 #[cfg(test)]
 mod touch_tests {
-    use crate::{ Touch, Transposition };
+    use crate::{ Touch, Transposition, PlaceNotation, Stage };
     
     #[test]
     fn basic_iterator () {
@@ -991,6 +1011,22 @@ mod touch_tests {
             }
 
             assert_eq! (chars.next (), None);
+        }
+    }
+
+    #[test]
+    fn reflection () {
+        for (pn, stage) in &[
+            ("x58x16x12x36x12x58x14x18,12", Stage::MAJOR),
+            ("36x7T.18x9T.50.36.14x1470.5T.16x9T.30.18x14.3T.50.14x1T,1T", Stage::MAXIMUS)
+        ] {
+            let pns = PlaceNotation::from_multiple_string (*pn, *stage);
+            let reversed_pns : Vec<PlaceNotation> = pns.iter ().map (|x| x.reversed ()).collect ();
+
+            assert_eq! (
+                Touch::from (&pns [..]).reflected (), 
+                Touch::from (&reversed_pns [..])
+            );
         }
     }
 

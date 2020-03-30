@@ -104,6 +104,15 @@ impl Method {
     pub fn lead_head_after_call_iterator<'a> (&'a self, call : &'a Call) -> MultiplicationIterator<'a> {
         MultiplicationIterator::new (self.lead_end_slice (), call.transposition.iterator ())
     }
+
+    pub fn reflected (&self, new_name : &str) -> Method {
+        Method {
+            name : new_name.to_string (),
+            stage : self.stage,
+            plain_lead : self.plain_lead.reflected (),
+            place_notation : self.place_notation.iter ().map (|x| x.reversed ()).collect ()
+        }
+    }
 }
 
 impl Method {
@@ -301,5 +310,17 @@ mod tests {
         }
     }
 
+    #[test]
+    fn reflection () {
+        for (pns, lh) in &[
+            ("7.1.7.1.7.1.7,127", "2416357"), // Plain Bob Triples
+            ("x3x4x25x36x47x58x69x70x8x9x0xE,2", "537192E4068T"), // Camb S Max
+            ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", "7315624") // Scientific Triples
+        ] {
+            assert_eq! (
+                *Method::from_str ("No Name", pns, Stage::from (lh.len ())).reflected ("Enam On").lead_head (),
+                Change::from (*lh)
+            );
+        }
     }
 }
