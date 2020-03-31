@@ -165,6 +165,36 @@ impl Change {
 
         accumulator.total ().clone ()
     }
+
+    pub fn destructive_hash (&mut self) -> usize {
+        let stage = self.seq.len ();
+
+        let mut hash = 0;
+        let mut multiplier = 1;
+
+        for i in 1..stage {
+            multiplier *= i;
+        }
+
+        let mut i = stage - 1;
+
+        while i > 0 {
+            for j in 0..stage {
+                if self.seq [j] == Bell::from (i) {
+                    hash += j * multiplier;
+
+                    self.seq [j] = self.seq [i];
+
+                    break;
+                }
+            }
+
+            multiplier /= i;
+            i -= 1;
+        }
+
+        hash
+    }
 }
 
 impl Change {
@@ -331,6 +361,8 @@ mod change_tests {
         Bell, Stage, Place, Parity,
         Transposition
     };
+
+    use crate::utils::ExtentIterator;
     
     use std::fmt::Write;
 
@@ -593,6 +625,21 @@ mod change_tests {
         assert_eq! (Change::from ("15234").music_score (), 0);
         assert_eq! (Change::from ("9876543210").music_score (), 21);
         assert_eq! (Change::from ("0987654321").music_score (), 56);
+    }
+
+    #[test]
+    fn destructive_hash () {
+        for s in 1..9 {
+            let mut hashes : Vec<usize> = ExtentIterator::new (Stage::from (s))
+                .map (|mut x| x.destructive_hash ())
+                .collect ();
+
+            hashes.sort ();
+
+            for s in 0..hashes.len () {
+                assert_eq! (s, hashes [s]);
+            }
+        }
     }
     
     #[test]
