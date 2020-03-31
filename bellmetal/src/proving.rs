@@ -4,6 +4,8 @@ use crate::touch::RowIterator;
 use factorial::Factorial;
 use std::collections::HashMap;
 
+use std::cmp::Ordering;
+
 pub trait ProvingContext {
     fn prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> bool;
     
@@ -57,7 +59,89 @@ fn full_proof_from_iterator (iterator : impl Iterator<Item = (usize, usize)>) ->
 
 
 
+
+#[derive(Eq, PartialEq, Debug)]
+struct IndexedChange {
+    pub index : usize,
+    pub change : Change
+}
+
+impl Ord for IndexedChange {
+    fn cmp (&self, other : &Self) -> Ordering {
+        self.change.cmp (&other.change)
+    }
+}
+
+impl PartialOrd for IndexedChange {
+    fn partial_cmp (&self, other : &Self) -> Option<Ordering> {
+        Some (self.cmp (other))
+    }
+}
+
+
+
+
 pub struct NaiveProver { }
+
+impl FullProvingContext for NaiveProver {
+    fn full_prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> ProofGroups {
+        let mut temporary_change = Change::rounds (touch.stage);
+
+        let mut indexed_changes : Vec<IndexedChange> = Vec::with_capacity (touch.length);
+        
+        println! ("------\n");
+
+        for row in touch.row_iterator () {
+            println! ("{:?}", temporary_change);
+            
+            canon (&row, &mut temporary_change);
+
+            println! ("  {:?}", temporary_change);
+
+            indexed_changes.push (
+                IndexedChange {
+                    index : row.index, 
+                    change : temporary_change.clone ()
+                }
+            );
+        }
+
+        indexed_changes.sort ();
+
+        println! ("");
+        for i in &indexed_changes {
+            println! ("{:?}", i);
+
+            for b in i.change.slice () {
+                println! (" >> {:?}", b);
+            }
+        }
+
+        let mut truth = Vec::with_capacity (10);
+        let mut temp_vec : Vec<usize> = Vec::with_capacity (5);
+        let mut group_start_index = 0;
+
+        temp_vec.push (0);
+        for i in 1..indexed_changes.len () {
+            if indexed_changes [i].change != indexed_changes [group_start_index].change {
+                if temp_vec.len () > 1 {
+                    truth.push (temp_vec.clone ());
+                }
+
+                group_start_index = i;
+                temp_vec.clear ();
+            }
+
+            temp_vec.push (indexed_changes [i].index);
+        }
+                
+        if temp_vec.len () > 1 {
+            truth.push (temp_vec.clone ());
+        }
+
+        truth
+    }
+}
 
 impl ProvingContext for NaiveProver {
     fn prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> bool {
@@ -384,7 +468,6 @@ pub fn canon_fixed_treble_cyclic (row : &Row, change : &mut Change) {
     let slice = row.slice ();
     let stage = row.stage ().as_usize ();
 
-    // Nothing to be done if the stage is one
     if stage == 1 {
         change.set_bell (Place::from (0), Bell::from (0));
         
@@ -430,6 +513,7 @@ pub fn canon_full_cyclic (row : &Row, change : &mut Change) {
     let slice = row.slice ();
     let stage = row.stage ().as_usize ();
 
+    // Nothing to be done if the stage is one
     if stage == 1 {
         change.set_bell (Place::from (0), Bell::from (0));
         
@@ -559,6 +643,32 @@ mod proof_tests {
                 CompactHashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic), 
                 *truth
             );
+        }
+    }
+
+    #[test]
+    fn full_canonical_proving () {
+        for (touch, truth) in &[
+            ("123\n132\n123", vec![vec![0, 1]]),
+            ("12345678\n21436587\n17654328\n31547682\n12345678", vec![]),
+            ("12345678\n21436587\n17654328\n31547628\n12345678", vec![vec![1, 3]]),
+            (
+                "12345678\n21436587\n17654328\n31547628\n13287654\n18765432\n12345678", 
+                vec![vec![1, 3], vec![2, 4, 5]]
+            ),
+        ] {
+            let t = Touch::from (*touch);
+
+            let mut compact_truth = CompactHashProver::from_stage (t.stage)
+                .full_prove_canonical (&t, canon_fixed_treble_cyclic);
+            let mut naive_truth = NaiveProver { }
+                .full_prove_canonical (&t, canon_fixed_treble_cyclic);
+
+            compact_truth.sort ();
+            naive_truth.sort ();
+
+            assert_eq! (compact_truth, *truth);
+            assert_eq! (naive_truth, *truth);
         }
     }
 }
