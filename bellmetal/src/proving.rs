@@ -1,6 +1,6 @@
 use crate::{ Touch, Row, Stage, Place, Bell, Transposition, Change };
-
 use crate::touch::RowIterator;
+
 use factorial::Factorial;
 use std::collections::HashMap;
 
