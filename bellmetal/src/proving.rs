@@ -89,14 +89,8 @@ impl FullProvingContext for NaiveProver {
 
         let mut indexed_changes : Vec<IndexedChange> = Vec::with_capacity (touch.length);
         
-        println! ("------\n");
-
         for row in touch.row_iterator () {
-            println! ("{:?}", temporary_change);
-            
             canon (&row, &mut temporary_change);
-
-            println! ("  {:?}", temporary_change);
 
             indexed_changes.push (
                 IndexedChange {
@@ -107,15 +101,6 @@ impl FullProvingContext for NaiveProver {
         }
 
         indexed_changes.sort ();
-
-        println! ("");
-        for i in &indexed_changes {
-            println! ("{:?}", i);
-
-            for b in i.change.slice () {
-                println! (" >> {:?}", b);
-            }
-        }
 
         let mut truth = Vec::with_capacity (10);
         let mut temp_vec : Vec<usize> = Vec::with_capacity (5);
