@@ -386,6 +386,8 @@ pub fn canon_fixed_treble_cyclic (row : &Row, change : &mut Change) {
 
     // Nothing to be done if the stage is one
     if stage == 1 {
+        change.set_bell (Place::from (0), Bell::from (0));
+        
         return;
     }
 
@@ -394,7 +396,7 @@ pub fn canon_fixed_treble_cyclic (row : &Row, change : &mut Change) {
                 
         change.set_bell (Place::from (0), Bell::from (0));
 
-        for i in 2..stage {
+        for i in 1..stage {
             let new_bell = slice [i].as_isize () - shift;
 
             if new_bell <= 0 {
@@ -428,8 +430,9 @@ pub fn canon_full_cyclic (row : &Row, change : &mut Change) {
     let slice = row.slice ();
     let stage = row.stage ().as_usize ();
 
-    // Nothing to be done if the stage is one
     if stage == 1 {
+        change.set_bell (Place::from (0), Bell::from (0));
+        
         return;
     }
 
@@ -505,11 +508,13 @@ mod proof_tests {
             ("123456\n123456", "123456"),
             ("42315678\n12345678", "27813456"),
             ("71632548\n12345678", "21854763"),
+            ("18765432\n12345678", "12876543"),
+            ("15432876\n12345678", "12876543"),
             ("87654321\n12345678", "28765431"),
             ("4567890231\n1234567890", "2345678901")
         ] {
             let touch = Touch::from (*orig);
-            let mut change = Change::rounds (touch.stage);
+            let mut change = Change::new (vec! [Bell::from (20); canon.len ()]);
 
             canon_fixed_treble_cyclic (&touch.row_iterator ().next ().unwrap (), &mut change);
 
@@ -529,7 +534,7 @@ mod proof_tests {
             ("4567890231\n1234567890", "1234567908")
         ] {
             let touch = Touch::from (*orig);
-            let mut change = Change::rounds (touch.stage);
+            let mut change = Change::new (vec! [Bell::from (20); canon.len ()]);
 
             canon_full_cyclic (&touch.row_iterator ().next ().unwrap (), &mut change);
 
