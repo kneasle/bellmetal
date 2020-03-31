@@ -17,6 +17,9 @@ pub struct Row<'a> {
 }
 
 
+
+static ANNOTATION_PADDING_LEFT : &str = "    ";
+static ANNOTATION_PADDING_RIGHT : &str = "  ";
 static FALSENESS_COLOURS : [&str; 14] = [
     "91;1", "92;1", "93;1", "94;1", "95;1", "96;1", "97;1",
     "31", "32", "33", "34", "35", "36", "37"
@@ -232,10 +235,6 @@ impl Touch {
     }
 
     pub fn pretty_string_multi_column (&self, columns : usize) -> String {
-        for f in &FALSENESS_COLOURS {
-            println! ("\x1b[{}m{}\x1b[0m", f, f);
-        }
-
         let truth_table = self.full_truth_table ();
 
         let stage = self.stage.as_usize ();
@@ -280,10 +279,14 @@ impl Touch {
                     lines [line_number].push_str ("    ");
                 }
 
+                lines [line_number].push_str (ANNOTATION_PADDING_LEFT);
+
                 for _ in 0..stage {
                     lines [line_number].push ('-');
                 }
                 
+                lines [line_number].push_str (ANNOTATION_PADDING_RIGHT);
+
                 line_number += 1;
             }
             
@@ -297,6 +300,8 @@ impl Touch {
         } else {
             lines [line_number].push_str ("    ");
         }
+
+        lines [line_number].push_str (ANNOTATION_PADDING_LEFT);
 
         self.leftover_change.write_pretty_string (&mut lines [line_number]);
 
