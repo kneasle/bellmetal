@@ -2,10 +2,44 @@ use crate::{ Touch, Row, Stage, Place, Bell, Transposition, Change };
 
 use crate::touch::RowIterator;
 use factorial::Factorial;
+use std::collections::HashMap;
 
 pub trait ProvingContext {
     fn prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> bool;
-    fn prove (&mut self, touch : &Touch) -> bool;
+    
+    fn prove (&mut self, touch : &Touch) -> bool {
+        self.prove_canonical (touch, canon_copy)
+    }
+}
+
+pub type ProofGroups = Vec<Vec<usize>>;
+
+pub trait FullProvingContext : ProvingContext {
+    fn full_prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> ProofGroups;
+    
+    fn full_prove (&mut self, touch : &Touch) -> ProofGroups {
+        self.full_prove_canonical (touch, canon_copy)
+    }
+}
+
+fn full_proof_from_iterator (iterator : impl Iterator<Item = (usize, usize)>) -> ProofGroups {
+    let mut hash_map : HashMap<usize, Vec<usize>> = HashMap::with_capacity (20);
+
+    for (root, value) in iterator {
+        if !hash_map.contains_key (&root) {
+            hash_map.insert (root, Vec::with_capacity (3));
+            hash_map.get_mut (&root).unwrap ().push (root);
+        }
+        hash_map.get_mut (&root).unwrap ().push (value);
+    }
+
+    let mut vec = Vec::with_capacity (hash_map.len ());
+
+    for (_, v) in hash_map.drain () {
+        vec.push (v);
+    }
+
+    vec
 }
 
 
@@ -198,6 +232,27 @@ impl CompactHashProver {
     }
 }
 
+impl FullProvingContext for CompactHashProver {
+    fn full_prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> ProofGroups {
+        let truth = full_proof_from_iterator (CompactHashIterator {
+            temporary_change : Change::rounds (self.stage),
+            hash_prover : self,
+            row_iterator : &mut touch.row_iterator (),
+            canon_func : &mut canon
+        }.map (|(x, y)| (x as usize, y as usize)));
+
+        let mut c = Change::rounds (self.stage);
+
+        for r in touch.row_iterator () {
+            canon (&r, &mut c);
+
+            self.falseness_map [c.destructive_hash ()] = -1;
+        }
+
+        truth
+    }
+}
+
 impl ProvingContext for CompactHashProver {
     fn prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> bool {
         let truth = CompactHashIterator {
@@ -216,10 +271,6 @@ impl ProvingContext for CompactHashProver {
         }
 
         truth
-    }
-
-    fn prove (&mut self, touch : &Touch) -> bool {
-        self.prove_canonical (touch, canon_copy)
     }
 }
 
@@ -391,6 +442,14 @@ mod proof_tests {
     use crate::{ Touch };
     use crate::proving::*;
 
+    fn full_proof_test_touches () -> Vec<(Touch, Vec<Vec<usize>>)> {
+        vec![
+            (Touch::from ("123"), vec![]),
+            (Touch::from ("123456\n214365\n123456"), vec![]),
+            (Touch::from ("123456\n214365\n123456\n123456"), vec![vec![0, 2]]),
+        ]
+    }
+    
     fn test_touches () -> Vec<(Touch, bool)> {
         vec![
             (Touch::from ("123"), true),
@@ -421,6 +480,10 @@ mod proof_tests {
     fn compact_hash () {
         for (t, b) in test_touches () {
             assert_eq! (CompactHashProver::from_stage (t.stage).prove (&t), b);
+        }
+
+        for (t, b) in full_proof_test_touches () {
+            assert_eq! (CompactHashProver::from_stage (t.stage).full_prove (&t), b);
         }
     }
 
