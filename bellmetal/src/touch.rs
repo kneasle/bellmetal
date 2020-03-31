@@ -3,16 +3,57 @@ use crate::{
     PlaceNotation,
     Change, ChangeAccumulator,
     Transposition,
-    NaiveProver, ProvingContext,
+    NaiveProver, ProvingContext, FullProvingContext,
     Method
 };
 
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 pub struct Row<'a> {
     pub index : usize,
     pub is_ruled_off : bool,
     bells : &'a [Bell]
+}
+
+
+static FALSENESS_COLOURS : [&str; 14] = [
+    "91;1", "92;1", "93;1", "94;1", "95;1", "96;1", "97;1",
+    "31", "32", "33", "34", "35", "36", "37"
+];
+
+impl Row<'_> {
+    fn write_annotated_string (&self, string : &mut String, table : &HashMap<usize, usize>) {
+        string.push_str ("  ");
+        
+        match table.get (&self.index) {
+            Some (x) => {
+                string.push_str ("\x1b[");
+                string.push_str (FALSENESS_COLOURS [*x]);
+                string.push_str ("m[\x1b[0m");
+            }
+            None => {
+                string.push (' ');
+            }
+        }
+
+        string.push (' ');
+        
+        self.write_pretty_string (string);
+        
+        string.push (' ');
+        
+        match table.get (&self.index) {
+            Some (x) => {
+                string.push_str ("\x1b[");
+                string.push_str (FALSENESS_COLOURS [*x]);
+                string.push_str ("m]\x1b[0m");
+            }
+            None => {
+                string.push (' ');
+            }
+        }
+    }
 }
 
 impl Transposition for Row<'_> {
@@ -174,7 +215,29 @@ impl Touch {
         NaiveProver { }.prove (self)
     }
 
+    pub fn full_truth (&self) -> Vec<Vec<usize>> {
+        NaiveProver { }.full_prove (self)
+    }
+
+    pub fn full_truth_table (&self) -> HashMap<usize, usize> {
+        let mut hash_map : HashMap<usize, usize> = HashMap::with_capacity (50);
+
+        for (i, g) in self.full_truth ().iter ().enumerate () {
+            for b in g {
+                hash_map.insert (*b, i);
+            }
+        }
+
+        hash_map
+    }
+
     pub fn pretty_string_multi_column (&self, columns : usize) -> String {
+        for f in &FALSENESS_COLOURS {
+            println! ("\x1b[{}m{}\x1b[0m", f, f);
+        }
+
+        let truth_table = self.full_truth_table ();
+
         let stage = self.stage.as_usize ();
         let rows_per_column = self.length / columns;
 
@@ -192,7 +255,7 @@ impl Touch {
                     lines [line_number].push_str ("    ");
                 }
 
-                r.write_pretty_string (false, &mut lines [line_number]);
+                r.write_annotated_string (&mut lines [line_number], &truth_table);
                 
                 line_number = 0;
                 row_number = 0;
@@ -205,7 +268,7 @@ impl Touch {
                 lines [line_number].push_str ("    ");
             }
 
-            r.write_pretty_string (false, &mut lines [line_number]);
+            r.write_annotated_string (&mut lines [line_number], &truth_table);
             
             line_number += 1;
             
@@ -235,18 +298,20 @@ impl Touch {
             lines [line_number].push_str ("    ");
         }
 
-        self.leftover_change.write_pretty_string (false, &mut lines [line_number]);
+        self.leftover_change.write_pretty_string (&mut lines [line_number]);
 
         lines.join ("\n")
     }
 
     pub fn pretty_string (&self) -> String {
+        let truth_table = self.full_truth_table ();
+
         let stage = self.stage.as_usize ();
 
         let mut s = String::with_capacity (stage * self.length * 2);
 
         for r in self.row_iterator () {
-            r.write_pretty_string (false, &mut s);
+            r.write_annotated_string (&mut s, &truth_table);
 
             if r.is_ruled_off {
                 s.push ('\n');
@@ -258,6 +323,8 @@ impl Touch {
 
             s.push ('\n');
         }
+
+        self.leftover_change.write_pretty_string (&mut s);
 
         s
     }
