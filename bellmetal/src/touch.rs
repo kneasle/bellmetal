@@ -10,8 +10,8 @@ use crate::{
 use std::cmp::Ordering;
 
 pub struct Row<'a> {
-    index : usize,
-    is_ruled_off : bool,
+    pub index : usize,
+    pub is_ruled_off : bool,
     bells : &'a [Bell]
 }
 

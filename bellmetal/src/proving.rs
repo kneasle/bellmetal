@@ -1,5 +1,8 @@
 use crate::{ Touch, Row, Stage, Place, Bell, Transposition, Change };
 
+use crate::touch::RowIterator;
+use factorial::Factorial;
+
 pub trait ProvingContext {
     fn prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> bool;
     fn prove (&mut self, touch : &Touch) -> bool;
@@ -178,6 +181,91 @@ impl HashProver {
 
 
 
+
+type IndexType = i32;
+
+pub struct CompactHashProver {
+    stage : Stage,
+    falseness_map : Vec<IndexType>
+}
+
+impl CompactHashProver {
+    fn from_stage (stage : Stage) -> CompactHashProver {
+        CompactHashProver {
+            stage : stage,
+            falseness_map : vec![-1 as IndexType; stage.as_usize ().factorial ()]
+        }
+    }
+}
+
+impl ProvingContext for CompactHashProver {
+    fn prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> bool {
+        let truth = CompactHashIterator {
+            temporary_change : Change::rounds (self.stage),
+            hash_prover : self,
+            row_iterator : &mut touch.row_iterator (),
+            canon_func : &mut canon
+        }.next () == None;
+
+        let mut c = Change::rounds (self.stage);
+
+        for r in touch.row_iterator () {
+            canon (&r, &mut c);
+
+            self.falseness_map [c.destructive_hash ()] = -1;
+        }
+
+        truth
+    }
+
+    fn prove (&mut self, touch : &Touch) -> bool {
+        self.prove_canonical (touch, canon_copy)
+    }
+}
+
+pub struct CompactHashIterator<'a, T : FnMut(&Row, &mut Change) -> ()> {
+    hash_prover : &'a mut CompactHashProver,
+    row_iterator : &'a mut RowIterator<'a>,
+    temporary_change : Change,
+    canon_func : &'a mut T
+}
+
+impl<T : FnMut(&Row, &mut Change) -> ()> Iterator for CompactHashIterator<'_, T> {
+    type Item = (IndexType, IndexType);
+
+    fn next (&mut self) -> Option<Self::Item> {
+        loop {
+            match self.row_iterator.next () {
+                Some (r) => {
+                    (self.canon_func) (&r, &mut self.temporary_change);
+
+                    let hash = self.temporary_change.destructive_hash ();
+                    let falseness_index = self.hash_prover.falseness_map [hash];
+
+                    if falseness_index == -1 {
+                        self.hash_prover.falseness_map [hash] = r.index as IndexType;
+                    } else {
+                        return Some ((falseness_index, r.index as IndexType));
+                    }
+                }
+                None => {
+                    return None;
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 #[cfg(test)]
 mod bitmap_tests {
     use crate::proving::*;
@@ -330,6 +418,13 @@ mod proof_tests {
     }
 
     #[test]
+    fn compact_hash () {
+        for (t, b) in test_touches () {
+            assert_eq! (CompactHashProver::from_stage (t.stage).prove (&t), b);
+        }
+    }
+
+    #[test]
     fn canon_func_fixed_treble_cyclic () {
         for (orig, canon) in &[
             ("1\n1", "1"),
@@ -380,6 +475,10 @@ mod proof_tests {
 
             assert_eq! (
                 HashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic), 
+                *truth
+            );
+            assert_eq! (
+                CompactHashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic), 
                 *truth
             );
         }
