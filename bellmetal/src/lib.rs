@@ -20,7 +20,7 @@ pub use coursing_order::{ CoursingOrder, CoursingOrderIterator, BasicCoursingOrd
 pub use method::{ Method, Call };
 pub use method_library::{ MethodLibrary, serialise_method, deserialise_method };
 pub use place_notation::PlaceNotation;
-pub use proving::{ ProvingContext, NaiveProver, HashProver };
+pub use proving::{ ProvingContext, FullProvingContext, NaiveProver, HashProver, CompactHashProver };
 pub use touch::{ Row, Touch, BasicTouchIterator, TransfiguredTouchIterator, ConcatTouchIterator, AppendedTouchIterator, TouchIterator };
 pub use transposition::{ Transposition, TranspositionIterator, MultiplicationIterator };
 pub use types::{ Stroke, Bell, Place, Parity, Stage, Number, Mask, MaskMethods };
