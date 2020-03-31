@@ -12,6 +12,11 @@ pub trait ProvingContext {
     }
 }
 
+
+
+
+
+
 pub type ProofGroups = Vec<Vec<usize>>;
 
 pub trait FullProvingContext : ProvingContext {
@@ -21,6 +26,11 @@ pub trait FullProvingContext : ProvingContext {
         self.full_prove_canonical (touch, canon_copy)
     }
 }
+
+
+
+
+
 
 fn full_proof_from_iterator (iterator : impl Iterator<Item = (usize, usize)>) -> ProofGroups {
     let mut hash_map : HashMap<usize, Vec<usize>> = HashMap::with_capacity (20);
