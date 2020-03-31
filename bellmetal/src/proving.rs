@@ -53,6 +53,9 @@ impl ProvingContext for NaiveProver {
 
 
 
+
+
+
 struct BitMap {
     vec : Vec<u64>
 }
@@ -92,6 +95,11 @@ impl BitMap {
         }
     }
 }
+
+
+
+
+
 
 
 pub struct HashProver {
