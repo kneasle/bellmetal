@@ -91,14 +91,18 @@ pub fn one_part_spliced_touch (
         assert_eq! (method_indices.len (), call_indices.len ());
     }
 
+    let method_names : Vec<&str> = methods.iter ().map (|(a, _)| *a).collect ();
+
     one_part_spliced_touch_from_indices (
         &method_list [..], &call_list [..],
+        &method_names [..],
         &method_indices [..], &call_indices [..]
     )
 }
 
 fn one_part_spliced_touch_from_indices (
     methods : &[&Method], calls : &[&Call],
+    method_names : &[&str],
     method_indices : &[usize], call_indices : &[usize]
 ) -> Touch {
     // There should be at least one method otherwise the behaviour is undefined
@@ -121,13 +125,20 @@ fn one_part_spliced_touch_from_indices (
 
     // Find the number of calls used
     let num_calls = call_indices.iter ().filter (|i| **i > 0).count ();
+    let num_method_splices = method_indices [..].windows (2)
+        .filter (|pair| pair [0] != pair [1])
+        .count ();
 
     // Generate the touch
     let mut lead_head_accumulator = ChangeAccumulator::new (stage);
-    let mut touch = Touch::with_capacity (stage, length, method_indices.len (), num_calls);
+    let mut touch = Touch::with_capacity (stage, length, method_indices.len (), num_calls, num_method_splices);
 
     for i in 0..method_indices.len () {
         let method = &methods [method_indices [i]];
+
+        if i == 0 || method_indices [i - 1] != method_indices [i] {
+            touch.add_method_name (touch.length, method_names [method_indices [i]]);
+        }
 
         touch.append_iterator (
             &mut TransfiguredTouchIterator::new (
