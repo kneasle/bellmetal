@@ -10,6 +10,20 @@ use crate::{
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
+fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize> {
+    let mut hash_map : HashMap<usize, usize> = HashMap::with_capacity (50);
+
+    for (i, g) in falseness_map.iter ().enumerate () {
+        for b in g {
+            hash_map.insert (*b, i);
+        }
+    }
+
+    hash_map
+}
+
+
+
 pub struct Row<'a> {
     pub index : usize,
     pub is_ruled_off : bool,
@@ -223,19 +237,18 @@ impl Touch {
     }
 
     pub fn full_truth_table (&self) -> HashMap<usize, usize> {
-        let mut hash_map : HashMap<usize, usize> = HashMap::with_capacity (50);
-
-        for (i, g) in self.full_truth ().iter ().enumerate () {
-            for b in g {
-                hash_map.insert (*b, i);
-            }
-        }
-
-        hash_map
+        falseness_to_table (&self.full_truth ())
     }
 
-    pub fn pretty_string_multi_column (&self, columns : usize) -> String {
-        let truth_table = self.full_truth_table ();
+    pub fn pretty_string_multi_column (&self, columns : usize, truth : Option<&Vec<Vec<usize>>>) -> String {
+        let truth_table = match truth {
+            Some (t) => {
+                falseness_to_table (t)
+            }
+            None => {
+                self.full_truth_table ()
+            }
+        };
 
         let stage = self.stage.as_usize ();
         let rows_per_column = self.length / columns;
@@ -308,8 +321,15 @@ impl Touch {
         lines.join ("\n")
     }
 
-    pub fn pretty_string (&self) -> String {
-        let truth_table = self.full_truth_table ();
+    pub fn pretty_string (&self, truth : Option<&Vec<Vec<usize>>>) -> String {
+        let truth_table = match truth {
+            Some (t) => {
+                falseness_to_table (t)
+            }
+            None => {
+                self.full_truth_table ()
+            }
+        };
 
         let stage = self.stage.as_usize ();
 
