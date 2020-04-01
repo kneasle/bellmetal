@@ -11,11 +11,80 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize> {
+    // Combine mappings
+    let mut combination_tree : Vec<Option<usize>> = vec![None; falseness_map.len ()];
+
+    for i in 1..falseness_map.len () {
+        for j in 0..i {
+            if falseness_map [i].len () == falseness_map [j].len () {
+                let mut is_adjacent = true;
+                let mut is_all_one = true;
+                let mut is_all_minus_one = true;
+
+                for k in 0..falseness_map [i].len () {
+                    let diff = falseness_map [i] [k] as isize - falseness_map [j] [k] as isize;
+
+                    is_all_one = is_all_one && diff == 1;
+                    is_all_minus_one = is_all_minus_one && diff == -1;
+
+                    if diff != -1 && diff != 1 {
+                        is_adjacent = false;
+                        break;
+                    }
+                }
+
+                if is_adjacent {
+                    if is_all_minus_one {
+                        assert_eq! (combination_tree [j], None);
+
+                        combination_tree [j] = Some (i);
+                    } else {
+                        assert_eq! (combination_tree [i], None);
+
+                        combination_tree [i] = Some (j);
+                    }
+                }
+            }
+        }
+    }
+
+    // Map transiative closure / combine groups
+    for i in 0..combination_tree.len () {
+        let mut j = i;
+
+        while let Some (x) = combination_tree [j] {
+            if x == j {
+                break;
+            }
+
+            j = x;
+        }
+
+        combination_tree [i] = Some (j);
+    }
+
+    let mut transiative_closure : Vec<usize> = combination_tree.iter ().map (|x| x.unwrap ()).collect ();
+    
+    // Renumber groups to lower, sequential numbers
+    let mut group_renaming_map : HashMap<usize, usize> = HashMap::with_capacity (50);
+
+    for i in 0..combination_tree.len () {
+        let root = transiative_closure [i];
+
+        if let Some (new_root) = group_renaming_map.get (&root) {
+            transiative_closure [i] = *new_root;
+        } else {
+            transiative_closure [i] = group_renaming_map.len ();
+            group_renaming_map.insert (root, group_renaming_map.len ());
+        }
+    }
+
+    // Generate hash map from combined mappings
     let mut hash_map : HashMap<usize, usize> = HashMap::with_capacity (50);
 
     for (i, g) in falseness_map.iter ().enumerate () {
         for b in g {
-            hash_map.insert (*b, i);
+            hash_map.insert (*b, transiative_closure [i]);
         }
     }
 
@@ -43,6 +112,34 @@ static FALSENESS_COLOURS : [&str; 14] = [
     "31", "32", "33", "34", "35", "36", "37"
 ];
 
+enum Position {
+    Top,
+    Middle,
+    Bottom,
+    Alone
+}
+
+fn get_position (table : &HashMap<usize, usize>, index : usize) -> Position {
+    let g = table.get (&index).unwrap ();
+
+    let above = if index == 0 { None } else { table.get (&(index - 1)) };
+    let below = table.get (&(index + 1));
+
+    if above == None || above != Some (g) {
+        if below == None || below != Some (g) {
+            Position::Alone
+        } else {
+            Position::Top
+        }
+    } else {
+        if below == None || below != Some (g) {
+            Position::Bottom
+        } else {
+            Position::Middle
+        }
+    }
+}
+
 impl Row<'_> {
     fn write_annotated_string (&self, string : &mut String, table : &HashMap<usize, usize>) {
         match self.method_name {
@@ -56,7 +153,14 @@ impl Row<'_> {
             Some (x) => {
                 string.push_str ("\x1b[");
                 string.push_str (FALSENESS_COLOURS [*x % FALSENESS_COLOURS.len ()]);
-                string.push_str ("m[\x1b[0m");
+                string.push_str ("m");
+                string.push (match get_position (table, self.index) {
+                    Position::Alone  => { '[' },
+                    Position::Top    => { '┏' },
+                    Position::Middle => { '┃' },
+                    Position::Bottom => { '┗' },
+                });
+                string.push_str ("\x1b[0m");
             }
             None => {
                 string.push (' ');
@@ -73,7 +177,14 @@ impl Row<'_> {
             Some (x) => {
                 string.push_str ("\x1b[");
                 string.push_str (FALSENESS_COLOURS [*x % FALSENESS_COLOURS.len ()]);
-                string.push_str ("m]\x1b[0m");
+                string.push_str ("m");
+                string.push (match get_position (table, self.index) {
+                    Position::Alone  => { ']' },
+                    Position::Top    => { '┓' },
+                    Position::Middle => { '┃' },
+                    Position::Bottom => { '┛' },
+                });
+                string.push_str ("\x1b[0m");
             }
             None => {
                 string.push (' ');
