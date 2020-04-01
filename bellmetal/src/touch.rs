@@ -32,6 +32,7 @@ pub struct Row<'a> {
 
 
 
+static MULTICOLUMN_DELIMITER : &str = "  ";
 static ANNOTATION_PADDING_LEFT : &str = "    ";
 static ANNOTATION_PADDING_RIGHT : &str = "  ";
 static FALSENESS_COLOURS : [&str; 14] = [
@@ -264,7 +265,7 @@ impl Touch {
                 if line_number == lines.len () {
                     lines.push (String::with_capacity (200));
                 } else {
-                    lines [line_number].push_str ("    ");
+                    lines [line_number].push_str (MULTICOLUMN_DELIMITER);
                 }
 
                 r.write_annotated_string (&mut lines [line_number], &truth_table);
@@ -277,7 +278,7 @@ impl Touch {
             if line_number == lines.len () {
                 lines.push (String::with_capacity (200));
             } else {
-                lines [line_number].push_str ("    ");
+                lines [line_number].push_str (MULTICOLUMN_DELIMITER);
             }
 
             r.write_annotated_string (&mut lines [line_number], &truth_table);
@@ -289,7 +290,7 @@ impl Touch {
                 if line_number == lines.len () {
                     lines.push (String::with_capacity (200));
                 } else {
-                    lines [line_number].push_str ("    ");
+                    lines [line_number].push_str (MULTICOLUMN_DELIMITER);
                 }
 
                 lines [line_number].push_str (ANNOTATION_PADDING_LEFT);
@@ -311,7 +312,7 @@ impl Touch {
         if line_number == lines.len () {
             lines.push (String::with_capacity (200));
         } else {
-            lines [line_number].push_str ("    ");
+            lines [line_number].push_str (MULTICOLUMN_DELIMITER);
         }
 
         lines [line_number].push_str (ANNOTATION_PADDING_LEFT);
