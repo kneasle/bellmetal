@@ -47,7 +47,7 @@ impl Row<'_> {
         match table.get (&self.index) {
             Some (x) => {
                 string.push_str ("\x1b[");
-                string.push_str (FALSENESS_COLOURS [*x]);
+                string.push_str (FALSENESS_COLOURS [*x % FALSENESS_COLOURS.len ()]);
                 string.push_str ("m[\x1b[0m");
             }
             None => {
@@ -64,7 +64,7 @@ impl Row<'_> {
         match table.get (&self.index) {
             Some (x) => {
                 string.push_str ("\x1b[");
-                string.push_str (FALSENESS_COLOURS [*x]);
+                string.push_str (FALSENESS_COLOURS [*x % FALSENESS_COLOURS.len ()]);
                 string.push_str ("m]\x1b[0m");
             }
             None => {
