@@ -678,21 +678,13 @@ impl<'a> Iterator for RowIterator<'a> {
     type Item = Row<'a>;
 
     fn next (&mut self) -> Option<Row<'a>> {
-        let stage = self.touch.stage.as_usize ();
         let index = self.row_index;
 
         if index < self.touch.length {
-            let is_ruleoff = if self.ruleoff_index >= self.touch.ruleoffs.len () { false } 
-                             else { self.touch.ruleoffs [self.ruleoff_index] == index };
+            let row = self.touch.row_at (self.row_index);
 
-            let row = Row {
-                index : index,
-                is_ruled_off : is_ruleoff,
-                bells : &self.touch.bells [index * stage .. (index + 1) * stage]
-            };
-                
             self.row_index += 1;
-            if is_ruleoff {
+            if row.is_ruled_off {
                 self.ruleoff_index += 1;
             }
 
