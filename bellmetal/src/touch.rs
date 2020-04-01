@@ -342,6 +342,8 @@ impl Touch {
             if r.is_ruled_off {
                 s.push ('\n');
 
+                s.push_str (ANNOTATION_PADDING_LEFT);
+
                 for _ in 0..stage {
                     s.push ('-');
                 }
@@ -349,6 +351,8 @@ impl Touch {
 
             s.push ('\n');
         }
+
+        s.push_str (ANNOTATION_PADDING_LEFT);
 
         self.leftover_change.write_pretty_string (&mut s);
 
