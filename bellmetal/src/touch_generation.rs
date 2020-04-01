@@ -119,9 +119,12 @@ fn one_part_spliced_touch_from_indices (
         length += methods [*i].lead_length ();
     }
 
+    // Find the number of calls used
+    let num_calls = call_indices.iter ().filter (|i| **i > 0).count ();
+
     // Generate the touch
     let mut lead_head_accumulator = ChangeAccumulator::new (stage);
-    let mut touch = Touch::with_capacity (stage, length, method_indices.len ());
+    let mut touch = Touch::with_capacity (stage, length, method_indices.len (), num_calls);
 
     for i in 0..method_indices.len () {
         let method = &methods [method_indices [i]];
@@ -136,9 +139,13 @@ fn one_part_spliced_touch_from_indices (
         if call_indices [i] == 0 {
             lead_head_accumulator.accumulate (method.lead_head ());
         } else {
+            let call = calls [call_indices [i] - 1];
+
+            touch.add_call (touch.length - 1, call.notation);
+
             lead_head_accumulator.accumulate_iterator (
                 method.lead_head_after_call_iterator (
-                    &calls [call_indices [i] - 1]
+                    &call
                 )
             );
         }

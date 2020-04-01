@@ -1,5 +1,5 @@
 use crate::{
-    Stage, Bell, Place,
+    Stage, Bell, Place, Stroke,
     PlaceNotation,
     Change, ChangeAccumulator,
     Transposition,
@@ -27,6 +27,8 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
 pub struct Row<'a> {
     pub index : usize,
     pub is_ruled_off : bool,
+    pub call_char : char,
+    pub stroke : Stroke,
     bells : &'a [Bell]
 }
 
@@ -42,7 +44,8 @@ static FALSENESS_COLOURS : [&str; 14] = [
 
 impl Row<'_> {
     fn write_annotated_string (&self, string : &mut String, table : &HashMap<usize, usize>) {
-        string.push_str ("  ");
+        string.push_str (" ");
+        string.push (self.call_char);
         
         match table.get (&self.index) {
             Some (x) => {
@@ -138,6 +141,7 @@ pub struct Touch {
 
     bells : Vec<Bell>,
     ruleoffs : Vec<usize>,
+    calls : HashMap<usize, char>,
     pub leftover_change : Change
 }
 
@@ -148,6 +152,10 @@ impl Touch {
 
     pub fn iterator<'a> (&'a self) -> BasicTouchIterator<'a> {
         BasicTouchIterator::new (self)
+    }
+
+    pub fn add_call (&mut self, index : usize, call_char : char) {
+        self.calls.insert (index, call_char);
     }
 
     pub fn append_iterator<'a> (&'a mut self, iterator : &mut impl TouchIterator) {
@@ -189,6 +197,11 @@ impl Touch {
                 Ok (_) => { true }
                 Err (_) => { false }
             },
+            call_char : match self.calls.get (&index) {
+                Some (c) => { *c }
+                None => { ' ' }
+            },
+            stroke : Stroke::from_index (index),
             bells : &self.bells [index * stage .. (index + 1) * stage]
         }
     }
@@ -488,6 +501,7 @@ impl Touch {
 
             bells : new_bells,
             ruleoffs : self.ruleoffs.clone (),
+            calls : self.calls.clone (),
             leftover_change : self.leftover_change.reflected ()
         }
     }
@@ -501,17 +515,19 @@ impl Touch {
 
             bells : Vec::with_capacity (0),
             ruleoffs : Vec::with_capacity (0),
+            calls : HashMap::with_capacity (0),
             leftover_change : Change::empty ()
         }
     }
 
-    pub fn with_capacity (stage : Stage, change_capacity : usize, ruleoff_capacity : usize) -> Touch {
+    pub fn with_capacity (stage : Stage, change_capacity : usize, ruleoff_capacity : usize, call_capacity : usize) -> Touch {
         Touch {
             stage : stage,
             length : 0usize,
 
             bells : Vec::with_capacity (change_capacity * stage.as_usize ()),
             ruleoffs : Vec::with_capacity (ruleoff_capacity),
+            calls : HashMap::with_capacity (call_capacity),
             leftover_change : Change::rounds (stage)
         }
     }
@@ -574,6 +590,7 @@ impl Touch {
             
             bells : bells,
             ruleoffs : ruleoffs,
+            calls : HashMap::with_capacity (0),
             
             leftover_change : Change::rounds (Stage::from (stage))
         }
@@ -609,6 +626,7 @@ impl Touch {
             
             bells : bells,
             ruleoffs : ruleoffs,
+            calls : HashMap::with_capacity (0),
             
             leftover_change : iterator.leftover_change ()
         }

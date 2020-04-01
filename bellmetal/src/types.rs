@@ -37,8 +37,18 @@ impl Not for Parity {
 
 #[derive(Hash, Eq, PartialEq, Debug)]
 pub enum Stroke {
-    Hand = 0,
-    Back = 1
+    Back = 0,
+    Hand = 1
+}
+
+impl Stroke {
+    pub fn from_index (index : usize) -> Stroke {
+        if index % 2 == 0 {
+            Stroke::Back
+        } else {
+            Stroke::Hand
+        }
+    }
 }
 
 impl Not for Stroke {
