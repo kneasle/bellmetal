@@ -158,7 +158,7 @@ impl Row<'_> {
                     Position::Alone  => { '[' },
                     Position::Top    => { '┏' },
                     Position::Middle => { '┃' },
-                    Position::Bottom => { '┗' },
+                    Position::Bottom => { '┗' }
                 });
                 string.push_str ("\x1b[0m");
             }
@@ -182,7 +182,7 @@ impl Row<'_> {
                     Position::Alone  => { ']' },
                     Position::Top    => { '┓' },
                     Position::Middle => { '┃' },
-                    Position::Bottom => { '┛' },
+                    Position::Bottom => { '┛' }
                 });
                 string.push_str ("\x1b[0m");
             }
