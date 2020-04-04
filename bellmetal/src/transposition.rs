@@ -306,13 +306,9 @@ pub trait Transposition {
             // Useful vars
             let bell = bells [i];
 
-            let char_colour = if bell.as_usize () == 0 {
-                1
-            } else if bell.as_usize () == stage - 1 {
-                2
-            } else {
-                0
-            };
+            let char_colour = if bell.as_usize () == 0 { 1 } 
+                    else if bell.as_usize () == stage - 1 { 2 } 
+                    else { 0 };
             
             let should_be_highlighted = i < run_front || (stage - 1 - i) < run_back;
             
