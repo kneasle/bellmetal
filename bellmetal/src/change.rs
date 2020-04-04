@@ -166,6 +166,26 @@ impl Change {
         accumulator.total ().clone ()
     }
 
+    pub fn in_place_fixed_treble_inverse (&mut self) {
+        let stage = self.seq.len ();
+
+        for i in 0..stage {
+            if self.seq [i] != Bell::from (0) {
+                self.seq [i] = Bell::from (stage - self.seq [i].as_usize ());
+            }
+        }
+    }
+
+    pub fn in_place_reverse (&mut self) {
+        let stage = self.seq.len ();
+
+        for i in 0..stage / 2 {
+            let tmp = self.seq [i];
+            self.seq [i] = self.seq [stage - 1 - i];
+            self.seq [stage - 1 - i] = tmp;
+        }
+    }
+
     pub fn destructive_hash (&mut self) -> usize {
         let stage = self.seq.len ();
 
@@ -625,6 +645,38 @@ mod change_tests {
         assert_eq! (Change::from ("15234").music_score (), 0);
         assert_eq! (Change::from ("9876543210").music_score (), 21);
         assert_eq! (Change::from ("0987654321").music_score (), 56);
+    }
+
+    #[test]
+    fn in_place_fixed_treble_inverse () {
+        for (from, to) in &[
+            ("1", "1"),
+            ("4231", "2431"),
+            ("14235", "13542"),
+            ("12345678", "18765432")
+        ] {
+            let mut change = Change::from (*from);
+
+            change.in_place_fixed_treble_inverse ();
+
+            assert_eq! (change, Change::from (*to));
+        }
+    }
+
+    #[test]
+    fn in_place_reverse () {
+        for s in &[
+            "1",
+            "4231",
+            "14235",
+            "12345678",
+        ] {
+            let mut change = Change::from (*s);
+
+            change.in_place_reverse ();
+
+            assert_eq! (change, Change::from (&s.chars ().rev ().collect::<String> () [..]));
+        }
     }
 
     #[test]
