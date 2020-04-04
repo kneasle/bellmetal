@@ -23,6 +23,11 @@ pub trait TouchIterator<'a> {
     }
 }
 
+
+
+
+
+
 pub struct TransfiguredTouchIterator<'a, I : TouchIterator<'a>, T : Transposition> {
     iterator : I,
     transposition : &'a T
