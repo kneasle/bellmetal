@@ -20,12 +20,17 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
                 let mut is_adjacent = true;
                 let mut is_all_one = true;
                 let mut is_all_minus_one = true;
+                let mut is_first_diff_one = false;
 
                 for k in 0..falseness_map [i].len () {
                     let diff = falseness_map [i] [k] as isize - falseness_map [j] [k] as isize;
 
                     is_all_one = is_all_one && diff == 1;
                     is_all_minus_one = is_all_minus_one && diff == -1;
+
+                    if k == 0 && diff == 1 {
+                        is_first_diff_one = true;
+                    }
 
                     if diff != -1 && diff != 1 {
                         is_adjacent = false;
@@ -39,9 +44,15 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
 
                         combination_tree [j] = Some (i);
                     } else {
-                        assert_eq! (combination_tree [i], None);
+                        if !is_all_one && is_first_diff_one {
+                            assert_eq! (combination_tree [i], None);
 
-                        combination_tree [i] = Some (j);
+                            combination_tree [i] = Some (j);
+                        } else {
+                            assert_eq! (combination_tree [j], None);
+
+                            combination_tree [j] = Some (i);
+                        }
                     }
                 }
             }
