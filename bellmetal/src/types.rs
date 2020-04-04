@@ -3,7 +3,7 @@ use std::ops::{ Mul, Not };
 use crate::consts::BELL_NAMES;
 use std::fmt;
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
 pub enum Parity {
     Even = 0,
     Odd = 1
@@ -35,7 +35,7 @@ impl Not for Parity {
 
 
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
 pub enum Stroke {
     Back = 0,
     Hand = 1
