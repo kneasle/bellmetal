@@ -31,7 +31,14 @@ pub trait Transposition {
             }
         }
 
-        panic! ("Bell '{}' not found in change {:?}", bell.as_char (), self.slice ());
+        panic! (
+            "Bell '{}' not found in <{}>", 
+            bell.as_char (), 
+            self.slice ()
+                .iter ()
+                .map (|x| x.as_char ())
+                .collect::<String> ()
+        );
     }
 
     fn parity (&self) -> Parity {
