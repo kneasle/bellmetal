@@ -180,7 +180,7 @@ impl Row<'_> {
 
         string.push (' ');
         
-        self.write_pretty_string (string);
+        self.write_pretty_string_with_stroke (string, self.stroke);
         
         string.push (' ');
         

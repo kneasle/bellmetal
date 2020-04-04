@@ -281,6 +281,25 @@ pub trait Transposition {
     }
 
     fn write_pretty_string (&self, string : &mut String) {
+        self.write_pretty_string_with_stroke (string, Stroke::Hand);
+    }
+
+    fn pretty_string_with_stroke (&self, stroke : Stroke) -> String {
+        let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
+        
+        self.write_pretty_string_with_stroke (&mut string, stroke);
+
+        string
+    }
+
+    fn write_pretty_string_with_stroke (&self, string : &mut String, stroke : Stroke) {
+        #[derive(PartialEq, Eq)]
+        enum CharState {
+            Normal,
+            Musical,
+            Undesirable
+        }
+
         let bells = self.slice ();
 
         let stage = bells.len ();
@@ -297,7 +316,12 @@ pub trait Transposition {
             if x >= 4 { x } else { 0 }
         };
 
-        let mut was_last_char_highlighted = false;
+        let is_87_at_back = stage % 2 == 0 
+            && stroke == Stroke::Back
+            && bells [stage - 2] == Bell::from (stage - 1) 
+            && bells [stage - 1] == Bell::from (stage - 2);
+
+        let mut last_char_state = CharState::Normal;
         let mut last_char_colour = 0;
 
         let colours = ["97", "91", "96"];
@@ -310,20 +334,26 @@ pub trait Transposition {
                     else if bell.as_usize () == stage - 1 { 2 } 
                     else { 0 };
             
-            let should_be_highlighted = i < run_front || (stage - 1 - i) < run_back;
+            let char_state = if i < run_front || (stage - 1 - i) < run_back { CharState::Musical }
+                    else if is_87_at_back && i >= stage - 2 { CharState::Undesirable }
+                    else { CharState::Normal };
             
             // Push the escape codes
-            if last_char_colour != char_colour || was_last_char_highlighted != should_be_highlighted {
+            if last_char_colour != char_colour || last_char_state != char_state {
                 string.push_str ("\x1b[");
                 string.push_str (colours [char_colour]);
                 string.push (';');
-                string.push_str (if should_be_highlighted { "42" } else { "49" });
+                string.push_str (match char_state {
+                    CharState::Musical => { "42" } 
+                    CharState::Undesirable => { "41" } 
+                    CharState::Normal => { "49" }
+                });
                 string.push ('m');
             }
             
             string.push (bell.as_char ());
 
-            was_last_char_highlighted = should_be_highlighted;
+            last_char_state = char_state;
             last_char_colour = char_colour;
         }
 
