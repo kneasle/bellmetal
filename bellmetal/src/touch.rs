@@ -508,6 +508,20 @@ impl Touch {
         s
     }
 
+    // Tested in touch_generation.rs
+    pub fn summary_string (&self) -> String {
+        let (f, b) = self.number_of_4_bell_runs ();
+
+        format! (
+            "{} changes, {}.  Score: {}. {} 4-bell runs ({}f, {}b)",
+            &self.length.to_string (),
+            if self.is_true () { "true" } else { "false" },
+            self.music_score (),
+            f + b,
+            f, b
+        )
+    }
+
     pub fn to_string (&self) -> String {
         let stage = self.stage.as_usize ();
 

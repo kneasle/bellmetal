@@ -197,16 +197,16 @@ mod gen_tests {
             ('-', bob)
         ];
 
-        for (string, runs) in &[
-            ("CoCa", (2, 5)),
-            ("   CoXXLDKJFLCa    ", (2, 5)),
-            ("B-P - \0Co Ca\t\n-B** X-E-B-", (11, 12))
+        for (input_string, summary) in &[
+            ("CoCa", "64 changes, true.  Score: 40. 7 4-bell runs (2f, 5b)"),
+            ("   CoXXLDKJFLCa    ", "64 changes, true.  Score: 40. 7 4-bell runs (2f, 5b)"),
+            ("B-P - \0Co Ca\t\n-B** X-E-B-", "208 changes, true.  Score: 71. 23 4-bell runs (11f, 12b)"),
+            ("BBCa", "96 changes, false.  Score: 58. 11 4-bell runs (4f, 7b)")
         ] {
-            // Assuming that it can't screw up and produce exactly the right number of 4-bell runs
-            assert_eq! (
-                one_part_spliced_touch (&methods, &calls [..], string).number_of_4_bell_runs (),
-                *runs
-            );
+            let touch = one_part_spliced_touch (&methods, &calls [..], input_string);
+
+            // Assuming that it can't screw up and produce exactly the right summary string
+            assert_eq! (touch.summary_string (), *summary);
         }
     }
 }
