@@ -468,7 +468,12 @@ impl Touch {
 
         self.leftover_change.write_pretty_string (&mut lines [line_number]);
 
-        lines.join ("\n")
+        let mut s = lines.join ("\n");
+
+        s.push ('\n');
+        s.push_str (&self.coloured_summary_string ());
+
+        s
     }
 
     pub fn pretty_string (&self, truth : Option<&Vec<Vec<usize>>>) -> String {
@@ -505,10 +510,26 @@ impl Touch {
 
         self.leftover_change.write_pretty_string (&mut s);
 
+        s.push ('\n');
+        s.push_str (&self.coloured_summary_string ());
+
         s
     }
 
     // Tested in touch_generation.rs
+    pub fn coloured_summary_string (&self) -> String {
+        let (f, b) = self.number_of_4_bell_runs ();
+
+        format! (
+            "\x1b[94m{}\x1b[0m changes, {}.  Score: \x1b[93m{}\x1b[0m. {} 4-bell runs ({}f, {}b)",
+            &self.length.to_string (),
+            if self.is_true () { "\x1b[92mtrue\x1b[0m" } else { "\x1b[91mfalse\x1b[0m" },
+            self.music_score (),
+            f + b,
+            f, b
+        )
+    }
+
     pub fn summary_string (&self) -> String {
         let (f, b) = self.number_of_4_bell_runs ();
 
