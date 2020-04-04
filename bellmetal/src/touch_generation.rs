@@ -197,26 +197,16 @@ mod gen_tests {
             ('-', bob)
         ];
 
-        // Assuming that it can't screw up and produce exactly the right number of 4-bell runs
-        assert_eq! (
-            one_part_spliced_touch (
-                &methods, &calls [..], "CoCa"
-            ).number_of_4_bell_runs (),
-            (2, 5)
-        );
-
-        assert_eq! (
-            one_part_spliced_touch (
-                &methods, &calls [..], "   CoXXLDKJFLCa    "
-            ).number_of_4_bell_runs (),
-            (2, 5)
-        );
-
-        assert_eq! (
-            one_part_spliced_touch (
-                &methods, &calls [..], "B-P - \0Co Ca\t\n-B** X-E-B-"
-            ).number_of_4_bell_runs (), 
-            (11, 12)
-        );
+        for (string, runs) in &[
+            ("CoCa", (2, 5)),
+            ("   CoXXLDKJFLCa    ", (2, 5)),
+            ("B-P - \0Co Ca\t\n-B** X-E-B-", (11, 12))
+        ] {
+            // Assuming that it can't screw up and produce exactly the right number of 4-bell runs
+            assert_eq! (
+                one_part_spliced_touch (&methods, &calls [..], string).number_of_4_bell_runs (),
+                *runs
+            );
+        }
     }
 }
