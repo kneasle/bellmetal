@@ -198,6 +198,14 @@ impl PlaceNotation {
         PlaceNotation { places : places, stage : stage }
     }
 
+    pub fn to_multiple_string_short (place_notations : &Vec<PlaceNotation>) -> String {
+        let mut string = String::with_capacity (200);
+
+        PlaceNotation::into_multiple_string_short (place_notations, &mut string);
+
+        string
+    }
+
     pub fn into_multiple_string_short (place_notations : &Vec<PlaceNotation>, string : &mut String) {
         let len = place_notations.len ();
 
@@ -292,6 +300,14 @@ impl PlaceNotation {
                 }
             }
         }
+    }
+
+    pub fn to_multiple_string (place_notations : &Vec<PlaceNotation>) -> String {
+        let mut string = String::with_capacity (200);
+
+        PlaceNotation::into_multiple_string (place_notations, &mut string);
+
+        string
     }
 
     pub fn into_multiple_string (place_notations : &Vec<PlaceNotation>, string : &mut String) {
