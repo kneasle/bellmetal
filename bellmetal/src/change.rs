@@ -1,5 +1,5 @@
 use crate::types::*;
-use crate::{ Transposition, TranspositionIterator };
+use crate::{ Transposition };
 use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
@@ -16,10 +16,6 @@ impl Transposition for Change {
 }
 
 impl Change {
-    pub fn iterator<'a> (&'a self) -> TranspositionIterator<'a> {
-        TranspositionIterator::from_transposition (self)
-    }
-
     pub fn stage (&self) -> Stage {
         Stage::from (self.seq.len ())
     }
@@ -123,6 +119,11 @@ impl Change {
         for c in string.chars () {
             self.seq.push (Bell::from (c));
         }
+    }
+
+    pub fn overwrite_from_iterator (&mut self, other : &mut impl Iterator<Item = Bell>) {
+        self.seq.clear ();
+        self.seq.extend (other);
     }
 
     pub fn overwrite_from (&mut self, other : &impl Transposition) {
@@ -512,7 +513,7 @@ mod change_tests {
         for (lhs, rhs, result) in &changes {
             assert_eq! (lhs.clone () * rhs.clone (), *result);
 
-            assert_eq! (lhs.multiply_iterator (rhs.iterator ()), *result);
+            assert_eq! (lhs.multiply_iterator (rhs.iter ()), *result);
         }
     }
 
@@ -571,7 +572,7 @@ mod change_tests {
         for c in changes {
             let mut x = 0;
 
-            for b in c.iterator () {
+            for b in c.iter () {
                 assert_eq! (b, c.bell_at (Place::from (x)));
 
                 x += 1;

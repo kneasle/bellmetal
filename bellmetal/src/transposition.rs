@@ -4,6 +4,10 @@ use crate::Change;
 pub trait Transposition {
     fn slice (&self) -> &[Bell];
 
+    fn iter<'a> (&'a self) -> std::iter::Cloned<std::slice::Iter<'a, Bell>> {
+        self.slice ().iter ().cloned ()
+    }
+
     fn naive_hash (&self) -> usize {
         let mut val = 0;
         let stage = self.slice ().len ();
@@ -366,53 +370,13 @@ pub trait Transposition {
 
 
 
-
-pub struct TranspositionIterator<'a> {
-    slice : &'a [Bell],
-    index : usize
-}
-
-impl TranspositionIterator<'_> {
-    pub fn from_slice<'a> (slice : &'a [Bell]) -> TranspositionIterator<'a> {
-        TranspositionIterator {
-            slice : slice,
-            index : 0
-        }
-    }
-
-    pub fn from_transposition<'a> (transposition : &'a impl Transposition) -> TranspositionIterator<'a> {
-        TranspositionIterator::from_slice (transposition.slice ())
-    }
-}
-
-impl Iterator for TranspositionIterator<'_> {
-    type Item = Bell;
-
-    fn next (&mut self) -> Option<Bell> {
-        if self.index >= self.slice.len () {
-            return None;
-        }
-
-        let bell = Bell::from (self.slice [self.index]);
-
-        self.index += 1;
-
-        Some (bell)
-    }
-}
-
-
-
-
-
-
-pub struct MultiplicationIterator<'a> {
+pub struct MultiplicationIterator<'a, T : Iterator<Item = Bell>> {
     lhs : &'a [Bell],
-    rhs : TranspositionIterator<'a>
+    rhs : T
 }
 
-impl MultiplicationIterator<'_> {
-    pub fn new<'a> (lhs : &'a [Bell], rhs : TranspositionIterator<'a>) -> MultiplicationIterator<'a> {
+impl<T> MultiplicationIterator<'_, T> where T : Iterator<Item = Bell> {
+    pub fn new<'a> (lhs : &'a [Bell], rhs : T) -> MultiplicationIterator<'a, T> {
         MultiplicationIterator {
             lhs : lhs,
             rhs : rhs
@@ -420,7 +384,7 @@ impl MultiplicationIterator<'_> {
     }
 }
 
-impl<'a> Iterator for MultiplicationIterator<'a> {
+impl<'a, T> Iterator for MultiplicationIterator<'a, T> where T : Iterator<Item = Bell> {
     type Item = Bell;
 
     fn next (&mut self) -> Option<Bell> {

@@ -1,8 +1,9 @@
 use crate::{
-    Touch, TransfiguredTouchIterator,
+    Touch,
     Method,
     Call,
-    ChangeAccumulator
+    ChangeAccumulator,
+    TouchIterator
 };
 
 use std::collections::{ HashMap, HashSet };
@@ -140,12 +141,7 @@ fn one_part_spliced_touch_from_indices (
             touch.add_method_name (touch.length, method_names [method_indices [i]]);
         }
 
-        touch.append_iterator (
-            &mut TransfiguredTouchIterator::new (
-                lead_head_accumulator.total (),
-                &method.plain_lead
-            )
-        );
+        touch.append_iterator (&method.plain_lead.iter ().transfigure (lead_head_accumulator.total ())); 
 
         if call_indices [i] == 0 {
             lead_head_accumulator.accumulate (method.lead_head ());

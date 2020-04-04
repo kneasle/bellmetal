@@ -1,14 +1,16 @@
 use crate::{
-    Stage, Bell, Place, Stroke,
+    Stage, Bell, Stroke,
     PlaceNotation,
     Change, ChangeAccumulator,
     Transposition,
     NaiveProver, ProvingContext, FullProvingContext,
-    Method
+    Method,
+    TouchIterator
 };
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::iter::Cloned;
 
 fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize> {
     // Combine mappings
@@ -278,7 +280,7 @@ impl Touch {
         RowIterator::new (self)
     }
 
-    pub fn iterator<'a> (&'a self) -> BasicTouchIterator<'a> {
+    pub fn iter<'a> (&'a self) -> BasicTouchIterator<'a> {
         BasicTouchIterator::new (self)
     }
 
@@ -290,34 +292,19 @@ impl Touch {
         self.method_names.insert (index, String::from (method_name));
     }
 
-    pub fn append_iterator<'a> (&'a mut self, iterator : &mut impl TouchIterator) {
-        iterator.reset ();
+    pub fn append_iterator<'a, 'b> (&'a mut self, iterator : &impl TouchIterator<'b>) {
+        assert_eq! (self.stage, iterator.stage ());
 
-        loop {
-            match iterator.next_bell () {
-                Some (b) => { 
-                    self.bells.push (b);
-                }
-                None => {
-                    break;
-                }
-            }
-        }
+        let len = self.length;
 
-        loop {
-            match iterator.next_ruleoff () {
-                Some (b) => { 
-                    self.ruleoffs.push (self.length + b);
-                }
-                None => {
-                    break;
-                }
-            }
-        }
+        self.bells.extend (iterator.bell_iter ());
+        self.ruleoffs.extend (iterator.ruleoff_iter ().map (|x| x + len));
+        self.calls.extend (iterator.call_iter ().map (|(ind, call)| (*ind + len, *call)));
+        self.method_names.extend (iterator.method_name_iter ().map (|(ind, name)| (*ind + len, name.clone ())));
+
+        self.leftover_change.overwrite_from_iterator (&mut iterator.leftover_change_iter ());
 
         self.length += iterator.length ();
-        
-        self.ruleoffs.push (self.length - 1);
     }
 
     pub fn row_at (&self, index : usize) -> Row {
@@ -593,7 +580,7 @@ impl Touch {
         let mut accumulator : ChangeAccumulator = ChangeAccumulator::new (Stage::from (stage));
 
         for p in place_notations {
-            for b in accumulator.total ().iterator () {
+            for b in accumulator.total ().iter () {
                 self.bells.push (b);
             }
             
@@ -680,9 +667,9 @@ impl Touch {
 }
 
 impl Touch {
-    pub fn empty () -> Touch {
+    pub fn empty (stage : Stage) -> Touch {
         Touch {
-            stage : Stage::ZERO,
+            stage : stage,
             length : 0usize,
 
             bells : Vec::with_capacity (0),
@@ -714,14 +701,13 @@ impl Touch {
 
     pub fn single_course (method : &Method, course_head : &Change) -> Touch {
         let mut accumulator = ChangeAccumulator::new (method.stage);
-        let mut touch = Touch::empty ();
+        let mut touch = Touch::empty (method.stage);
 
         accumulator.set (course_head);
         touch.stage = method.stage;
 
         loop {
-            touch.append_iterator (&mut TransfiguredTouchIterator::new (accumulator.total (), &method.plain_lead));
-
+            touch.append_iterator (&method.plain_lead.iter ().transfigure (accumulator.total ()));
             accumulator.accumulate (method.lead_head ());
 
             if accumulator.total () == course_head {
@@ -732,92 +718,18 @@ impl Touch {
         touch
     }
 
-    pub fn from_iterator_multipart<I> (iterator : &mut I, part_ends : &[Change]) -> Touch 
-            where I : TouchIterator, I : Sized {
-        let num_parts = part_ends.len ();
-        
-        let stage = iterator.stage ().as_usize ();
-        let length = iterator.length () * num_parts;
-        
-        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
-        let mut ruleoffs : Vec<usize> = Vec::with_capacity (iterator.number_of_ruleoffs () * num_parts);
+    pub fn from_iterator<'b, I> (iterator : &I) -> Touch where I : TouchIterator<'b>, I : Sized {
+        let mut touch = Touch::empty (iterator.stage ());
 
-        let mut part_start_index = 0;
-        
-        for c in part_ends {
-            iterator.reset ();
-            
-            loop {
-                match iterator.next_bell () {
-                    Some (b) => { bells.push (c.bell_at (Place::from (b.as_usize ()))); }
-                    None => { break; }
-                }
-            }
+        touch.append_iterator (iterator);
 
-            loop {
-                match iterator.next_ruleoff () {
-                    Some (r) => { ruleoffs.push (r + part_start_index); }
-                    None => { break; }
-                }
-            }
-
-            part_start_index += iterator.length ();
-        }
-
-        Touch {
-            stage : Stage::from (stage),
-            length : length,
-            
-            bells : bells,
-            ruleoffs : ruleoffs,
-            calls : HashMap::with_capacity (0),
-            method_names : HashMap::with_capacity (0),
-            
-            leftover_change : Change::rounds (Stage::from (stage))
-        }
-    }
-
-    pub fn from_iterator<I> (iterator : &mut I) -> Touch where I : TouchIterator, I : Sized {
-        let stage = iterator.stage ().as_usize ();
-        let length = iterator.length ();
-        
-        // Generate bells
-        let mut bells : Vec<Bell> = Vec::with_capacity (length * stage);
-        
-        loop {
-            match iterator.next_bell () {
-                Some (b) => { bells.push (b); }
-                None => { break; }
-            }
-        }
-
-        // Generate ruleoffs
-        let mut ruleoffs : Vec<usize> = Vec::with_capacity (iterator.number_of_ruleoffs ());
-
-        loop {
-            match iterator.next_ruleoff () {
-                Some (r) => { ruleoffs.push (r); }
-                None => { break; }
-            }
-        }
-
-        Touch {
-            stage : Stage::from (stage),
-            length : length,
-            
-            bells : bells,
-            ruleoffs : ruleoffs,
-            calls : HashMap::with_capacity (0),
-            method_names : HashMap::with_capacity (0),
-            
-            leftover_change : iterator.leftover_change ()
-        }
+        touch
     }
 }
 
 impl From<&[PlaceNotation]> for Touch {
     fn from (place_notations : &[PlaceNotation]) -> Touch {
-        let mut touch = Touch::empty ();
+        let mut touch = Touch::empty (Stage::ZERO);
 
         touch.overwrite_from_place_notations (place_notations);
 
@@ -827,7 +739,7 @@ impl From<&[PlaceNotation]> for Touch {
 
 impl From<&str> for Touch {
     fn from (string : &str) -> Touch {
-        let mut touch = Touch::empty ();
+        let mut touch = Touch::empty (Stage::ZERO);
 
         touch.overwrite_from_string (string);
 
@@ -881,374 +793,51 @@ impl<'a> Iterator for RowIterator<'a> {
 
 
 
-pub trait TouchIterator {
-    fn next_bell (&mut self) -> Option<Bell>;
-    fn next_ruleoff (&mut self) -> Option<usize>;
-    fn reset (&mut self);
-
-    fn length (&self) -> usize;
-    fn stage (&self) -> Stage;
-
-    fn number_of_ruleoffs (&self) -> usize;
-
-    fn leftover_change (&self) -> Change;
-}
-
-
-
-
-
 pub struct BasicTouchIterator<'a> {
     touch : &'a Touch,
-
-    next_bell_index : usize,
-    next_ruleoff_index : usize
 }
 
 impl BasicTouchIterator<'_> {
     pub fn new<'a> (touch : &'a Touch) -> BasicTouchIterator<'a> {
         BasicTouchIterator {
             touch : touch,
-
-            next_bell_index : 0,
-            next_ruleoff_index : 0
         }
     }
 }
 
-impl<'a> TouchIterator for BasicTouchIterator<'a> {
-    fn next_bell (&mut self) -> Option<Bell> {
-        if self.next_bell_index >= self.touch.length * self.touch.stage.as_usize () {
-            return None;
-        }
+impl<'a> TouchIterator<'a> for BasicTouchIterator<'a> {
+    type BellIter = Cloned<std::slice::Iter<'a, Bell>>;
+    type RuleoffIter = Cloned<std::slice::Iter<'a, usize>>;
+    type CallIter = std::collections::hash_map::Iter<'a, usize, char>;
+    type MethodNameIter = std::collections::hash_map::Iter<'a, usize, String>;
+    type LeftoverChangeIter = std::iter::Cloned<std::slice::Iter<'a, Bell>>;
 
-        let bell = self.touch.bells [self.next_bell_index];
-
-        self.next_bell_index += 1;
-
-        Some (bell)
+    fn bell_iter (&self) -> Self::BellIter {
+        self.touch.bells.iter ().cloned ()
     }
 
-    fn next_ruleoff (&mut self) -> Option<usize> {
-        if self.next_ruleoff_index >= self.touch.ruleoffs.len () {
-            return None;
-        }
-
-        let index = self.touch.ruleoffs [self.next_ruleoff_index];
-
-        self.next_ruleoff_index += 1;
-
-        Some (index)
+    fn ruleoff_iter (&self) -> Self::RuleoffIter {
+        self.touch.ruleoffs.iter ().cloned ()
     }
 
-    fn reset (&mut self) {
-        self.next_bell_index = 0;
-        self.next_ruleoff_index = 0;
+    fn call_iter (&self) -> Self::CallIter {
+        self.touch.calls.iter ()
+    }
+
+    fn method_name_iter (&self) -> Self::MethodNameIter {
+        self.touch.method_names.iter ()
     }
 
     fn length (&self) -> usize {
         self.touch.length
     }
 
-    fn number_of_ruleoffs (&self) -> usize {
-        self.touch.ruleoffs.len ()
-    }
-
     fn stage (&self) -> Stage {
         self.touch.stage
     }
 
-    fn leftover_change (&self) -> Change {
-        self.touch.leftover_change.clone ()
-    }
-}
-
-
-
-
-
-
-
-pub struct AppendedTouchIterator<'a> {
-    iterators : &'a mut [&'a mut dyn TouchIterator],
-
-    accumulator : ChangeAccumulator,
-    
-    bell_iterator_index : usize,
-    ruleoff_iterator_index : usize
-}
-
-impl AppendedTouchIterator<'_> {
-    pub fn new<'a> (iterators : &'a mut [&'a mut dyn TouchIterator]) -> AppendedTouchIterator<'a> {
-        assert! (iterators.len () > 0);
-
-        let stage = iterators [0].stage ();
-        for i in iterators.iter () {
-            assert_eq! (stage, i.stage ());
-        }
-
-        AppendedTouchIterator {
-            iterators : iterators,
-
-            accumulator : ChangeAccumulator::new (stage),
-            
-            bell_iterator_index : 0,
-            ruleoff_iterator_index : 0
-        }
-    }
-}
-
-impl<'a> TouchIterator for AppendedTouchIterator<'a> {
-    fn next_bell (&mut self) -> Option<Bell> {
-        loop {
-            if self.bell_iterator_index >= self.iterators.len () {
-                return None;
-            }
-        
-            match self.iterators [self.bell_iterator_index].next_bell () {
-                Some (x) => { 
-                    return Some (self.accumulator.total ().slice () [x.as_usize ()]);
-                }
-                None => {
-                    self.accumulator.accumulate (&self.iterators [self.bell_iterator_index].leftover_change ());
-
-                    self.bell_iterator_index += 1;
-                }
-            }
-        }
-    }
-    
-    fn next_ruleoff (&mut self) -> Option<usize> {
-        loop {
-            if self.ruleoff_iterator_index >= self.iterators.len () {
-                return None;
-            }
-        
-            match self.iterators [self.ruleoff_iterator_index].next_ruleoff () {
-                Some (x) => { 
-                    return Some (x);
-                }
-                None => {
-                    self.ruleoff_iterator_index += 1;
-                }
-            }
-        }
-    }
-
-    fn reset (&mut self) {
-        for i in 0..self.iterators.len () {
-            self.iterators [i].reset ();
-        }
-
-        self.accumulator.reset ();
-
-        self.bell_iterator_index = 0;
-        self.ruleoff_iterator_index = 0;
-    }
-
-    fn length (&self) -> usize {
-        let mut sum = 0;
-
-        for i in self.iterators.iter () {
-            sum += i.length ();
-        }
-
-        sum
-    }
-
-    fn stage (&self) -> Stage {
-        self.iterators [0].stage ()
-    }
-
-    fn number_of_ruleoffs (&self) -> usize {
-        let mut sum = 0;
-
-        for i in self.iterators.iter () {
-            sum += i.number_of_ruleoffs ();
-        }
-
-        sum
-    }
-
-    fn leftover_change (&self) -> Change {
-        self.iterators [self.iterators.len () - 1].leftover_change ()
-    }
-}
-
-
-
-
-
-
-
-
-
-pub struct ConcatTouchIterator<'a> {
-    iterators : &'a mut [&'a mut dyn TouchIterator],
-    
-    bell_iterator_index : usize,
-    ruleoff_iterator_index : usize
-}
-
-impl ConcatTouchIterator<'_> {
-    pub fn new<'a> (iterators : &'a mut [&'a mut dyn TouchIterator]) -> ConcatTouchIterator<'a> {
-        assert! (iterators.len () > 0);
-
-        let stage = iterators [0].stage ();
-        for i in iterators.iter () {
-            assert_eq! (stage, i.stage ());
-        }
-
-        ConcatTouchIterator {
-            iterators : iterators,
-            
-            bell_iterator_index : 0,
-            ruleoff_iterator_index : 0
-        }
-    }
-}
-
-impl<'a> TouchIterator for ConcatTouchIterator<'a> {
-    fn next_bell (&mut self) -> Option<Bell> {
-        loop {
-            if self.bell_iterator_index >= self.iterators.len () {
-                return None;
-            }
-        
-            match self.iterators [self.bell_iterator_index].next_bell () {
-                Some (x) => { 
-                    return Some (x);
-                }
-                None => {
-                    self.bell_iterator_index += 1;
-                }
-            }
-        }
-    }
-    
-    fn next_ruleoff (&mut self) -> Option<usize> {
-        loop {
-            if self.ruleoff_iterator_index >= self.iterators.len () {
-                return None;
-            }
-        
-            match self.iterators [self.ruleoff_iterator_index].next_ruleoff () {
-                Some (x) => { 
-                    return Some (x);
-                }
-                None => {
-                    self.ruleoff_iterator_index += 1;
-                }
-            }
-        }
-    }
-
-    fn reset (&mut self) {
-        for i in 0..self.iterators.len () {
-            self.iterators [i].reset ();
-        }
-
-        self.bell_iterator_index = 0;
-        self.ruleoff_iterator_index = 0;
-    }
-
-    fn length (&self) -> usize {
-        let mut sum = 0;
-
-        for i in self.iterators.iter () {
-            sum += i.length ();
-        }
-
-        sum
-    }
-
-    fn stage (&self) -> Stage {
-        self.iterators [0].stage ()
-    }
-
-    fn number_of_ruleoffs (&self) -> usize {
-        let mut sum = 0;
-
-        for i in self.iterators.iter () {
-            sum += i.number_of_ruleoffs ();
-        }
-
-        sum
-    }
-
-    fn leftover_change (&self) -> Change {
-        self.iterators [self.iterators.len () - 1].leftover_change ()
-    }
-}
-
-
-
-
-
-pub struct TransfiguredTouchIterator<'a> {
-    start_change : &'a Change,
-    touch : &'a Touch,
-
-    next_bell_index : usize,
-    next_ruleoff_index : usize
-}
-
-impl TransfiguredTouchIterator<'_> {
-    pub fn new<'a> (change : &'a Change, touch : &'a Touch) -> TransfiguredTouchIterator<'a> {
-        TransfiguredTouchIterator {
-            start_change : change,
-            touch : touch,
-
-            next_bell_index : 0,
-            next_ruleoff_index : 0
-        }
-    }
-}
-
-impl<'a> TouchIterator for TransfiguredTouchIterator<'a> {
-    fn next_bell (&mut self) -> Option<Bell> {
-        if self.next_bell_index >= self.touch.length * self.touch.stage.as_usize () {
-            return None;
-        }
-
-        let bell = self.start_change.bell_at (Place::from (self.touch.bells [self.next_bell_index].as_usize ()));
-
-        self.next_bell_index += 1;
-
-        Some (bell)
-    }
-
-    fn next_ruleoff (&mut self) -> Option<usize> {
-        if self.next_ruleoff_index >= self.touch.ruleoffs.len () {
-            return None;
-        }
-
-        let index = self.touch.ruleoffs [self.next_ruleoff_index];
-
-        self.next_ruleoff_index += 1;
-
-        Some (index)
-    }
-
-    fn reset (&mut self) {
-        self.next_bell_index = 0;
-        self.next_ruleoff_index = 0;
-    }
-
-    fn length (&self) -> usize {
-        self.touch.length
-    }
-
-    fn number_of_ruleoffs (&self) -> usize {
-        self.touch.ruleoffs.len ()
-    }
-
-    fn stage (&self) -> Stage {
-        self.touch.stage
-    }
-
-    fn leftover_change (&self) -> Change {
-        self.start_change.multiply (&self.touch.leftover_change)
+    fn leftover_change_iter (&self) -> Self::LeftoverChangeIter {
+        self.touch.leftover_change.iter ()
     }
 }
 
@@ -1268,7 +857,7 @@ mod touch_tests {
             let s = *s_ref;
             let touch = Touch::from (s);
 
-            assert_eq! (Touch::from_iterator (&mut touch.iterator ()), touch);
+            assert_eq! (Touch::from_iterator (&mut touch.iter ()), touch);
         }
     }
 
@@ -1292,7 +881,7 @@ mod touch_tests {
             }
             
             // Consume the leftover change
-            for b in touch.leftover_change.iterator () {
+            for b in touch.leftover_change.iter () {
                 match chars.next () {
                     Some (c) => { assert_eq! (b.as_char (), c); }
                     None => { panic! ("Touch yielded too many bells"); }
