@@ -11,6 +11,7 @@ use crate::{
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::iter::Cloned;
+use std::marker::PhantomData;
 
 fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize> {
     // Combine mappings
@@ -299,8 +300,8 @@ impl Touch {
 
         self.bells.extend (iterator.bell_iter ());
         self.ruleoffs.extend (iterator.ruleoff_iter ().map (|x| x + len));
-        self.calls.extend (iterator.call_iter ().map (|(ind, call)| (*ind + len, *call)));
-        self.method_names.extend (iterator.method_name_iter ().map (|(ind, name)| (*ind + len, name.clone ())));
+        self.calls.extend (iterator.call_iter ().map (|(ind, call)| (ind + len, call)));
+        self.method_names.extend (iterator.method_name_iter ().map (|(ind, name)| (ind + len, name.clone ())));
 
         self.leftover_change.overwrite_from_iterator (&mut iterator.leftover_change_iter ());
 
@@ -792,7 +793,57 @@ impl<'a> Iterator for RowIterator<'a> {
 
 
 
+// An iterator that dereferences the values coming from an iterator without using map
+pub struct CallDerefIter<'a, T : Iterator<Item = (&'a usize, &'a char)>> {
+    iterator : T,
+    phantom : PhantomData<&'a ()>
+}
 
+impl<'a, T : Iterator<Item = (&'a usize, &'a char)>> Iterator for CallDerefIter<'a, T> {
+    type Item = (usize, char);
+
+    fn next (&mut self) -> Option<(usize, char)> {
+        match self.iterator.next () {
+            None => {
+                None
+            }
+            Some ((ind, call)) => {
+                Some ((*ind, *call))
+            }
+        }
+    }
+
+    fn size_hint (&self) -> (usize, Option<usize>) {
+        self.iterator.size_hint ()
+    }
+}
+
+// An iterator that dereferences the values coming from an iterator without using map
+pub struct MethodNameDerefIter<'a, T : Iterator<Item = (&'a usize, &'a String)>> {
+    iterator : T,
+    phantom : PhantomData<&'a ()>
+}
+
+impl<'a, T : Iterator<Item = (&'a usize, &'a String)>> Iterator for MethodNameDerefIter<'a, T> {
+    type Item = (usize, &'a String);
+
+    fn next (&mut self) -> Option<(usize, &'a String)> {
+        match self.iterator.next () {
+            None => {
+                None
+            }
+            Some ((ind, name)) => {
+                Some ((*ind, name))
+            }
+        }
+    }
+
+    fn size_hint (&self) -> (usize, Option<usize>) {
+        self.iterator.size_hint ()
+    }
+}
+
+// The full iterator
 pub struct BasicTouchIterator<'a> {
     touch : &'a Touch,
 }
@@ -808,8 +859,8 @@ impl BasicTouchIterator<'_> {
 impl<'a> TouchIterator<'a> for BasicTouchIterator<'a> {
     type BellIter = Cloned<std::slice::Iter<'a, Bell>>;
     type RuleoffIter = Cloned<std::slice::Iter<'a, usize>>;
-    type CallIter = std::collections::hash_map::Iter<'a, usize, char>;
-    type MethodNameIter = std::collections::hash_map::Iter<'a, usize, String>;
+    type CallIter = CallDerefIter<'a, std::collections::hash_map::Iter<'a, usize, char>>;
+    type MethodNameIter = MethodNameDerefIter<'a, std::collections::hash_map::Iter<'a, usize, String>>;
     type LeftoverChangeIter = std::iter::Cloned<std::slice::Iter<'a, Bell>>;
 
     fn bell_iter (&self) -> Self::BellIter {
@@ -821,11 +872,17 @@ impl<'a> TouchIterator<'a> for BasicTouchIterator<'a> {
     }
 
     fn call_iter (&self) -> Self::CallIter {
-        self.touch.calls.iter ()
+        CallDerefIter {
+            iterator : self.touch.calls.iter (),
+            phantom : PhantomData
+        }
     }
 
     fn method_name_iter (&self) -> Self::MethodNameIter {
-        self.touch.method_names.iter ()
+        MethodNameDerefIter {
+            iterator : self.touch.method_names.iter (),
+            phantom : PhantomData
+        }
     }
 
     fn length (&self) -> usize {

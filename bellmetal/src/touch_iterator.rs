@@ -3,8 +3,8 @@ use crate::{ Bell, Stage, Transposition, MultiplicationIterator };
 pub trait TouchIterator<'a> {
     type BellIter : Iterator<Item = Bell>;
     type RuleoffIter : Iterator<Item = usize>;
-    type CallIter : Iterator<Item = (&'a usize, &'a char)>;
-    type MethodNameIter : Iterator<Item = (&'a usize, &'a String)>;
+    type CallIter : Iterator<Item = (usize, char)>;
+    type MethodNameIter : Iterator<Item = (usize, &'a String)>;
     type LeftoverChangeIter : Iterator<Item = Bell>;
 
     fn bell_iter (&self) -> Self::BellIter;
