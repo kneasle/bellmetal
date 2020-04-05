@@ -393,8 +393,11 @@ impl<'a, T> Iterator for MultiplicationIterator<'a, T> where T : Iterator<Item =
             None => { None }
         }
     }
-}
 
+    fn size_hint (&self) -> (usize, Option<usize>) {
+        self.rhs.size_hint ()
+    }
+}
 
 
 
