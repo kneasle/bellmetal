@@ -585,7 +585,7 @@ impl Touch {
                 self.bells.push (b);
             }
             
-            accumulator.accumulate_iterator (p.iterator ());
+            accumulator.accumulate_iterator (p.iter ());
         }
         
         // Ruleoffs

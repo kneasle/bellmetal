@@ -41,7 +41,7 @@ impl PlaceNotation {
         count == 0
     }
 
-    pub fn iterator (&self) -> PlaceNotationIterator {
+    pub fn iter (&self) -> PlaceNotationIterator {
         PlaceNotationIterator::new (self)
     }
     
@@ -410,7 +410,7 @@ impl PlaceNotation {
         let mut accum = ChangeAccumulator::new (pns [0].stage);
 
         for pn in pns {
-            accum.accumulate_iterator (pn.iterator ());
+            accum.accumulate_iterator (pn.iter ());
         }
         
         accum.total ().clone ()
@@ -643,7 +643,7 @@ pub mod pn_tests {
             let mut change_accum = ChangeAccumulator::new (stage);
 
             for c in &split_notation {
-                change_accum.accumulate_iterator (c.iterator ());
+                change_accum.accumulate_iterator (c.iter ());
             }
 
             assert_eq! (*change_accum.total (), result);
