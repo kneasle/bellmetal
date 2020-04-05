@@ -753,6 +753,8 @@ impl From<&[PlaceNotation]> for Touch {
 
         touch.overwrite_from_place_notations (place_notations);
 
+        touch.ruleoffs.push (place_notations.len () - 1);
+
         touch
     }
 }
