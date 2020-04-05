@@ -1,6 +1,6 @@
 use crate::{
     Stage, Bell,
-    Change,
+    Change, ChangeAccumulator,
     PlaceNotation,
     Touch, Row,
     Transposition, MultiplicationIterator
@@ -128,6 +128,36 @@ impl Method {
             stage : place_notation [0].stage,
             plain_lead : Touch::from (&place_notation [..]),
             place_notation : place_notation
+        }
+    }
+
+    pub fn partial (
+        name : &str, place_notations : Vec<PlaceNotation>,
+        lead_end : Change, lead_end_notation : PlaceNotation
+    ) -> Method {
+        let stage = lead_end.stage ();
+        let lead_head = lead_end.multiply_iterator (lead_end_notation.iter ());
+
+        let mut changes = Vec::with_capacity (place_notations.len () * 2);
+
+        let mut acc = ChangeAccumulator::new (stage);
+
+        for pn in place_notations {
+            changes.push (acc.total ().clone ());
+            acc.accumulate_iterator (pn.iter ());
+        }
+
+        changes.push (acc.total ().clone ());
+
+        for i in (0..changes.len ()).rev () {
+            changes.push (lead_end.multiply (&changes [i]));
+        }
+
+        Method {
+            name : name.to_string (),
+            stage : stage,
+            plain_lead : Touch::from_changes (&changes [..], lead_head),
+            place_notation : Vec::with_capacity (0)
         }
     }
     

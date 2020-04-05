@@ -681,6 +681,25 @@ impl Touch {
         }
     }
 
+    pub fn from_changes (changes : &[Change], leftover_change : Change) -> Touch {
+        let mut bells : Vec<Bell> = Vec::with_capacity (changes.len () * leftover_change.stage ().as_usize ());
+
+        for c in changes {
+            bells.extend (c.iter ());
+        }
+
+        Touch {
+            stage : leftover_change.stage (),
+            length : changes.len (),
+
+            bells : bells,
+            ruleoffs : Vec::with_capacity (0),
+            calls : HashMap::with_capacity (0),
+            method_names : HashMap::with_capacity (0),
+            leftover_change : leftover_change
+        }
+    }
+
     pub fn with_capacity (
         stage : Stage,
         change_capacity : usize,
