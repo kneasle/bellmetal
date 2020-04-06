@@ -330,7 +330,7 @@ impl PlaceNotation {
         }
     }
 
-    pub fn from_multiple_string<'a> (string : &str, stage : Stage) -> Vec<PlaceNotation> {
+    pub fn from_multiple_string (string : &str, stage : Stage) -> Vec<PlaceNotation> {
         let mut string_buff = String::with_capacity (Mask::limit () as usize);
         let mut place_notations : Vec<PlaceNotation> = Vec::with_capacity (string.len ());
         let mut comma_index = 0usize;
