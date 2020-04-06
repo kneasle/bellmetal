@@ -605,43 +605,7 @@ impl Touch {
     }
 
     pub fn pretty_string (&self, truth : Option<&Vec<Vec<usize>>>) -> String {
-        let truth_table = match truth {
-            Some (t) => {
-                falseness_to_table (t)
-            }
-            None => {
-                self.full_truth_table ()
-            }
-        };
-
-        let stage = self.stage.as_usize ();
-
-        let mut s = String::with_capacity (stage * self.length * 2);
-
-        for r in self.row_iterator () {
-            r.write_annotated_string (&mut s, &truth_table);
-
-            if r.is_ruled_off {
-                s.push ('\n');
-
-                s.push_str (ANNOTATION_PADDING_LEFT);
-
-                for _ in 0..stage {
-                    s.push ('-');
-                }
-            }
-
-            s.push ('\n');
-        }
-
-        s.push_str (ANNOTATION_PADDING_LEFT);
-
-        self.leftover_change.write_pretty_string (&mut s);
-
-        s.push ('\n');
-        s.push_str (&self.coloured_summary_string ());
-
-        s
+        self.pretty_string_multi_column (1, truth)
     }
 
     // Tested in touch_generation.rs
