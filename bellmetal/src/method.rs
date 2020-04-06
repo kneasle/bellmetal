@@ -133,10 +133,10 @@ impl Method {
 
     pub fn partial (
         name : &str, place_notations : Vec<PlaceNotation>,
-        lead_end : Change, lead_end_notation : PlaceNotation
+        lead_head : Change, lead_end_notation : PlaceNotation
     ) -> Method {
-        let stage = lead_end.stage ();
-        let lead_head = lead_end.multiply_iterator (lead_end_notation.iter ());
+        let stage = lead_head.stage ();
+        let lead_end = lead_head.multiply_iterator (lead_end_notation.iter ());
 
         let mut changes = Vec::with_capacity (place_notations.len () * 2);
 
