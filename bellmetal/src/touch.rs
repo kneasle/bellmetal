@@ -508,17 +508,23 @@ impl Touch {
         let mut ruleoffs_used_this_split = 0;
         let mut last_r = 0;
 
+        macro_rules! add {
+            ($x : expr) => {
+                if column_splits.len () == 0 || column_splits [column_splits.len () - 1] != $x {
+                    column_splits.push ($x);
+                }
+            }
+        }
+
         for &r in &self.ruleoffs {
             if r > next_ideal_split {
                 if ruleoffs_used_this_split == 0 {
-                    column_splits.push (r + 1);
+                    add! (r + 1);
                 } else {
-                    column_splits.push (last_r + 1);
+                    add! (last_r + 1);
                 }
 
-                while r > next_ideal_split {
-                    next_ideal_split += ideal_column_height;
-                }
+                next_ideal_split += ideal_column_height;
             }
 
             ruleoffs_used_this_split += 1;
