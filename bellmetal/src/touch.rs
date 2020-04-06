@@ -434,8 +434,6 @@ impl Touch {
         let mut last_r = 0;
 
         for &r in &self.ruleoffs {
-            println! ("{} {}", r, next_ideal_split);
-
             if r > next_ideal_split {
                 if ruleoffs_used_this_split == 0 {
                     column_splits.push (r + 1);
@@ -451,8 +449,6 @@ impl Touch {
             ruleoffs_used_this_split += 1;
             last_r = r;
         }
-
-        println! ("{:?}", column_splits);
 
         // Initialise variables to generate the layout
         let mut fragments : HashMap<(usize, usize), String> = HashMap::with_capacity (self.length * 2 + columns);
