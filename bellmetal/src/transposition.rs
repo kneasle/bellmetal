@@ -80,6 +80,29 @@ pub trait Transposition {
         }
     }
 
+    fn is_continuous_with<T : Transposition> (&self, other : T) -> bool {
+        let a = self.slice ();
+        let b = other.slice ();
+
+        if a.len () != b.len () {
+            return false;
+        }
+
+        let mut i = 0;
+
+        while i < a.len () {
+            if a [i] == b [i] {
+                i += 1;
+            } else if a [i] == b [i + 1] && b [i] == a [i + 1] {
+                i += 2;
+            } else {
+                return false;
+            }
+        }
+
+        true
+    }
+
     // Music scoring (follows roughly what CompLib does, but IMO it makes long runs overpowered)
     fn music_score (&self) -> usize {
         run_length_to_score (self.run_length_off_front ())

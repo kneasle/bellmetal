@@ -13,6 +13,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::iter::Cloned;
 use std::marker::PhantomData;
+use crate::utils::AndNext;
 
 fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize> {
     // Combine mappings
@@ -107,7 +108,7 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
 }
 
 
-
+#[derive(Debug, Clone, Copy)]
 pub struct Row<'a> {
     pub index : usize,
     is_ruled_off : bool,
@@ -413,6 +414,82 @@ impl Touch {
             s
         };
 
+        let discontinuity_string = {
+            let mut s = String::with_capacity (column_width);
+
+            s.push_str (ANNOTATION_PADDING_LEFT);
+
+            if stage <= 3 {
+                s.push_str ("\x1b[31;1m");
+                
+                for _ in 0..stage {
+                    s.push ('·');
+                }
+                
+                s.push_str ("\x1b[0m");
+            } else {
+                let gap = if stage % 2 == 0 { stage / 2 - 2 } else { stage / 2 - 1 };
+
+                for _ in 0..gap {
+                    s.push (' ');
+                }
+
+                s.push_str ("\x1b[31;1m");
+                
+                for _ in 0..stage - 2 * gap {
+                    s.push ('·');
+                }
+                
+                s.push_str ("\x1b[0m");
+                
+                for _ in 0..gap {
+                    s.push (' ');
+                }
+            }
+            
+            s.push_str (ANNOTATION_PADDING_RIGHT);
+
+            s
+        };
+
+        let discontinuous_ruleoff_string = {
+            let mut s = String::with_capacity (column_width);
+
+            s.push_str (ANNOTATION_PADDING_LEFT);
+
+            if stage <= 3 {
+                s.push_str ("\x1b[31;1m");
+                
+                for _ in 0..stage {
+                    s.push ('·');
+                }
+                
+                s.push_str ("\x1b[0m");
+            } else {
+                let gap = if stage % 2 == 0 { stage / 2 - 2 } else { stage / 2 - 1 };
+
+                for _ in 0..gap {
+                    s.push ('─');
+                }
+
+                s.push_str ("\x1b[31;1m");
+                
+                for _ in 0..stage - 2 * gap {
+                    s.push ('·');
+                }
+                
+                s.push_str ("\x1b[0m");
+                
+                for _ in 0..gap {
+                    s.push ('─');
+                }
+            }
+            
+            s.push_str (ANNOTATION_PADDING_RIGHT);
+
+            s
+        };
+
         let blank_string = {
             let mut s = String::with_capacity (column_width);
             
@@ -473,11 +550,17 @@ impl Touch {
             }
         };
 
-        for (i, r) in self.row_iterator ().enumerate () {
+        for (i, (r, next_r)) in AndNext::new (self.row_iterator ()).enumerate () {
+            // Determine if a discontinuity has happened
             // Start new column if required, and add the row to the bottom of the last column
             let needs_new_column = match column_splits.get (x) {
                 None => false,
                 Some (&v) => i == v
+            };
+
+            let is_continuous = match next_r {
+                None => true,
+                Some (x) => r.is_continuous_with (x)
             };
 
             if needs_new_column {
@@ -489,9 +572,18 @@ impl Touch {
             
             add! (r.to_annotated_string (&truth_table));
             
-            // Push the ruleoff
-            if r.is_ruled_off {
-                add! (ruleoff_string.clone ());
+            // Push the ruleoffs and discontinuity strings
+            match (r.is_ruled_off, is_continuous) {
+                (false, false) => {
+                    add! (discontinuity_string.clone ());
+                }
+                (true, false) => {
+                    add! (discontinuous_ruleoff_string.clone ());
+                }
+                (true, true) => {
+                    add! (ruleoff_string.clone ());
+                }
+                _ => { }
             }
         }
 
