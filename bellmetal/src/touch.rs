@@ -603,11 +603,16 @@ impl Touch {
             s
         });
 
-        (0..height).map (
+        let mut final_string = (0..height).map (
             |y| (0..=width).map (
                 |x| fragments.get (&(x, y)).unwrap_or (&blank_string)
             ).join (COLUMN_DELIMITER)
-        ).join ("\n")
+        ).join ("\n");
+
+        final_string.push ('\n');
+        final_string.push_str (&self.coloured_summary_string ());
+
+        final_string
     }
 
     pub fn pretty_string (&self, truth : Option<&Vec<Vec<usize>>>) -> String {
