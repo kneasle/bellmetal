@@ -8,6 +8,7 @@ use crate::{
     TouchIterator
 };
 
+use itertools::Itertools;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::iter::Cloned;
@@ -118,7 +119,7 @@ pub struct Row<'a> {
 
 
 
-static MULTICOLUMN_DELIMITER : &str = "  ";
+static COLUMN_DELIMITER : &str = "  ";
 static ANNOTATION_PADDING_LEFT : &str = "    ";
 static ANNOTATION_PADDING_RIGHT : &str = "  ";
 static FALSENESS_COLOURS : [&str; 14] = [
@@ -155,6 +156,14 @@ fn get_position (table : &HashMap<usize, usize>, index : usize) -> Position {
 }
 
 impl Row<'_> {
+    fn to_annotated_string (&self, table : &HashMap<usize, usize>) -> String {
+        let mut s = String::with_capacity (self.stage ().as_usize () * 2);
+
+        self.write_annotated_string (&mut s, table);
+
+        s
+    }
+
     fn write_annotated_string (&self, string : &mut String, table : &HashMap<usize, usize>) {
         match self.method_name {
             Some (s) => { string.push_str (s); }
@@ -389,79 +398,124 @@ impl Touch {
         };
 
         let stage = self.stage.as_usize ();
-        let rows_per_column = self.length / columns;
+        let column_width = ANNOTATION_PADDING_LEFT.len () + stage + ANNOTATION_PADDING_RIGHT.len ();
 
-        let mut lines : Vec<String> = Vec::with_capacity (rows_per_column * 2 + 1);
-        
-        let mut row_number : usize = 0;
-        let mut line_number : usize = 0;
+        // Create useful strings
+        let ruleoff_string = {
+            let mut s = String::with_capacity (column_width);
 
-        for r in self.row_iterator () {
-            // Start new column if required, and add the row to the bottom of the last column
-            if row_number == rows_per_column {
-                if line_number == lines.len () {
-                    lines.push (String::with_capacity (200));
+            s.push_str (ANNOTATION_PADDING_LEFT);
+
+            for _ in 0..stage {
+                s.push ('─');
+            }
+            
+            s.push_str (ANNOTATION_PADDING_RIGHT);
+
+            s
+        };
+
+        let blank_string = {
+            let mut s = String::with_capacity (column_width);
+            
+            for _ in 0..column_width {
+                s.push (' ');
+            }
+
+            s
+        };
+
+        // Use the ruleoffs to decide how long each column should be
+        let ideal_column_height = self.length / columns;
+        let mut column_splits : Vec<usize> = Vec::with_capacity (columns);
+
+        let mut next_ideal_split = ideal_column_height;
+        let mut ruleoffs_used_this_split = 0;
+        let mut last_r = 0;
+
+        for &r in &self.ruleoffs {
+            println! ("{} {}", r, next_ideal_split);
+
+            if r > next_ideal_split {
+                if ruleoffs_used_this_split == 0 {
+                    column_splits.push (r + 1);
                 } else {
-                    lines [line_number].push_str (MULTICOLUMN_DELIMITER);
+                    column_splits.push (last_r + 1);
                 }
 
-                r.write_annotated_string (&mut lines [line_number], &truth_table);
-                
-                line_number = 0;
-                row_number = 0;
-            }
-            
-            // Push the row
-            if line_number == lines.len () {
-                lines.push (String::with_capacity (200));
-            } else {
-                lines [line_number].push_str (MULTICOLUMN_DELIMITER);
+                while r > next_ideal_split {
+                    next_ideal_split += ideal_column_height;
+                }
             }
 
-            r.write_annotated_string (&mut lines [line_number], &truth_table);
+            ruleoffs_used_this_split += 1;
+            last_r = r;
+        }
+
+        println! ("{:?}", column_splits);
+
+        // Initialise variables to generate the layout
+        let mut fragments : HashMap<(usize, usize), String> = HashMap::with_capacity (self.length * 2 + columns);
+        
+        let mut x = 0;
+        let mut y = 0;
+
+        let mut height = 0;
+        let mut width = 0;
+
+        macro_rules! add {
+            ($string : expr) => {
+                fragments.insert ((x, y), $string);
+
+                y += 1;
+
+                if y > height {
+                    height = y;
+                }
+
+                if x > width {
+                    width = x;
+                }
+            }
+        };
+
+        for (i, r) in self.row_iterator ().enumerate () {
+            // Start new column if required, and add the row to the bottom of the last column
+            let needs_new_column = match column_splits.get (x) {
+                None => false,
+                Some (&v) => i == v
+            };
+
+            if needs_new_column {
+                add! (r.to_annotated_string (&truth_table));
+
+                x += 1;
+                y = 0;
+            }
             
-            line_number += 1;
+            add! (r.to_annotated_string (&truth_table));
             
             // Push the ruleoff
             if r.is_ruled_off {
-                if line_number == lines.len () {
-                    lines.push (String::with_capacity (200));
-                } else {
-                    lines [line_number].push_str (MULTICOLUMN_DELIMITER);
-                }
-
-                lines [line_number].push_str (ANNOTATION_PADDING_LEFT);
-
-                for _ in 0..stage {
-                    lines [line_number].push ('-');
-                }
-                
-                lines [line_number].push_str (ANNOTATION_PADDING_RIGHT);
-
-                line_number += 1;
+                add! (ruleoff_string.clone ());
             }
+        }
+
+        add! ({
+            let mut s = String::with_capacity (100);
             
-            // Update the row_counter
-            row_number += 1;
-        }
+            s.push_str (ANNOTATION_PADDING_LEFT);
 
-        // Add the leftover change
-        if line_number == lines.len () {
-            lines.push (String::with_capacity (200));
-        } else {
-            lines [line_number].push_str (MULTICOLUMN_DELIMITER);
-        }
+            self.leftover_change.write_pretty_string (&mut s);
 
-        lines [line_number].push_str (ANNOTATION_PADDING_LEFT);
+            s
+        });
 
-        self.leftover_change.write_pretty_string (&mut lines [line_number]);
-
-        let mut s = lines.join ("\n");
-
-        s.push ('\n');
-        s.push_str (&self.coloured_summary_string ());
-
-        s
+        (0..height).map (
+            |y| (0..=width).map (
+                |x| fragments.get (&(x, y)).unwrap_or (&blank_string)
+            ).join (COLUMN_DELIMITER)
+        ).join ("\n")
     }
 
     pub fn pretty_string (&self, truth : Option<&Vec<Vec<usize>>>) -> String {
