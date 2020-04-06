@@ -318,8 +318,6 @@ impl Touch {
     }
 
     pub fn row_at (&self, index : usize) -> Row {
-        let stage = self.stage.as_usize ();
-
         Row {
             index : index,
             is_ruled_off : match self.ruleoffs.binary_search (&index) {
