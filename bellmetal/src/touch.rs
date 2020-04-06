@@ -743,7 +743,7 @@ impl Touch {
             length : changes.len (),
 
             bells : bells,
-            ruleoffs : Vec::with_capacity (0),
+            ruleoffs : vec![changes.len () - 1],
             calls : HashMap::with_capacity (0),
             method_names : HashMap::with_capacity (0),
             leftover_change : leftover_change
