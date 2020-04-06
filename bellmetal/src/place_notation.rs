@@ -362,7 +362,9 @@ impl PlaceNotation {
             }
         }
 
-        add_place_not! ();
+        if string_buff.len () != 0 {
+            add_place_not! ();
+        }
 
         // Deal with strings with comma in them
         if has_found_comma {
