@@ -335,7 +335,7 @@ impl Touch {
                 None => { None }
             },
             stroke : Stroke::from_index (index),
-            bells : &self.bells [index * stage .. (index + 1) * stage]
+            bells : self.slice_at (index)
         }
     }
 
