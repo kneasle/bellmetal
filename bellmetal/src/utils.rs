@@ -1,4 +1,5 @@
 use crate::{ Change, Stage, Bell };
+use std::iter::{ Fuse, Peekable };
 
 pub fn closure (change : Change) -> Vec<Change> {
     let mut vec : Vec<Change> = Vec::with_capacity (change.stage ().as_usize ());
@@ -152,6 +153,44 @@ impl ExtentGenerator {
 
 
 
+
+
+pub struct AndNext<T : Iterator> {
+    iter : Peekable<Fuse<T>>
+}
+
+impl<T : Iterator> AndNext<T> where T::Item : Copy {
+    pub fn new (iter : T) -> AndNext<T> {
+        AndNext {
+            iter : iter.fuse ().peekable ()
+        }
+    }
+}
+
+impl<T : Iterator> Iterator for AndNext<T> where T::Item : Copy {
+    type Item = (T::Item, Option<T::Item>);
+
+    fn next (&mut self) -> Option<Self::Item> {
+        match self.iter.next () {
+            None => None,
+            Some (v) => match self.iter.peek () {
+                None => Some ((v, None)),
+                Some (n) => Some ((v, Some (*n)))
+            }
+        }
+    }
+
+    fn size_hint (&self) -> (usize, Option<usize>) {
+        self.iter.size_hint ()
+    }
+}
+
+
+
+
+
+
+
 const CACHED_EXTENTS : usize = 5;
 
 static EXTENT_LENGTHS : [usize; CACHED_EXTENTS] = [0, 1, 2, 6, 24];
@@ -175,9 +214,19 @@ static EXTENTS : [&[u8]; CACHED_EXTENTS] = [
 mod utils_tests {
     use crate::utils;
     use crate::{ Change, Stage };
-    use crate::utils::ExtentIterator;
+    use crate::utils::{ ExtentIterator, AndNext };
 
     use factorial::Factorial;
+
+    #[test]
+    fn and_next_iter () {
+        let mut iter = AndNext::new ([1, 2, 3].iter ());
+
+        assert_eq! (iter.next (), Some ((&1, Some (&2))));
+        assert_eq! (iter.next (), Some ((&2, Some (&3))));
+        assert_eq! (iter.next (), Some ((&3, None)));
+        assert_eq! (iter.next (), None);
+    }
 
     #[test]
     fn closure () {
