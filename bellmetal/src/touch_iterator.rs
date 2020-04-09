@@ -1,4 +1,4 @@
-use crate::{ Bell, Stage, Transposition, MultiplicationIterator };
+use crate::{ Bell, Stage, Touch, Transposition, MultiplicationIterator };
 
 pub trait TouchIterator<'a> {
     type BellIter : Iterator<Item = Bell>;
@@ -20,6 +20,10 @@ pub trait TouchIterator<'a> {
     fn transfigure<T> (self, transposition : &'a T) -> TransfiguredTouchIterator<Self, T> 
             where Self : Sized, T : Transposition {
         TransfiguredTouchIterator::new (self, transposition)
+    }
+
+    fn collect (self) -> Touch where Self : Sized {
+        Touch::from_iterator (&self)
     }
 }
 
