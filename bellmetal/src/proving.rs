@@ -303,7 +303,7 @@ pub struct CompactHashProver {
 }
 
 impl CompactHashProver {
-    fn from_stage (stage : Stage) -> CompactHashProver {
+    pub fn from_stage (stage : Stage) -> CompactHashProver {
         CompactHashProver {
             stage : stage,
             falseness_map : vec![-1 as IndexType; stage.as_usize ().factorial ()]
