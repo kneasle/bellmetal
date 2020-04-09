@@ -138,7 +138,7 @@ impl Change {
     }
 
     pub fn inverse (&self) -> Change {
-        let mut new_seq : Vec<Bell> = vec![Bell::from (0u32); self.stage ().as_usize ()];
+        let mut new_seq : Vec<Bell> = vec![Bell::from (0 as Number); self.stage ().as_usize ()];
 
         for i in 0..self.stage ().as_usize () {
             new_seq [self.seq [i as usize].as_usize ()] = Bell::from (i);

@@ -71,7 +71,7 @@ impl PlaceNotation {
         let mut i = 0;
         
         while i < stage {
-            if self.places.get (i as u32) || self.places.get (i as u32 + 1) {
+            if self.places.get (i as Number) || self.places.get (i as Number + 1) {
                 bell_vec.push (Bell::from (i));
 
                 i += 1;
