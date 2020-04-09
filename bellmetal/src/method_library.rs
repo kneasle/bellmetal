@@ -37,6 +37,10 @@ pub struct MethodLibrary {
 }
 
 impl MethodLibrary {
+    pub fn all_methods<'a> (&'a self) -> impl Iterator<Item = Method> + 'a {
+        self.stored_methods.iter ().map (|x| x.to_method ())
+    }
+
     pub fn get_method_by_notation (&self, place_notations : &[PlaceNotation]) -> Option<Method> {
         for m in &self.stored_methods {
             if m.place_notation == place_notations {
