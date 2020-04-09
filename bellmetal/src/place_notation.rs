@@ -333,8 +333,7 @@ impl PlaceNotation {
     pub fn from_multiple_string (string : &str, stage : Stage) -> Vec<PlaceNotation> {
         let mut string_buff = String::with_capacity (Mask::limit () as usize);
         let mut place_notations : Vec<PlaceNotation> = Vec::with_capacity (string.len ());
-        let mut comma_index = 0usize;
-        let mut has_found_comma = false;
+        let mut comma_index : Option<usize> = None;
 
         macro_rules! add_place_not {
             () => {
@@ -349,8 +348,7 @@ impl PlaceNotation {
             } else if c == ',' {
                 add_place_not! ();
                 
-                has_found_comma = true;
-                comma_index = place_notations.len ();
+                comma_index = Some (place_notations.len ());
             } else if PlaceNotation::is_cross_notation (c) {
                 if string_buff.len () != 0 {
                     add_place_not! ();
@@ -367,9 +365,9 @@ impl PlaceNotation {
         }
 
         // Deal with strings with comma in them
-        if has_found_comma {
+        if let Some (ind) = comma_index {
             let mut reordered_place_notations : Vec<PlaceNotation> = Vec::with_capacity (
-                comma_index * 2 + (place_notations.len () - comma_index) * 2 - 2
+                ind * 2 + (place_notations.len () - ind) * 2 - 2
             );
 
             macro_rules! add {
@@ -379,22 +377,22 @@ impl PlaceNotation {
             }
             
             // Before the comma forwards
-            for i in 0..comma_index {
+            for i in 0..ind {
                 add! (i);
             }
 
             // Before the comma backwards
-            for i in 0..comma_index - 1 {
-                add! (comma_index - 2 - i);
+            for i in 0..ind - 1 {
+                add! (ind - 2 - i);
             }
             
             // After the comma forwards
-            for i in comma_index..place_notations.len () {
+            for i in ind..place_notations.len () {
                 add! (i);
             }
 
             // After the comma backwards
-            for i in 0..place_notations.len () - comma_index - 1 {
+            for i in 0..place_notations.len () - ind - 1 {
                 add! (place_notations.len () - 2 - i);
             }
 
