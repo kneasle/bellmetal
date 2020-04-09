@@ -337,8 +337,10 @@ impl PlaceNotation {
 
         macro_rules! add_place_not {
             () => {
-                place_notations.push (PlaceNotation::from_string (&string_buff, stage));
-                string_buff.clear ();
+                if string_buff.len () != 0 {
+                    place_notations.push (PlaceNotation::from_string (&string_buff, stage));
+                    string_buff.clear ();
+                }
             }
         }
 
@@ -360,9 +362,7 @@ impl PlaceNotation {
             }
         }
 
-        if string_buff.len () != 0 {
-            add_place_not! ();
-        }
+        add_place_not! ();
 
         // Deal with strings with comma in them
         if let Some (ind) = comma_index {
@@ -475,7 +475,8 @@ pub mod pn_tests {
     use crate::{
         Stage,
         PlaceNotation,
-        Change, ChangeAccumulator
+        Change, ChangeAccumulator,
+        Touch
     };
 
     #[test]
@@ -491,20 +492,21 @@ pub mod pn_tests {
 
     #[test]
     fn multiple_string_conversions () {
-        let mut s = String::with_capacity (100);
-
-        for (string, stage) in &[
-            ("x16", Stage::MINOR), // Original Minor
-            ("3.145.5.1.5.1.5.1.5.1", Stage::DOUBLES), // Gnu Bob Doubles
-            ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", Stage::TRIPLES), // Scientific Triples
-            ("x12x16", Stage::MINOR), // Bastow Minor
-            ("3.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1", Stage::CINQUES) // Grandsire Cinques
+        for (string, length, leadhead) in &[
+            ("-14-14-70-70-70.36.70.18-,12", 28, "8756341290"), // Hurricane Jack Differential Royal
+            ("x16", 2, "241635"), // Original Minor
+            ("3.145.5.1.5.1.5.1.5.1", 10, "12435"), // Gnu Bob Doubles
+            ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", 30, "4623751"), // Scientific Triples
+            ("x12,16", 4, "142635"), // Bastow Minor
+            ("3,1.E.1.E.1.E.1.E.1.E.1", 22, "12537496E80"), // Grandsire Cinques
         ] {
-            PlaceNotation::into_multiple_string (&PlaceNotation::from_multiple_string (string, *stage), &mut s);
+            let lh = Change::from (*leadhead);
+            let pns = PlaceNotation::from_multiple_string (string, lh.stage ());
 
-            assert_eq! (s, *string);
+            let touch = Touch::from (&pns [..]);
 
-            s.clear ();
+            assert_eq! (touch.length, *length);
+            assert_eq! (touch.leftover_change, lh);
         }
     }
 
