@@ -759,7 +759,7 @@ impl Touch {
         }
     }
 
-    pub fn reflected (&self) -> Touch {
+    pub fn inverted (&self) -> Touch {
         let mut new_bells : Vec<Bell> = Vec::with_capacity (self.length);
         let stage = self.stage.as_usize ();
 
@@ -777,7 +777,7 @@ impl Touch {
             ruleoffs : self.ruleoffs.clone (),
             calls : self.calls.clone (),
             method_names : self.method_names.clone (),
-            leftover_change : self.leftover_change.reflected ()
+            leftover_change : self.leftover_change.inverted ()
         }
     }
 }
@@ -1095,7 +1095,7 @@ mod touch_tests {
             let reversed_pns : Vec<PlaceNotation> = pns.iter ().map (|x| x.reversed ()).collect ();
 
             assert_eq! (
-                Touch::from (&pns [..]).reflected (), 
+                Touch::from (&pns [..]).inverted (), 
                 Touch::from (&reversed_pns [..])
             );
         }

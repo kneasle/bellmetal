@@ -109,11 +109,11 @@ impl Method {
         MultiplicationIterator::new (self.lead_end_slice (), call.transposition.iter ())
     }
 
-    pub fn reflected (&self, new_name : &str) -> Method {
+    pub fn inverted (&self, new_name : &str) -> Method {
         Method {
             name : new_name.to_string (),
             stage : self.stage,
-            plain_lead : self.plain_lead.reflected (),
+            plain_lead : self.plain_lead.inverted (),
             place_notation : self.place_notation.iter ().map (|x| x.reversed ()).collect ()
         }
     }
@@ -238,7 +238,7 @@ mod tests {
             ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", "7315624") // Scientific Triples
         ] {
             assert_eq! (
-                *Method::from_str ("No Name", pns, Stage::from (lh.len ())).reflected ("Enam On").lead_head (),
+                *Method::from_str ("No Name", pns, Stage::from (lh.len ())).inverted ("Enam On").lead_head (),
                 Change::from (*lh)
             );
         }

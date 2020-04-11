@@ -271,7 +271,7 @@ pub trait Transposition {
         true
     }
 
-    fn reflected (&self) -> Change where Self : Sized {
+    fn inverted (&self) -> Change where Self : Sized {
         let stage_minus_1 = self.slice ().len () - 1;
 
         Change::new (
