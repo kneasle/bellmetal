@@ -271,7 +271,7 @@ pub trait Transposition {
         true
     }
 
-    fn reflected (&self) -> Change where Self : std::marker::Sized {
+    fn reflected (&self) -> Change where Self : Sized {
         let stage_minus_1 = self.slice ().len () - 1;
 
         Change::new (
@@ -283,7 +283,7 @@ pub trait Transposition {
         )
     }
 
-    fn copy_into (&self, other : &mut Change) where Self : std::marker::Sized {
+    fn copy_into (&self, other : &mut Change) where Self : Sized {
         other.overwrite_from (self);
     }
 
