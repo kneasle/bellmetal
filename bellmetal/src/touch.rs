@@ -1086,7 +1086,7 @@ mod touch_tests {
     }
 
     #[test]
-    fn reflection () {
+    fn inversion () {
         for (pn, stage) in &[
             ("x58x16x12x36x12x58x14x18,12", Stage::MAJOR),
             ("36x7T.18x9T.50.36.14x1470.5T.16x9T.30.18x14.3T.50.14x1T,1T", Stage::MAXIMUS)

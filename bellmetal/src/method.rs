@@ -231,7 +231,7 @@ mod tests {
     }
 
     #[test]
-    fn reflection () {
+    fn inversion () {
         for (pns, lh) in &[
             ("7.1.7.1.7.1.7,127", "2416357"), // Plain Bob Triples
             ("x3x4x25x36x47x58x69x70x8x9x0xE,2", "537192E4068T"), // Camb S Max
