@@ -80,7 +80,7 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
     }
 
     let mut transiative_closure : Vec<usize> = combination_tree.iter ().map (|x| x.unwrap ()).collect ();
-    
+
     // Renumber groups to lower, sequential numbers
     let mut group_renaming_map : HashMap<usize, usize> = HashMap::with_capacity (50);
 
@@ -170,7 +170,7 @@ impl Row<'_> {
             Some (s) => { string.push_str (s); }
             None => { string.push (' '); }
         }
-        
+
         string.push (self.call_char);
 
         match table.get (&self.index) {
@@ -192,11 +192,11 @@ impl Row<'_> {
         }
 
         string.push (' ');
-        
+
         self.write_pretty_string_with_stroke (string, self.stroke);
-        
+
         string.push (' ');
-        
+
         match table.get (&self.index) {
             Some (x) => {
                 string.push_str ("\x1b[");
@@ -408,7 +408,7 @@ impl Touch {
             for _ in 0..stage {
                 s.push ('─');
             }
-            
+
             s.push_str (ANNOTATION_PADDING_RIGHT);
 
             s
@@ -421,11 +421,11 @@ impl Touch {
 
             if stage <= 3 {
                 s.push_str ("\x1b[31;1m");
-                
+
                 for _ in 0..stage {
                     s.push ('·');
                 }
-                
+
                 s.push_str ("\x1b[0m");
             } else {
                 let gap = if stage % 2 == 0 { stage / 2 - 2 } else { stage / 2 - 1 };
@@ -435,18 +435,18 @@ impl Touch {
                 }
 
                 s.push_str ("\x1b[31;1m");
-                
+
                 for _ in 0..stage - 2 * gap {
                     s.push ('·');
                 }
-                
+
                 s.push_str ("\x1b[0m");
-                
+
                 for _ in 0..gap {
                     s.push (' ');
                 }
             }
-            
+
             s.push_str (ANNOTATION_PADDING_RIGHT);
 
             s
@@ -459,11 +459,11 @@ impl Touch {
 
             if stage <= 3 {
                 s.push_str ("\x1b[31;1m");
-                
+
                 for _ in 0..stage {
                     s.push ('·');
                 }
-                
+
                 s.push_str ("\x1b[0m");
             } else {
                 let gap = if stage % 2 == 0 { stage / 2 - 2 } else { stage / 2 - 1 };
@@ -473,18 +473,18 @@ impl Touch {
                 }
 
                 s.push_str ("\x1b[31;1m");
-                
+
                 for _ in 0..stage - 2 * gap {
                     s.push ('·');
                 }
-                
+
                 s.push_str ("\x1b[0m");
-                
+
                 for _ in 0..gap {
                     s.push ('─');
                 }
             }
-            
+
             s.push_str (ANNOTATION_PADDING_RIGHT);
 
             s
@@ -492,7 +492,7 @@ impl Touch {
 
         let blank_string = {
             let mut s = String::with_capacity (column_width);
-            
+
             for _ in 0..column_width {
                 s.push (' ');
             }
@@ -533,7 +533,7 @@ impl Touch {
 
         // Initialise variables to generate the layout
         let mut fragments : HashMap<(usize, usize), String> = HashMap::with_capacity (self.length * 2 + columns);
-        
+
         let mut x = 0;
         let mut y = 0;
 
@@ -575,9 +575,9 @@ impl Touch {
                 x += 1;
                 y = 0;
             }
-            
+
             add! (r.to_annotated_string (&truth_table));
-            
+
             // Push the ruleoffs and discontinuity strings
             match (r.is_ruled_off, is_continuous) {
                 (false, false) => {
@@ -595,7 +595,7 @@ impl Touch {
 
         add! ({
             let mut s = String::with_capacity (100);
-            
+
             s.push_str (ANNOTATION_PADDING_LEFT);
 
             self.leftover_change.write_pretty_string (&mut s);
@@ -655,7 +655,7 @@ impl Touch {
             for j in 0..stage {
                 s.push (self.bells [i * stage + j].as_char ());
             }
-            
+
             if i != self.length - 1 {
                 s.push ('\n');
             }
@@ -688,7 +688,7 @@ impl Touch {
 
             stage.unwrap ().as_usize ()
         };
-       
+
         // Bells
         self.bells.clear ();
         self.bells.reserve (length * stage);
@@ -699,13 +699,13 @@ impl Touch {
             for b in accumulator.total ().iter () {
                 self.bells.push (b);
             }
-            
+
             accumulator.accumulate_iterator (p.iter ());
         }
-        
+
         // Ruleoffs
         self.ruleoffs.clear ();
-        
+
         // Constants
         self.stage = Stage::from (stage);
         self.length = length;
@@ -736,11 +736,11 @@ impl Touch {
                 None => { panic! ("Cannot create an empty touch"); }
             }
         };
-        
+
         // Constants
         self.length = length;
         self.stage = Stage::from (stage);
-        
+
         self.bells.clear ();
         self.bells.reserve (length * stage);
 
@@ -1043,7 +1043,7 @@ impl<'a> TouchIterator<'a> for BasicTouchIterator<'a> {
 #[cfg(test)]
 mod touch_tests {
     use crate::{ Touch, Transposition, PlaceNotation, Stage };
-    
+
     #[test]
     fn basic_iterator () {
         for s_ref in &TOUCH_STRINGS {
@@ -1072,7 +1072,7 @@ mod touch_tests {
 
                 chars.next (); // Consume the newlines
             }
-            
+
             // Consume the leftover change
             for b in touch.leftover_change.iter () {
                 match chars.next () {
@@ -1095,7 +1095,7 @@ mod touch_tests {
             let reversed_pns : Vec<PlaceNotation> = pns.iter ().map (|x| x.reversed ()).collect ();
 
             assert_eq! (
-                Touch::from (&pns [..]).inverted (), 
+                Touch::from (&pns [..]).inverted (),
                 Touch::from (&reversed_pns [..])
             );
         }
@@ -1106,13 +1106,13 @@ mod touch_tests {
         for s_ref in &TOUCH_STRINGS {
             let s = *s_ref;
             let t = Touch::from (s);
-            
+
             if t.to_string () != "" {
                 assert_eq! (t.to_string () + "\n" + &t.leftover_change.to_string (), s);
             }
         }
     }
-    
+
     const TOUCH_STRINGS : [&str; 4] = [
             "123456\n214365\n123456",
             "123\n213\n231\n321\n312\n132\n123",

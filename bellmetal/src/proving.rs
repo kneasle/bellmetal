@@ -8,7 +8,7 @@ use std::cmp::Ordering;
 
 pub trait ProvingContext {
     fn prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> bool;
-    
+
     fn prove (&mut self, touch : &Touch) -> bool {
         self.prove_canonical (touch, canon_copy)
     }
@@ -23,7 +23,7 @@ pub type ProofGroups = Vec<Vec<usize>>;
 
 pub trait FullProvingContext : ProvingContext {
     fn full_prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> ProofGroups;
-    
+
     fn full_prove (&mut self, touch : &Touch) -> ProofGroups {
         self.full_prove_canonical (touch, canon_copy)
     }
@@ -88,13 +88,13 @@ impl FullProvingContext for NaiveProver {
         let mut temporary_change = Change::rounds (touch.stage);
 
         let mut indexed_changes : Vec<IndexedChange> = Vec::with_capacity (touch.length);
-        
+
         for row in touch.row_iterator () {
             canon (&row, &mut temporary_change);
 
             indexed_changes.push (
                 IndexedChange {
-                    index : row.index, 
+                    index : row.index,
                     change : temporary_change.clone ()
                 }
             );
@@ -119,7 +119,7 @@ impl FullProvingContext for NaiveProver {
 
             temp_vec.push (indexed_changes [i].index);
         }
-                
+
         if temp_vec.len () > 1 {
             truth.push (temp_vec.clone ());
         }
@@ -232,9 +232,9 @@ impl ProvingContext for HashProver {
 
         for r in touch.row_iterator () {
             canon (&r, &mut temporary_change);
-            
+
             let hash = temporary_change.naive_hash ();
-            
+
             if self.bit_map.get (hash) {
                 truth = false;
                 break;
@@ -258,7 +258,7 @@ impl ProvingContext for HashProver {
 
         for r in touch.row_iterator () {
             let hash = r.naive_hash ();
-            
+
             if self.bit_map.get (hash) {
                 truth = false;
                 break;
@@ -427,7 +427,7 @@ mod bitmap_tests {
         assert_eq! (map.get (10), false);
 
         map.set_false (0);
-        
+
         assert_eq! (map.get (0), false);
 
         map.clear ();
@@ -455,13 +455,13 @@ pub fn canon_fixed_treble_cyclic (row : &Row, change : &mut Change) {
 
     if stage == 1 {
         change.set_bell (Place::from (0), Bell::from (0));
-        
+
         return;
     }
 
     if slice [0] == Bell::from (0) {
         let shift = slice [1].as_isize () - 1;
-                
+
         change.set_bell (Place::from (0), Bell::from (0));
 
         for i in 1..stage {
@@ -475,7 +475,7 @@ pub fn canon_fixed_treble_cyclic (row : &Row, change : &mut Change) {
         }
     } else {
         let shift = slice [0].as_isize () - 1;
-                
+
         for i in 0..stage {
             if slice [i] == Bell::from (0) {
                 change.set_bell (Place::from (i), Bell::from (0));
@@ -501,12 +501,12 @@ pub fn canon_full_cyclic (row : &Row, change : &mut Change) {
     // Nothing to be done if the stage is one
     if stage == 1 {
         change.set_bell (Place::from (0), Bell::from (0));
-        
+
         return;
     }
 
     let shift = slice [0].as_usize ();
-            
+
     for i in 0..stage {
         let new_bell = slice [i].as_usize () + stage - shift;
 
@@ -531,7 +531,7 @@ mod proof_tests {
             (Touch::from ("123456\n214365\n123456\n123456"), vec![vec![0, 2]]),
         ]
     }
-    
+
     fn test_touches () -> Vec<(Touch, bool)> {
         vec![
             (Touch::from ("123"), true),
@@ -539,7 +539,7 @@ mod proof_tests {
             (Touch::from ("123456\n214365\n123456\n123456"), false),
         ]
     }
-    
+
     #[test]
     fn naive () {
         for (t, b) in test_touches () {
@@ -547,7 +547,7 @@ mod proof_tests {
             assert_eq! (NaiveProver { }.prove (&t), b);
         }
     }
-    
+
     #[test]
     fn hash () {
         for (t, b) in test_touches () {
@@ -621,11 +621,11 @@ mod proof_tests {
             let t = Touch::from (*touch);
 
             assert_eq! (
-                HashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic), 
+                HashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic),
                 *truth
             );
             assert_eq! (
-                CompactHashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic), 
+                CompactHashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic),
                 *truth
             );
         }
@@ -638,7 +638,7 @@ mod proof_tests {
             ("12345678\n21436587\n17654328\n31547682\n12345678", vec![]),
             ("12345678\n21436587\n17654328\n31547628\n12345678", vec![vec![1, 3]]),
             (
-                "12345678\n21436587\n17654328\n31547628\n13287654\n18765432\n12345678", 
+                "12345678\n21436587\n17654328\n31547628\n13287654\n18765432\n12345678",
                 vec![vec![1, 3], vec![2, 4, 5]]
             ),
         ] {

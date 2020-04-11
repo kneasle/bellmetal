@@ -49,7 +49,7 @@ impl Call {
 
             stage.unwrap ()
         };
-        
+
         Call {
             transposition : PlaceNotation::overall_transposition (&place_notations),
             place_notations : place_notations,
@@ -65,7 +65,7 @@ impl Call {
 pub struct Method {
     pub name : String,
     pub stage : Stage,
-    
+
     pub place_notation : Vec<PlaceNotation>,
     pub plain_lead : Touch
 }
@@ -81,7 +81,7 @@ impl Method {
 
     pub fn lead_end (&self) -> Change {
         let mut vec : Vec<Bell> = Vec::with_capacity (self.stage.as_usize ());
-        
+
         for b in self.plain_lead.row_at (self.plain_lead.length - 1).slice () {
             vec.push (*b);
         }
@@ -160,7 +160,7 @@ impl Method {
             place_notation : Vec::with_capacity (0)
         }
     }
-    
+
     pub fn from_str (name : &str, place_notation_str : &str, stage : Stage) -> Method {
         Method::new (name.to_string (), PlaceNotation::from_multiple_string (place_notation_str, stage))
     }
@@ -179,7 +179,7 @@ impl Method {
 mod tests {
     use crate::{
         Method,
-        Stage, 
+        Stage,
         Change
     };
 

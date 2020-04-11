@@ -36,8 +36,8 @@ pub trait Transposition {
         }
 
         panic! (
-            "Bell '{}' not found in <{}>", 
-            bell.as_char (), 
+            "Bell '{}' not found in <{}>",
+            bell.as_char (),
             self.slice ()
                 .iter ()
                 .map (|x| x.as_char ())
@@ -56,7 +56,7 @@ pub trait Transposition {
 
         while bells_fixed < stage {
             let mut bell = 0;
-                
+
             while mask.get (bell) {
                 bell += 1;
             }
@@ -65,14 +65,14 @@ pub trait Transposition {
 
             while !mask.get (bell) {
                 mask.add (bell);
-                
+
                 bell = bells [bell as usize].as_number ();
 
                 total_cycle_length += 1;
                 bells_fixed += 1;
             }
         }
-        
+
         match total_cycle_length & 1 {
             0 => { Parity::Even },
             1 => { Parity::Odd }
@@ -122,14 +122,14 @@ pub trait Transposition {
         let mut i = 1;
 
         while i < stage && (
-            bells [i].as_i32 () - last as i32 == -1 
+            bells [i].as_i32 () - last as i32 == -1
          || bells [i].as_i32 () - last as i32 == 1
         ) {
             last = bells [i].as_number ();
 
             i += 1;
         }
-        
+
         i
     }
 
@@ -146,14 +146,14 @@ pub trait Transposition {
         let mut i = 1;
 
         while i < stage && (
-            bells [stage - 1 - i].as_i32 () - last as i32 == -1 
+            bells [stage - 1 - i].as_i32 () - last as i32 == -1
          || bells [stage - 1 - i].as_i32 () - last as i32 == 1
         ) {
             last = bells [stage - 1 - i].as_number ();
 
             i += 1;
         }
-        
+
         i
     }
 
@@ -202,7 +202,7 @@ pub trait Transposition {
         let bells = self.slice ();
 
         let stage = bells.len ();
-        
+
         if stage <= 2 || bells [0].as_usize () != 0 {
             return false;
         }
@@ -211,7 +211,7 @@ pub trait Transposition {
 
         for i in 0..stage - 1 {
             let expected_bell = if start + i >= stage { start + i - stage + 1 } else { start + i };
-            
+
             if bells [i + 1].as_usize () != expected_bell {
                 return false;
             }
@@ -227,7 +227,7 @@ pub trait Transposition {
         let bells = self.slice ();
 
         let stage = bells.len ();
-        
+
         if stage <= 2 || bells [0].as_usize () != 0 {
             return false;
         }
@@ -301,7 +301,7 @@ pub trait Transposition {
     // Pretty printing
     fn pretty_string (&self) -> String {
         let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
-        
+
         self.write_pretty_string (&mut string);
 
         string
@@ -313,7 +313,7 @@ pub trait Transposition {
 
     fn pretty_string_with_stroke (&self, stroke : Stroke) -> String {
         let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
-        
+
         self.write_pretty_string_with_stroke (&mut string, stroke);
 
         string
@@ -343,9 +343,9 @@ pub trait Transposition {
             if x >= 4 { x } else { 0 }
         };
 
-        let is_87_at_back = stage % 2 == 0 
+        let is_87_at_back = stage % 2 == 0
             && stroke == Stroke::Back
-            && bells [stage - 2] == Bell::from (stage - 1) 
+            && bells [stage - 2] == Bell::from (stage - 1)
             && bells [stage - 1] == Bell::from (stage - 2);
 
         let mut last_char_state = CharState::Normal;
@@ -357,27 +357,27 @@ pub trait Transposition {
             // Useful vars
             let bell = bells [i];
 
-            let char_colour = if bell.as_usize () == 0 { 1 } 
-                    else if bell.as_usize () == stage - 1 { 2 } 
+            let char_colour = if bell.as_usize () == 0 { 1 }
+                    else if bell.as_usize () == stage - 1 { 2 }
                     else { 0 };
-            
+
             let char_state = if i < run_front || (stage - 1 - i) < run_back { CharState::Musical }
                     else if is_87_at_back && i >= stage - 2 { CharState::Undesirable }
                     else { CharState::Normal };
-            
+
             // Push the escape codes
             if last_char_colour != char_colour || last_char_state != char_state {
                 string.push_str ("\x1b[");
                 string.push_str (colours [char_colour]);
                 string.push (';');
                 string.push_str (match char_state {
-                    CharState::Musical => { "42" } 
-                    CharState::Undesirable => { "41" } 
+                    CharState::Musical => { "42" }
+                    CharState::Undesirable => { "41" }
                     CharState::Normal => { "49" }
                 });
                 string.push ('m');
             }
-            
+
             string.push (bell.as_char ());
 
             last_char_state = char_state;
@@ -432,7 +432,7 @@ fn run_length_to_score (length : usize) -> usize {
     }
 
     let x = length - 3;
-    
+
     // Triangular numbers = n * (n + 1) / 2
     (x * (x + 1)) >> 1
 }

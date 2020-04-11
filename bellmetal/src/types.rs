@@ -137,7 +137,7 @@ macro_rules! define_int_synonymn {
                 $type (x)
             }
         }
-        
+
         impl From<i32> for $type {
             fn from (x : i32) -> $type {
                 if x < 0 {
@@ -197,27 +197,27 @@ impl Stage {
 
     pub const SINGLES : Stage = Stage (3);
     pub const MINIMUS : Stage = Stage (4);
-    
+
     pub const DOUBLES : Stage = Stage (5);
     pub const MINOR : Stage = Stage (6);
     pub const TRIPLES : Stage = Stage (7);
     pub const MAJOR : Stage = Stage (8);
-   
+
     pub const CATERS : Stage = Stage (9);
     pub const ROYAL : Stage = Stage (10);
     pub const CINQUES : Stage = Stage (11);
     pub const MAXIMUS : Stage = Stage (12);
-   
+
     pub const SEXTUPLES : Stage = Stage (13);
     pub const FOURTEEN : Stage = Stage (14);
     pub const SEPTUPLES : Stage = Stage (15);
     pub const SIXTEEN : Stage = Stage (16);
-   
+
     pub const OCTUPLES : Stage = Stage (17);
     pub const EIGHTEEN : Stage = Stage (18);
     pub const NONUPLES : Stage = Stage (19);
     pub const TWENTY : Stage = Stage (20);
-   
+
     pub const DECUPLES : Stage = Stage (21);
     pub const TWENTY_TWO : Stage = Stage (22);
 }

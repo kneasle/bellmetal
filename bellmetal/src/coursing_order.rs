@@ -63,7 +63,7 @@ impl CoursingOrder {
         self.order.push (heaviest_bell);
         for _ in 0..len - 1 {
             let x = iterator.next ();
-            
+
             self.order.push (x);
         }
     }
@@ -220,7 +220,7 @@ impl CoursingOrder {
             order : Vec::with_capacity (0)
         }
     }
-    
+
     pub fn from_leadhead (lh : &Change) -> CoursingOrder {
         let mut co = CoursingOrder::empty ();
 
@@ -346,7 +346,7 @@ pub trait CoursingOrderIterator {
 
         heaviest_bell
     }
-    
+
     fn to_coursehead (&mut self) -> Change {
         let stage = self.length () + 1;
 
@@ -356,7 +356,7 @@ pub trait CoursingOrderIterator {
 
         iter.seek_heaviest_bell ();
         self.seek_heaviest_bell ();
-        
+
         for _ in 0..self.length () {
             vec [iter.next ().as_usize ()] = self.next ();
         }
@@ -468,7 +468,7 @@ impl CoursingOrderIterator for PlainCoursingOrderIterator {
             }
         } else {
             self.current_bell += 2;
-            
+
             if self.current_bell >= self.stage.as_usize () {
                 self.is_going_down = true;
                 self.current_bell = (self.stage.as_usize () + 1 & !1) - 2;
@@ -492,11 +492,11 @@ impl CoursingOrderIterator for PlainCoursingOrderIterator {
 
 #[cfg(test)]
 mod co_tests {
-    use crate::{ 
+    use crate::{
         Stage, Change,
-        CoursingOrder, 
+        CoursingOrder,
         CoursingOrderIterator,
-        BasicCoursingOrderIterator, PlainCoursingOrderIterator, 
+        BasicCoursingOrderIterator, PlainCoursingOrderIterator,
         LeadheadCoursingOrderIterator
     };
 

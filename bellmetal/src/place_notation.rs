@@ -44,22 +44,22 @@ impl PlaceNotation {
     pub fn iter (&self) -> PlaceNotationIterator {
         PlaceNotationIterator::new (self)
     }
-    
+
     // Returns the place notation that represents 'self' but with the places reversed
     // (for example 14 -> 58 in Major, 1 -> 7 in Triples, etc)
     pub fn reversed (&self) -> PlaceNotation {
         let stage = self.stage.as_usize ();
 
         let mut places = Mask::empty ();
-        
+
         for i in 0..stage {
             if self.places.get (i as Number) {
                 places.add ((stage - i - 1) as Number);
             }
         }
 
-        PlaceNotation { 
-            places : places, 
+        PlaceNotation {
+            places : places,
             stage : self.stage
         }
     }
@@ -69,7 +69,7 @@ impl PlaceNotation {
         let mut bell_vec : Vec<Bell> = Vec::with_capacity (stage);
 
         let mut i = 0;
-        
+
         while i < stage {
             if self.places.get (i as Number) || self.places.get (i as Number + 1) {
                 bell_vec.push (Bell::from (i));
@@ -84,7 +84,7 @@ impl PlaceNotation {
 
         Change::new (bell_vec)
     }
-    
+
     pub fn into_string_implicit (&self, string : &mut String) {
         let mut count = 0;
         let mut is_1sts_made = false;
@@ -104,7 +104,7 @@ impl PlaceNotation {
 
                     string.push (Bell::from (i).as_char ());
                 }
-                
+
                 count += 1;
             }
         }
@@ -130,7 +130,7 @@ impl PlaceNotation {
         for i in 0..self.stage.as_usize () {
             if self.places.get (i as Number) {
                 string.push (Bell::from (i).as_char ());
-                
+
                 count += 1;
             }
         }
@@ -156,12 +156,12 @@ impl PlaceNotation {
 
     pub fn from_string (notation : &str, stage : Stage) -> PlaceNotation {
         let mut places = Mask::empty ();
-        
+
         if notation == "" || notation == "X" || notation == "x" || notation == "-" {
             if stage.as_u32 () & 1u32 != 0 {
                 panic! ("Non-even stage used with a cross notation");
             }
-            
+
             // Nothing to be done here, since places defaults to 0
         } else { // Should decode bell names as places
             for c in notation.chars () {
@@ -189,12 +189,12 @@ impl PlaceNotation {
             while !places.get (highest_place) {
                 highest_place -= 1;
             }
-            
+
             if (stage.as_number () - highest_place) & 1 == 0 {
                 places.add (stage.as_number () - 1);
             }
         }
-        
+
         PlaceNotation { places : places, stage : stage }
     }
 
@@ -226,7 +226,7 @@ impl PlaceNotation {
 
         // Decide on the location, if any, of the comma
         let mut comma_index : Option<usize> = None;
-        
+
         if place_notations.len () % 2 == 0 {
             if is_symmetrical (len - 1) {
                 comma_index = Some (len - 1);
@@ -242,7 +242,7 @@ impl PlaceNotation {
 
         // Generate string
         let mut was_last_place_notation_cross = true; // Used to decide whether to insert a dot
-        
+
         match comma_index {
             Some (x) => {
                 // Before comma
@@ -264,7 +264,7 @@ impl PlaceNotation {
 
                 string.push (',');
                 was_last_place_notation_cross = true;
-                
+
                 // After comma
                 for p in &place_notations [x..x + (len - x) / 2 + 1] {
                     if p.is_cross () {
@@ -349,13 +349,13 @@ impl PlaceNotation {
                 add_place_not! ();
             } else if c == ',' {
                 add_place_not! ();
-                
+
                 comma_index = Some (place_notations.len ());
             } else if PlaceNotation::is_cross_notation (c) {
                 if string_buff.len () != 0 {
                     add_place_not! ();
                 }
-                
+
                 place_notations.push (PlaceNotation::cross (stage));
             } else {
                 string_buff.push (c);
@@ -375,7 +375,7 @@ impl PlaceNotation {
                     reordered_place_notations.push (place_notations [$x].clone ());
                 }
             }
-            
+
             // Before the comma forwards
             for i in 0..ind {
                 add! (i);
@@ -385,7 +385,7 @@ impl PlaceNotation {
             for i in 0..ind - 1 {
                 add! (ind - 2 - i);
             }
-            
+
             // After the comma forwards
             for i in ind..place_notations.len () {
                 add! (i);
@@ -412,7 +412,7 @@ impl PlaceNotation {
         for pn in pns {
             accum.accumulate_iterator (pn.iter ());
         }
-        
+
         accum.total ().clone ()
     }
 }
@@ -443,10 +443,10 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
         if self.index == self.place_notation.stage.as_usize () {
             return None;
         }
-        
+
         #[allow(unused_assignments)]
         let mut output = 0;
-    
+
         if self.place_notation.places.get (self.index as Number) {
             output = self.index;
 
@@ -457,12 +457,12 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
             } else {
                 output = self.index + 1;
             }
-            
+
             self.should_hunt_up = !self.should_hunt_up;
         }
 
         self.index += 1;
-        
+
         return Some (Bell::from (output));
     }
 }
@@ -525,7 +525,7 @@ pub mod pn_tests {
             ("4", Stage::SIXTEEN, "14"),
         ] {
             PlaceNotation::from_string (pn, *stage).into_string (&mut s);
-            
+
             assert_eq! (s, *exp);
 
             s.clear ();
@@ -555,13 +555,13 @@ pub mod pn_tests {
             ==
             PlaceNotation::from_string ("14", Stage::MINIMUS)
         );
-        
+
         assert! (
             PlaceNotation::from_string ("14", Stage::MINIMUS)
             !=
             PlaceNotation::from_string ("14", Stage::DOUBLES)
         );
-        
+
         assert! (
             PlaceNotation::from_string ("14", Stage::MAJOR)
             !=
@@ -631,10 +631,10 @@ pub mod pn_tests {
     fn split_many_and_change_accum () {
         fn test (string : &str, stage : Stage, result : Change)  {
             let split_notation = PlaceNotation::from_multiple_string (string, stage);
-            
+
             // Naive and extremely ineffecient accumulation
             let mut accum : Change = Change::rounds (stage);
-            
+
             for c in &split_notation {
                 accum = accum * c.transposition ();
             }

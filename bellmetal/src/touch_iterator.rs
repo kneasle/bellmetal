@@ -17,7 +17,7 @@ pub trait TouchIterator<'a> {
 
     fn length (&self) -> usize;
 
-    fn transfigure<T> (self, transposition : &'a T) -> TransfiguredTouchIterator<Self, T> 
+    fn transfigure<T> (self, transposition : &'a T) -> TransfiguredTouchIterator<Self, T>
             where Self : Sized, T : Transposition {
         TransfiguredTouchIterator::new (self, transposition)
     }

@@ -57,12 +57,12 @@ pub fn one_part_spliced_touch (
                             continue;
                         }
                     }
-                    None => { 
+                    None => {
                         if !legit_method_starts.contains (&c) {
                             // Ignore padding characters between method names
                             continue;
-                        } 
-                        
+                        }
+
                         if !has_consumed_call {
                             call_indices.push (0);
                         }
@@ -112,7 +112,7 @@ fn one_part_spliced_touch_from_indices (
 
     // Find the stage of the touch
     let stage = methods [0].stage;
-    
+
     for m in 1..methods.len () {
         assert_eq! (stage, methods [m].stage);
     }
@@ -141,7 +141,7 @@ fn one_part_spliced_touch_from_indices (
             touch.add_method_name (touch.length, method_names [method_indices [i]]);
         }
 
-        touch.append_iterator (&method.plain_lead.iter ().transfigure (lead_head_accumulator.total ())); 
+        touch.append_iterator (&method.plain_lead.iter ().transfigure (lead_head_accumulator.total ()));
 
         if call_indices [i] == 0 {
             lead_head_accumulator.accumulate (method.lead_head ());
@@ -182,7 +182,7 @@ mod gen_tests {
         let bob = Call::from_place_notation_string ('-', "14", Stage::MAJOR);
 
         let methods = [
-            ("B", &bristol), 
+            ("B", &bristol),
             ("P", &plain_bob),
             ("Co", &cornwall),
             ("Ca", &cambridge),

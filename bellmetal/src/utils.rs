@@ -75,7 +75,7 @@ impl ExtentGenerator {
     // Moves the iterator on by a step, returns true if there is are more permutations to come
     pub fn step (&mut self) -> bool {
         let stage = self.stage.as_usize ();
-        
+
         if stage < CACHED_EXTENTS {
             self.array_index += 1;
 
@@ -99,7 +99,7 @@ impl ExtentGenerator {
             }
         }
     }
-    
+
     pub fn fill (&self, slice : &mut [Bell]) {
         let stage = self.stage.as_usize ();
 
@@ -115,7 +115,7 @@ impl ExtentGenerator {
             match &self.recursive_generator {
                 Some (g) => {
                     g.fill (slice);
-                    
+
                     let mut temp = Bell::from (stage - 1);
 
                     for i in self.insert_location..stage {
@@ -124,8 +124,8 @@ impl ExtentGenerator {
                         temp = t2;
                     }
                 }
-                None => { 
-                    panic! ("Recursive extent generator not found"); 
+                None => {
+                    panic! ("Recursive extent generator not found");
                 }
             }
         }
@@ -137,9 +137,9 @@ impl ExtentGenerator {
         let s = stage.as_usize ();
 
         ExtentGenerator {
-            recursive_generator : if s < CACHED_EXTENTS { 
-                None 
-            } else { 
+            recursive_generator : if s < CACHED_EXTENTS {
+                None
+            } else {
                 Some (Box::new (ExtentGenerator::new (Stage::from (s - 1))))
             },
             stage : stage,
@@ -238,7 +238,7 @@ mod utils_tests {
                 Change::from ("14235678")
             ]
         );
-        
+
         assert_eq! (
             utils::closure (Change::from ("87654321")),
             vec! [
@@ -246,21 +246,21 @@ mod utils_tests {
                 Change::from ("87654321")
             ]
         );
-        
+
         assert_eq! (
             utils::closure (Change::from ("1")),
             vec! [
                 Change::from ("1"),
             ]
         );
-        
+
         assert_eq! (
             utils::closure (Change::from ("123456789")),
             vec! [
                 Change::from ("123456789"),
             ]
         );
-        
+
         assert_eq! (
             utils::closure (Change::from ("4321675")),
             vec! [
@@ -272,7 +272,7 @@ mod utils_tests {
                 Change::from ("4321756")
             ]
         );
-        
+
         assert_eq! (
             utils::closure (Change::from ("")),
             vec! [

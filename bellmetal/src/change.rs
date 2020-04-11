@@ -47,12 +47,12 @@ impl Change {
 
         Change { seq : new_seq }
     }
-    
+
     pub fn pre_multiply_into (&self, lhs : &impl Transposition, into : &mut Change) {
         if self.stage () != lhs.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
-        
+
         if self.stage () != into.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
@@ -63,14 +63,14 @@ impl Change {
             into.seq.push (lhs.bell_at (Place::from (self.seq [i].as_number ())));
         }
     }
-    
+
     pub fn multiply_iterator_into<I> (&self, rhs : I, into : &mut Change) where I : Iterator<Item = Bell> {
         if self.stage () != into.stage () {
             panic! ("Can't multiply into a change of the wrong stage");
         }
 
         into.seq.clear ();
-        
+
         let mut i = 0;
 
         for b in rhs {
@@ -81,12 +81,12 @@ impl Change {
 
         assert_eq! (i, into.stage ().as_usize ());
     }
-    
+
     pub fn multiply_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
-        
+
         if self.stage () != into.stage () {
             panic! ("Can't multiply into a change of the wrong stage");
         }
@@ -102,11 +102,11 @@ impl Change {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
-        
+
         if self.stage () != into.stage () {
             panic! ("Can't multiply into a change of the wrong stage");
         }
-        
+
         for i in 0..self.stage ().as_usize () {
             into.seq [rhs.bell_at (Place::from (i)).as_usize ()] = self.seq [i];
         }
@@ -153,7 +153,7 @@ impl Change {
         }
 
         let mut accumulator = ChangeAccumulator::new (self.stage ());
-        
+
         if exponent > 0 {
             for _ in 0..exponent as usize {
                 accumulator.accumulate (self);
@@ -350,7 +350,7 @@ impl ChangeAccumulator {
         if self.stage != change.stage () {
             panic! ("Can't write a change of the wrong stage into accumulator");
         }
-        
+
         if self.using_second_change {
             for i in 0..self.stage.as_usize () {
                 self.change_2.seq [i] = change.seq [i];
@@ -366,7 +366,7 @@ impl ChangeAccumulator {
         for i in 0..self.stage.as_usize () {
             self.change_1.seq [i] = Bell::from (i);
             self.change_2.seq [i] = Bell::from (i);
-            
+
             self.using_second_change = false;
         }
     }
@@ -377,14 +377,14 @@ impl ChangeAccumulator {
 
 #[cfg(test)]
 mod change_tests {
-    use crate::{ 
+    use crate::{
         Change,
         Bell, Stage, Place, Parity,
         Transposition
     };
 
     use crate::utils::ExtentIterator;
-    
+
     use std::fmt::Write;
 
     #[test]
@@ -404,7 +404,7 @@ mod change_tests {
                 Bell::from (2)
             ] }
         );
-        
+
         // Different bells
         assert! (
             Change { seq : vec![
@@ -421,7 +421,7 @@ mod change_tests {
                 Bell::from (2)
             ] }
         );
-        
+
         // Different stage
         assert! (
             Change { seq : vec![
@@ -471,7 +471,7 @@ mod change_tests {
         assert_eq! (Stage::from (1), Change::from ("1").stage ());
         assert_eq! (Stage::from (10), Change::from ("6789052431").stage ());
     }
-    
+
     #[test]
     fn parity () {
         assert_eq! (Parity::Even, Change::from ("1234567").parity ());
@@ -486,7 +486,7 @@ mod change_tests {
     #[test]
     fn copy_into () {
         let mut change = Change::empty ();
-        
+
         for c in [
             Change::from ("1234"),
             Change::from (""),
@@ -546,7 +546,7 @@ mod change_tests {
         assert_eq! (Change::from ("134265").pow (2), Change::from ("142356"));
         assert_eq! (Change::from ("134265").pow (-3), Change::from ("123465"));
     }
-    
+
     #[test]
     #[should_panic]
     fn multiplication_nonequal_stages () {
@@ -579,24 +579,24 @@ mod change_tests {
             }
         }
     }
-    
+
     #[test]
     fn cyclicness_tests () {
         assert! (Change::from ("12345").is_full_cyclic ());
         assert! (Change::from ("5678901234").is_full_cyclic ());
         assert! (!Change::from ("42513").is_full_cyclic ());
         assert! (!Change::from ("14567234").is_full_cyclic ());
-        
+
         assert! (Change::from ("54321").is_reverse_full_cyclic ());
         assert! (Change::from ("7654321098").is_reverse_full_cyclic ());
         assert! (!Change::from ("42513").is_reverse_full_cyclic ());
         assert! (!Change::from ("14567234").is_reverse_full_cyclic ());
-        
+
         assert! (Change::from ("123456789").is_fixed_treble_cyclic ());
         assert! (Change::from ("134562").is_fixed_treble_cyclic ());
         assert! (!Change::from ("4567123").is_fixed_treble_cyclic ());
         assert! (!Change::from ("42513").is_fixed_treble_cyclic ());
-        
+
         assert! (Change::from ("198765432").is_reverse_fixed_treble_cyclic ());
         assert! (Change::from ("126543").is_reverse_fixed_treble_cyclic ());
         assert! (!Change::from ("4567123").is_reverse_fixed_treble_cyclic ());
@@ -621,14 +621,14 @@ mod change_tests {
         assert! (!Change::from ("7584012369").is_rounds ());
         assert! (!Change::from ("4567123").is_rounds ());
     }
-    
+
     #[test]
     fn music_run_lengths () {
         assert_eq! (Change::from ("14238765").run_length_off_front (), 1);
         assert_eq! (Change::from ("12346578").run_length_off_front (), 4);
         assert_eq! (Change::from ("12345678").run_length_off_front (), 8);
         assert_eq! (Change::from ("76543218").run_length_off_front (), 7);
-        
+
         assert_eq! (Change::from ("81765432").run_length_off_back (), 6);
         assert_eq! (Change::from ("14238765").run_length_off_back (), 4);
         assert_eq! (Change::from ("76543218").run_length_off_back (), 1);
@@ -694,19 +694,19 @@ mod change_tests {
             }
         }
     }
-    
+
     #[test]
     fn debug_print () {
         let mut s = String::with_capacity (20);
-        
+
         write! (&mut s, "{:?}", Change::from ("")).unwrap ();
         assert_eq! (s, "<>");
         s.clear ();
-        
+
         write! (&mut s, "{:?}", Change::from ("14325")).unwrap ();
         assert_eq! (s, "<14325>");
         s.clear ();
-        
+
         write! (&mut s, "{:?}", Change::from ("1678902345ET")).unwrap ();
         assert_eq! (s, "<1678902345ET>");
         s.clear ();

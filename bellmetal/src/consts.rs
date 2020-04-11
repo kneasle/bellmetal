@@ -40,7 +40,7 @@ fn get_number (name : char) -> i8 {
 
 pub fn name_to_number (name : char) -> Number {
     let n = get_number (name);
-    
+
     if n == -1 {
         panic! ("Unknown bell name '{}'.", name);
     }

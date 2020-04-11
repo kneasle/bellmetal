@@ -77,7 +77,7 @@ impl MethodLibrary {
 
     pub fn from_string_filtered (string : &String, stage : Option<Stage>) -> MethodLibrary {
         let mut stored_methods : Vec<StoredMethod> = Vec::with_capacity (2000);
-        
+
         match stage {
             None => {
                 for l in string.lines () {
