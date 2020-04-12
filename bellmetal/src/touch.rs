@@ -375,12 +375,20 @@ impl Touch {
         (run_count_front, run_count_back)
     }
 
+    pub fn is_true_canonical (&self, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool {
+        NaiveProver { }.prove_touch_canonical (&self, canon)
+    }
+
     pub fn is_true (&self) -> bool {
         NaiveProver { }.prove_touch (&self)
     }
 
     pub fn full_truth (&self) -> ProofGroups {
         NaiveProver { }.full_prove_touch (&self)
+    }
+
+    pub fn full_truth_canonical (&self, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups {
+        NaiveProver { }.full_prove_touch_canonical (&self, canon)
     }
 
     pub fn full_truth_table (&self) -> HashMap<usize, usize> {
