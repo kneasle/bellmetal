@@ -1,4 +1,4 @@
-use crate::{ Touch, Row, Stage, Place, Bell, Transposition, Change };
+use crate::{ Touch, Stage, Place, Bell, Transposition, Change, ChangeIter, TouchIterator };
 use crate::touch::RowIterator;
 
 use factorial::Factorial;
@@ -6,11 +6,31 @@ use std::collections::HashMap;
 
 use std::cmp::Ordering;
 
-pub trait ProvingContext {
-    fn prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> bool;
+fn fill<T : Sized> (iter : &mut impl Iterator<Item = T>, slice : &mut [T]) -> bool {
+    for i in 0..slice.len () {
+        if let Some (v) = iter.next () {
+            slice [i] = v;
+        } else {
+            return false;
+        }
+    }
 
-    fn prove (&mut self, touch : &Touch) -> bool {
-        self.prove_canonical (touch, canon_copy)
+    true
+}
+
+pub trait ProvingContext {
+    fn prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool;
+
+    fn prove<'a> (&mut self, iter : &impl TouchIterator<'a>) -> bool {
+        self.prove_canonical (iter, canon_copy)
+    }
+    
+    fn prove_touch_canonical (&mut self, touch : &Touch, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool{
+        self.prove_canonical (&touch.iter (), canon)
+    }
+
+    fn prove_touch (&mut self, touch : &Touch) -> bool {
+        self.prove_touch_canonical (touch, canon_copy)
     }
 }
 
@@ -22,10 +42,18 @@ pub trait ProvingContext {
 pub type ProofGroups = Vec<Vec<usize>>;
 
 pub trait FullProvingContext : ProvingContext {
-    fn full_prove_canonical (&mut self, touch : &Touch, canon : impl FnMut(&Row, &mut Change) -> ()) -> ProofGroups;
+    fn full_prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups;
 
-    fn full_prove (&mut self, touch : &Touch) -> ProofGroups {
-        self.full_prove_canonical (touch, canon_copy)
+    fn full_prove<'a> (&mut self, iter : &impl TouchIterator<'a>) -> ProofGroups {
+        self.full_prove_canonical (iter, canon_copy)
+    }
+    
+    fn full_prove_touch_canonical (&mut self, touch : &Touch, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups {
+        self.full_prove_canonical (&touch.iter (), canon)
+    }
+
+    fn full_prove_touch (&mut self, touch : &Touch) -> ProofGroups {
+        self.full_prove_touch_canonical (touch, canon_copy)
     }
 }
 
@@ -84,20 +112,26 @@ impl PartialOrd for IndexedChange {
 pub struct NaiveProver { }
 
 impl FullProvingContext for NaiveProver {
-    fn full_prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> ProofGroups {
-        let mut temporary_change = Change::rounds (touch.stage);
+    fn full_prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups {
+        let mut temporary_change = Change::rounds (iter.stage ());
+        let mut temp_slice = vec![Bell::from (0); iter.stage ().as_usize ()];
 
-        let mut indexed_changes : Vec<IndexedChange> = Vec::with_capacity (touch.length);
+        let mut indexed_changes : Vec<IndexedChange> = Vec::with_capacity (iter.length ());
 
-        for row in touch.row_iterator () {
-            canon (&row, &mut temporary_change);
+        let mut bell_iter = iter.bell_iter ();
+        let mut index = 0;
+
+        while fill (&mut bell_iter, &mut temp_slice) {
+            canon (&temp_slice, &mut temporary_change);
 
             indexed_changes.push (
                 IndexedChange {
-                    index : row.index,
+                    index : index,
                     change : temporary_change.clone ()
                 }
             );
+
+            index += 1;
         }
 
         indexed_changes.sort ();
@@ -129,13 +163,16 @@ impl FullProvingContext for NaiveProver {
 }
 
 impl ProvingContext for NaiveProver {
-    fn prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> bool {
-        let mut temporary_change = Change::rounds (touch.stage);
+    fn prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool {
+        let mut temporary_change = Change::rounds (iter.stage ());
 
-        let mut changes : Vec<Change> = Vec::with_capacity (touch.length);
+        let mut changes : Vec<Change> = Vec::with_capacity (iter.length ());
 
-        for row in touch.row_iterator () {
-            canon (&row, &mut temporary_change);
+        let mut temp_slice = vec![Bell::from (0); iter.stage ().as_usize ()];
+        let mut bell_iter = iter.bell_iter ();
+        
+        while fill (&mut bell_iter, &mut temp_slice) {
+            canon (&temp_slice, &mut temporary_change);
 
             changes.push (temporary_change.clone ());
         }
@@ -151,13 +188,13 @@ impl ProvingContext for NaiveProver {
         true
     }
 
-    fn prove (&mut self, touch : &Touch) -> bool {
-        let mut rows : Vec<Row> = touch.row_iterator ().collect ();
+    fn prove<'a> (&mut self, iter : &impl TouchIterator<'a>) -> bool {
+        let mut changes : Vec<Change> = ChangeIter::new (iter.bell_iter (), iter.stage ()).collect ();
 
-        rows.sort ();
+        changes.sort ();
 
-        for i in 1..rows.len () {
-            if rows [i - 1] == rows [i] {
+        for i in 1..changes.len () {
+            if changes [i - 1] == changes [i] {
                 return false;
             }
         }
@@ -224,14 +261,14 @@ pub struct HashProver {
 }
 
 impl ProvingContext for HashProver {
-    fn prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> bool {
+    fn prove_touch_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool {
         assert_eq! (touch.stage, self.stage);
 
         let mut truth = true;
         let mut temporary_change = Change::rounds (touch.stage);
 
         for r in touch.row_iterator () {
-            canon (&r, &mut temporary_change);
+            canon (&r.slice (), &mut temporary_change);
 
             let hash = temporary_change.naive_hash ();
 
@@ -251,7 +288,7 @@ impl ProvingContext for HashProver {
         truth
     }
 
-    fn prove (&mut self, touch : &Touch) -> bool {
+    fn prove_touch (&mut self, touch : &Touch) -> bool {
         assert_eq! (touch.stage, self.stage);
 
         let mut truth = true;
@@ -270,6 +307,68 @@ impl ProvingContext for HashProver {
         // Reset the hash map before returning
         for r in touch.row_iterator () {
             self.bit_map.set_false (r.naive_hash ());
+        }
+
+        truth
+    }
+    
+    fn prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool {
+        assert_eq! (iter.stage (), self.stage);
+
+        let mut truth = true;
+        let mut temporary_change = Change::rounds (iter.stage ());
+
+        let mut temp_slice = vec![Bell::from (0); iter.stage ().as_usize ()];
+        let mut bell_iter = iter.bell_iter ();
+        
+        while fill (&mut bell_iter, &mut temp_slice) {
+            canon (&temp_slice, &mut temporary_change);
+
+            let hash = temporary_change.naive_hash ();
+
+            if self.bit_map.get (hash) {
+                truth = false;
+                break;
+            }
+
+            self.bit_map.set_true (hash);
+        }
+
+        bell_iter = iter.bell_iter ();
+
+        // Reset the hash map before returning
+        while fill (&mut bell_iter, &mut temporary_change.mut_slice ()) {
+            self.bit_map.set_false (temporary_change.naive_hash ());
+        }
+
+        truth
+    }
+
+    fn prove<'a> (&mut self, iter : &impl TouchIterator<'a>) -> bool {
+        assert_eq! (iter.stage (), self.stage);
+
+        let mut truth = true;
+
+        let mut temporary_change = Change::rounds (iter.stage ());
+
+        let mut bell_iter = iter.bell_iter ();
+        
+        while fill (&mut bell_iter, temporary_change.mut_slice ()) {
+            let hash = temporary_change.naive_hash ();
+
+            if self.bit_map.get (hash) {
+                truth = false;
+                break;
+            }
+
+            self.bit_map.set_true (hash);
+        }
+
+        bell_iter = iter.bell_iter ();
+
+        // Reset the hash map before returning
+        while fill (&mut bell_iter, temporary_change.mut_slice ()) {
+            self.bit_map.set_false (temporary_change.naive_hash ());
         }
 
         truth
@@ -299,33 +398,51 @@ type IndexType = i32;
 
 pub struct CompactHashProver {
     stage : Stage,
-    falseness_map : Vec<IndexType>
+    falseness_map : Vec<IndexType>,
+    temporary_change : Change,
+    temporary_slice : Vec<Bell>
 }
 
 impl CompactHashProver {
     pub fn from_stage (stage : Stage) -> CompactHashProver {
         CompactHashProver {
             stage : stage,
-            falseness_map : vec![-1 as IndexType; stage.as_usize ().factorial ()]
+            falseness_map : vec![-1 as IndexType; stage.as_usize ().factorial ()],
+            temporary_change : Change::rounds (stage),
+            temporary_slice : vec![Bell::from (0); stage.as_usize ()]
         }
     }
 }
 
 impl FullProvingContext for CompactHashProver {
-    fn full_prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> ProofGroups {
-        let truth = full_proof_from_iterator (CompactHashIterator {
-            temporary_change : Change::rounds (self.stage),
+    fn full_prove_touch_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups {
+        let truth = full_proof_from_iterator (CompactHashTouchIterator {
             hash_prover : self,
             row_iterator : &mut touch.row_iterator (),
             canon_func : &mut canon
         }.map (|(x, y)| (x as usize, y as usize)));
 
-        let mut c = Change::rounds (self.stage);
-
         for r in touch.row_iterator () {
-            canon (&r, &mut c);
+            canon (&r.slice (), &mut self.temporary_change);
 
-            self.falseness_map [c.destructive_hash ()] = -1;
+            self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
+        }
+
+        truth
+    }
+
+    fn full_prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups {
+        let truth = full_proof_from_iterator (CompactHashIterator {
+            hash_prover : self,
+            bell_iter : &mut iter.bell_iter (),
+            canon_func : &mut canon,
+            index : 0
+        }.map (|(x, y)| (x as usize, y as usize)));
+
+        while fill (&mut iter.bell_iter (), &mut self.temporary_slice [..]) {
+            canon (&self.temporary_slice, &mut self.temporary_change);
+
+            self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
         }
 
         truth
@@ -333,9 +450,8 @@ impl FullProvingContext for CompactHashProver {
 }
 
 impl ProvingContext for CompactHashProver {
-    fn prove_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&Row, &mut Change) -> ()) -> bool {
-        let truth = CompactHashIterator {
-            temporary_change : Change::rounds (self.stage),
+    fn prove_touch_canonical (&mut self, touch : &Touch, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool {
+        let truth = CompactHashTouchIterator {
             hash_prover : self,
             row_iterator : &mut touch.row_iterator (),
             canon_func : &mut canon
@@ -344,32 +460,78 @@ impl ProvingContext for CompactHashProver {
         let mut c = Change::rounds (self.stage);
 
         for r in touch.row_iterator () {
-            canon (&r, &mut c);
+            canon (&r.slice (), &mut c);
 
             self.falseness_map [c.destructive_hash ()] = -1;
         }
 
         truth
     }
+    
+    fn prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, mut canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool {
+        let truth = CompactHashIterator {
+            hash_prover : self,
+            bell_iter : &mut iter.bell_iter (),
+            canon_func : &mut canon,
+            index : 0
+        }.next () == None;
+
+        while fill (&mut iter.bell_iter (), &mut self.temporary_slice [..]) {
+            canon (&self.temporary_slice, &mut self.temporary_change);
+
+            self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
+        }
+
+        truth
+    }
 }
 
-pub struct CompactHashIterator<'a, T : FnMut(&Row, &mut Change) -> ()> {
+pub struct CompactHashIterator<'a, I : Iterator<Item = Bell>, T : FnMut(&[Bell], &mut Change) -> ()> {
+    hash_prover : &'a mut CompactHashProver,
+    bell_iter : &'a mut I,
+    canon_func : &'a mut T,
+    index : usize
+}
+
+impl<'a, I : Iterator<Item = Bell>, T : FnMut(&[Bell], &mut Change) -> ()> Iterator for CompactHashIterator<'_, I, T> {
+    type Item = (IndexType, IndexType);
+
+    fn next (&mut self) -> Option<Self::Item> {
+        while fill (self.bell_iter, &mut self.hash_prover.temporary_slice [..]) {
+            (self.canon_func) (&self.hash_prover.temporary_slice [..], &mut self.hash_prover.temporary_change);
+
+            let hash = self.hash_prover.temporary_change.destructive_hash ();
+            let falseness_index = self.hash_prover.falseness_map [hash];
+
+            if falseness_index == -1 {
+                self.hash_prover.falseness_map [hash] = self.index as IndexType;
+            } else {
+                return Some ((falseness_index, self.index as IndexType));
+            }
+
+            self.index += 1;
+        }
+
+        None
+    }
+}
+
+pub struct CompactHashTouchIterator<'a, T : FnMut(&[Bell], &mut Change) -> ()> {
     hash_prover : &'a mut CompactHashProver,
     row_iterator : &'a mut RowIterator<'a>,
-    temporary_change : Change,
     canon_func : &'a mut T
 }
 
-impl<T : FnMut(&Row, &mut Change) -> ()> Iterator for CompactHashIterator<'_, T> {
+impl<T : FnMut(&[Bell], &mut Change) -> ()> Iterator for CompactHashTouchIterator<'_, T> {
     type Item = (IndexType, IndexType);
 
     fn next (&mut self) -> Option<Self::Item> {
         loop {
             match self.row_iterator.next () {
                 Some (r) => {
-                    (self.canon_func) (&r, &mut self.temporary_change);
+                    (self.canon_func) (&r.slice (), &mut self.hash_prover.temporary_change);
 
-                    let hash = self.temporary_change.destructive_hash ();
+                    let hash = self.hash_prover.temporary_change.destructive_hash ();
                     let falseness_index = self.hash_prover.falseness_map [hash];
 
                     if falseness_index == -1 {
@@ -444,14 +606,13 @@ mod bitmap_tests {
 
 
 // Example canonical functions
-pub fn canon_copy (row : &Row, change : &mut Change) {
-    row.copy_into (change);
+pub fn canon_copy (slice : &[Bell], change : &mut Change) {
+    change.overwrite_from_slice (slice);
 }
 
-pub fn canon_fixed_treble_cyclic (row : &Row, change : &mut Change) {
+pub fn canon_fixed_treble_cyclic (slice : &[Bell], change : &mut Change) {
     // We'll convert so that the first non-treble bell in the change is the 2
-    let slice = row.slice ();
-    let stage = row.stage ().as_usize ();
+    let stage = slice.len ();
 
     if stage == 1 {
         change.set_bell (Place::from (0), Bell::from (0));
@@ -493,10 +654,9 @@ pub fn canon_fixed_treble_cyclic (row : &Row, change : &mut Change) {
     }
 }
 
-pub fn canon_full_cyclic (row : &Row, change : &mut Change) {
+pub fn canon_full_cyclic (slice : &[Bell], change : &mut Change) {
     // We'll convert so that the first non-treble bell in the change is the 2
-    let slice = row.slice ();
-    let stage = row.stage ().as_usize ();
+    let stage = slice.len ();
 
     // Nothing to be done if the stage is one
     if stage == 1 {
@@ -513,7 +673,6 @@ pub fn canon_full_cyclic (row : &Row, change : &mut Change) {
         change.set_bell (Place::from (i), Bell::from (new_bell % stage));
     }
 }
-
 
 
 
@@ -543,8 +702,8 @@ mod proof_tests {
     #[test]
     fn naive () {
         for (t, b) in test_touches () {
-            assert_eq! (NaiveProver { }.prove_canonical (&t, canon_copy), b);
-            assert_eq! (NaiveProver { }.prove (&t), b);
+            assert_eq! (NaiveProver { }.prove_touch_canonical (&t, canon_copy), b);
+            assert_eq! (NaiveProver { }.prove_touch (&t), b);
         }
     }
 
@@ -552,8 +711,8 @@ mod proof_tests {
     fn hash () {
         for (t, b) in test_touches () {
             if t.stage.as_usize () <= 8 {
-                assert_eq! (HashProver::from_stage (t.stage).prove_canonical (&t, canon_copy), b);
-                assert_eq! (HashProver::from_stage (t.stage).prove (&t), b);
+                assert_eq! (HashProver::from_stage (t.stage).prove_touch_canonical (&t, canon_copy), b);
+                assert_eq! (HashProver::from_stage (t.stage).prove_touch (&t), b);
             }
         }
     }
@@ -561,11 +720,11 @@ mod proof_tests {
     #[test]
     fn compact_hash () {
         for (t, b) in test_touches () {
-            assert_eq! (CompactHashProver::from_stage (t.stage).prove (&t), b);
+            assert_eq! (CompactHashProver::from_stage (t.stage).prove_touch (&t), b);
         }
 
         for (t, b) in full_proof_test_touches () {
-            assert_eq! (CompactHashProver::from_stage (t.stage).full_prove (&t), b);
+            assert_eq! (CompactHashProver::from_stage (t.stage).full_prove_touch (&t), b);
         }
     }
 
@@ -585,7 +744,7 @@ mod proof_tests {
             let touch = Touch::from (*orig);
             let mut change = Change::new (vec! [Bell::from (20); canon.len ()]);
 
-            canon_fixed_treble_cyclic (&touch.row_iterator ().next ().unwrap (), &mut change);
+            canon_fixed_treble_cyclic (&touch.row_iterator ().next ().unwrap ().slice (), &mut change);
 
             assert_eq! (change, Change::from (*canon));
         }
@@ -605,7 +764,7 @@ mod proof_tests {
             let touch = Touch::from (*orig);
             let mut change = Change::new (vec! [Bell::from (20); canon.len ()]);
 
-            canon_full_cyclic (&touch.row_iterator ().next ().unwrap (), &mut change);
+            canon_full_cyclic (&touch.row_iterator ().next ().unwrap ().slice (), &mut change);
 
             assert_eq! (change, Change::from (*canon));
         }
@@ -621,11 +780,11 @@ mod proof_tests {
             let t = Touch::from (*touch);
 
             assert_eq! (
-                HashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic),
+                HashProver::from_stage (t.stage).prove_touch_canonical (&t, canon_fixed_treble_cyclic),
                 *truth
             );
             assert_eq! (
-                CompactHashProver::from_stage (t.stage).prove_canonical (&t, canon_fixed_treble_cyclic),
+                CompactHashProver::from_stage (t.stage).prove_touch_canonical (&t, canon_fixed_treble_cyclic),
                 *truth
             );
         }
@@ -645,9 +804,9 @@ mod proof_tests {
             let t = Touch::from (*touch);
 
             let mut compact_truth = CompactHashProver::from_stage (t.stage)
-                .full_prove_canonical (&t, canon_fixed_treble_cyclic);
+                .full_prove_touch_canonical (&t, canon_fixed_treble_cyclic);
             let mut naive_truth = NaiveProver { }
-                .full_prove_canonical (&t, canon_fixed_treble_cyclic);
+                .full_prove_touch_canonical (&t, canon_fixed_treble_cyclic);
 
             compact_truth.sort ();
             naive_truth.sort ();

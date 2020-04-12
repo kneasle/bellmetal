@@ -375,11 +375,11 @@ impl Touch {
     }
 
     pub fn is_true (&self) -> bool {
-        NaiveProver { }.prove (self)
+        NaiveProver { }.prove_touch (&self)
     }
 
     pub fn full_truth (&self) -> Vec<Vec<usize>> {
-        NaiveProver { }.full_prove (self)
+        NaiveProver { }.full_prove_touch (&self)
     }
 
     pub fn full_truth_table (&self) -> HashMap<usize, usize> {

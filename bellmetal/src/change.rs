@@ -20,6 +20,10 @@ impl Change {
         Stage::from (self.seq.len ())
     }
 
+    pub fn mut_slice (&mut self) -> &mut [Bell] {
+        &mut self.seq [..]
+    }
+
     pub fn multiply (&self, rhs : &impl Transposition) -> Change {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
@@ -126,15 +130,17 @@ impl Change {
         self.seq.extend (other);
     }
 
-    pub fn overwrite_from (&mut self, other : &impl Transposition) {
-        let slice = other.slice ();
-
+    pub fn overwrite_from_slice (&mut self, slice : &[Bell]) {
         self.seq.clear ();
         self.seq.reserve (slice.len ());
 
         for b in slice.iter () {
             self.seq.push (*b);
         }
+    }
+
+    pub fn overwrite_from (&mut self, other : &impl Transposition) {
+        self.overwrite_from_slice (other.slice ());
     }
 
     pub fn inverse (&self) -> Change {
@@ -371,6 +377,45 @@ impl ChangeAccumulator {
         }
     }
 }
+
+
+
+
+
+pub struct ChangeIter<T : Iterator<Item = Bell>> {
+    bell_iter : T,
+    stage : Stage
+}
+
+impl<T : Iterator<Item = Bell>> ChangeIter<T> {
+    pub fn new (bell_iter : T, stage : Stage) -> ChangeIter<T> {
+        ChangeIter {
+            bell_iter : bell_iter,
+            stage : stage
+        }
+    }
+}
+
+impl<T : Iterator<Item = Bell>> Iterator for ChangeIter<T> {
+    type Item = Change;
+
+    fn next (&mut self) -> Option<Change> {
+        let stage = self.stage.as_usize ();
+        let mut vec : Vec<Bell> = Vec::with_capacity (stage);
+
+        for _ in 0..stage {
+            if let Some (b) = self.bell_iter.next () {
+                vec.push (b);
+            } else {
+                return None;
+            }
+        }
+
+        Some (Change::new (vec))
+    }
+}
+    
+
 
 
 
