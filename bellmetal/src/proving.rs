@@ -6,6 +6,8 @@ use std::collections::HashMap;
 
 use std::cmp::Ordering;
 
+pub type ProofGroups = Vec<Vec<usize>>;
+
 fn fill<T : Sized> (iter : &mut impl Iterator<Item = T>, slice : &mut [T]) -> bool {
     for i in 0..slice.len () {
         if let Some (v) = iter.next () {
@@ -38,8 +40,6 @@ pub trait ProvingContext {
 
 
 
-
-pub type ProofGroups = Vec<Vec<usize>>;
 
 pub trait FullProvingContext : ProvingContext {
     fn full_prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups;
