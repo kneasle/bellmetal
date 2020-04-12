@@ -14,6 +14,7 @@ use std::collections::HashMap;
 use std::iter::Cloned;
 use std::marker::PhantomData;
 use crate::utils::AndNext;
+use crate::proving::ProofGroups;
 
 fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize> {
     // Combine mappings
@@ -378,7 +379,7 @@ impl Touch {
         NaiveProver { }.prove_touch (&self)
     }
 
-    pub fn full_truth (&self) -> Vec<Vec<usize>> {
+    pub fn full_truth (&self) -> ProofGroups {
         NaiveProver { }.full_prove_touch (&self)
     }
 
