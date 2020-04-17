@@ -4,7 +4,7 @@ use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
 
-#[derive(PartialOrd, Ord, Eq, PartialEq, Clone)]
+#[derive(Hash, PartialOrd, Ord, Eq, PartialEq, Clone)]
 pub struct Change {
     seq : Vec<Bell>
 }
