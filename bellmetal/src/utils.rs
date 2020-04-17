@@ -18,6 +18,10 @@ pub fn closure (change : Change) -> Vec<Change> {
     vec
 }
 
+pub fn extent (stage : Stage) -> impl Iterator<Item = Change> {
+    ExtentIterator::new (Stage::from (stage))
+}
+
 
 
 

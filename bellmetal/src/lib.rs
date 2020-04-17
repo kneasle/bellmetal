@@ -27,3 +27,4 @@ pub use touch_iterator::{ TouchIterator, TransfiguredTouchIterator };
 pub use transposition::{ Transposition, MultiplicationIterator };
 pub use types::{ Stroke, Bell, Place, Parity, Stage, Number, Mask, MaskMethods };
 pub use touch_generation::{ one_part_spliced_touch };
+pub use utils::{ extent, closure };
