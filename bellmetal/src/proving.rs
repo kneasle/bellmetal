@@ -1,4 +1,4 @@
-use crate::{ Touch, Stage, Place, Bell, Transposition, Change, ChangeIter, TouchIterator };
+use crate::{ Touch, Stage, Place, Bell, Transposition, Change, ChangeCollectIter, TouchIterator };
 use crate::touch::RowIterator;
 
 use factorial::Factorial;
@@ -189,7 +189,7 @@ impl ProvingContext for NaiveProver {
     }
 
     fn prove<'a> (&mut self, iter : &impl TouchIterator<'a>) -> bool {
-        let mut changes : Vec<Change> = ChangeIter::new (iter.bell_iter (), iter.stage ()).collect ();
+        let mut changes : Vec<Change> = ChangeCollectIter::new (iter.bell_iter (), iter.stage ()).collect ();
 
         changes.sort ();
 

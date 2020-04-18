@@ -384,21 +384,21 @@ impl ChangeAccumulator {
 
 
 
-pub struct ChangeIter<T : Iterator<Item = Bell>> {
+pub struct ChangeCollectIter<T : Iterator<Item = Bell>> {
     bell_iter : T,
     stage : Stage
 }
 
-impl<T : Iterator<Item = Bell>> ChangeIter<T> {
-    pub fn new (bell_iter : T, stage : Stage) -> ChangeIter<T> {
-        ChangeIter {
+impl<T : Iterator<Item = Bell>> ChangeCollectIter<T> {
+    pub fn new (bell_iter : T, stage : Stage) -> ChangeCollectIter<T> {
+        ChangeCollectIter {
             bell_iter : bell_iter,
             stage : stage
         }
     }
 }
 
-impl<T : Iterator<Item = Bell>> Iterator for ChangeIter<T> {
+impl<T : Iterator<Item = Bell>> Iterator for ChangeCollectIter<T> {
     type Item = Change;
 
     fn next (&mut self) -> Option<Change> {
