@@ -80,26 +80,22 @@ impl ExtentGenerator {
     pub fn step (&mut self) -> bool {
         let stage = self.stage.as_usize ();
 
-        if stage < CACHED_EXTENTS {
-            self.array_index += 1;
+        match &mut self.recursive_generator {
+            Some (g) => {
+                self.insert_location += 1;
 
-            return self.array_index < EXTENT_LENGTHS [stage];
-        } else {
-            match &mut self.recursive_generator {
-                Some (g) => {
-                    self.insert_location += 1;
+                if self.insert_location == stage {
+                    self.insert_location = 0;
 
-                    if self.insert_location == stage {
-                        self.insert_location = 0;
-
-                        return g.step ();
-                    } else {
-                        return true;
-                    }
+                    g.step ()
+                } else {
+                    true
                 }
-                None => {
-                    panic! ("Recursive extent generator not found");
-                }
+            }
+            None => {
+                self.array_index += 1;
+
+                self.array_index < EXTENT_LENGTHS [stage]
             }
         }
     }
@@ -107,29 +103,25 @@ impl ExtentGenerator {
     pub fn fill (&self, slice : &mut [Bell]) {
         let stage = self.stage.as_usize ();
 
-        if stage < CACHED_EXTENTS {
-            // Load the extent from static memory
-            let extent_slice = EXTENTS [stage];
+        match &self.recursive_generator {
+            Some (g) => {
+                // Generate the permutation recursively
+                g.fill (slice);
 
-            for i in 0..stage {
-                slice [i] = Bell::from (extent_slice [self.array_index * stage + i] as usize);
-            }
-        } else {
-            // Generate the permutation recursively
-            match &self.recursive_generator {
-                Some (g) => {
-                    g.fill (slice);
+                let mut temp = Bell::from (stage - 1);
 
-                    let mut temp = Bell::from (stage - 1);
-
-                    for i in self.insert_location..stage {
-                        let t2 = slice [i];
-                        slice [i] = temp;
-                        temp = t2;
-                    }
+                for i in self.insert_location..stage {
+                    let t2 = slice [i];
+                    slice [i] = temp;
+                    temp = t2;
                 }
-                None => {
-                    panic! ("Recursive extent generator not found");
+            }
+            None => {
+                // Load the extent from static memory
+                let extent_slice = EXTENTS [stage];
+
+                for i in 0..stage {
+                    slice [i] = Bell::from (extent_slice [self.array_index * stage + i] as usize);
                 }
             }
         }
