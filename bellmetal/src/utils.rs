@@ -184,6 +184,7 @@ impl<T : Iterator> Iterator for AndNext<T> where T::Item : Copy {
         }
     }
 
+    #[cfg_attr(tarpaulin, skip)]
     fn size_hint (&self) -> (usize, Option<usize>) {
         self.iter.size_hint ()
     }
@@ -216,9 +217,8 @@ static EXTENTS : [&[u8]; CACHED_EXTENTS] = [
 
 #[cfg(test)]
 mod utils_tests {
-    use crate::utils;
-    use crate::{ Change, Stage };
-    use crate::utils::{ ExtentIterator, AndNext };
+    use crate::{ Change, Stage, extent, closure };
+    use crate::utils::{ AndNext };
 
     use factorial::Factorial;
 
@@ -233,9 +233,9 @@ mod utils_tests {
     }
 
     #[test]
-    fn closure () {
+    fn change_closure () {
         assert_eq! (
-            utils::closure (Change::from ("13425678")),
+            closure (Change::from ("13425678")),
             vec! [
                 Change::from ("12345678"),
                 Change::from ("13425678"),
@@ -244,7 +244,7 @@ mod utils_tests {
         );
 
         assert_eq! (
-            utils::closure (Change::from ("87654321")),
+            closure (Change::from ("87654321")),
             vec! [
                 Change::from ("12345678"),
                 Change::from ("87654321")
@@ -252,21 +252,21 @@ mod utils_tests {
         );
 
         assert_eq! (
-            utils::closure (Change::from ("1")),
+            closure (Change::from ("1")),
             vec! [
                 Change::from ("1"),
             ]
         );
 
         assert_eq! (
-            utils::closure (Change::from ("123456789")),
+            closure (Change::from ("123456789")),
             vec! [
                 Change::from ("123456789"),
             ]
         );
 
         assert_eq! (
-            utils::closure (Change::from ("4321675")),
+            closure (Change::from ("4321675")),
             vec! [
                 Change::from ("1234567"),
                 Change::from ("4321675"),
@@ -278,7 +278,7 @@ mod utils_tests {
         );
 
         assert_eq! (
-            utils::closure (Change::from ("")),
+            closure (Change::from ("")),
             vec! [
                 Change::from (""),
             ]
@@ -286,11 +286,11 @@ mod utils_tests {
     }
 
     #[test]
-    fn extent () {
+    fn extent_gen () {
         for s in 1..9usize {
             let mut count = 0;
 
-            for c in ExtentIterator::new (Stage::from (s)) {
+            for c in extent (Stage::from (s)) {
                 assert_eq! (c.stage (), Stage::from (s));
 
                 count += 1;

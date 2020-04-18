@@ -599,6 +599,15 @@ mod change_tests {
     }
 
     #[test]
+    fn mut_slice () {
+        let mut c = Change::rounds (Stage::MAXIMUS);
+
+        c.mut_slice () [5] = Bell::from (0);
+
+        assert_eq! (c, Change::from ("1234517890ET"));
+    }
+
+    #[test]
     fn inversion () {
         assert_eq! (!Change::from ("12345"), Change::from ("12345"));
         assert_eq! (!Change::from ("1235647890"), Change::from ("1236457890"));

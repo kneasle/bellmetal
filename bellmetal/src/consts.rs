@@ -53,6 +53,21 @@ mod const_tests {
     use crate::{ BELL_NAMES, Bell, name_to_number };
     use crate::consts::get_number;
 
+    macro_rules! name_to_number_panic_test {
+        ($n : ident, $e : expr) => {
+            #[test]
+            #[should_panic]
+            fn $n () {
+                name_to_number ($e);
+            }
+        }
+    }
+
+    name_to_number_panic_test! (name_to_number_null, '\0');
+    name_to_number_panic_test! (name_to_number_newline, '\n');
+    name_to_number_panic_test! (name_to_number_space, ' ');
+    name_to_number_panic_test! (name_to_number_nonascii, '★');
+
     #[test]
     fn lookup_table () {
         fn get_from_names (name : char) -> i8 {
