@@ -543,7 +543,7 @@ mod co_tests {
             let mut a = PlainCoursingOrderIterator::new (stage);
             let mut b = order.chars ().cycle ();
 
-            for _ in 0..10 {
+            for _ in 0..100 {
                 let l = a.next ().as_char ();
                 let r = b.next ().unwrap ();
 
