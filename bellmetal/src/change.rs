@@ -323,6 +323,8 @@ impl ChangeAccumulator {
         } else {
             self.change_1.pre_multiply_into (iter, &mut self.change_2);
         }
+
+        self.using_second_change = !self.using_second_change;
     }
 
     pub fn set (&mut self, change : &Change) {
