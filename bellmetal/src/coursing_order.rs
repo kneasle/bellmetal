@@ -260,13 +260,7 @@ impl From<&str> for CoursingOrder {
 
 impl fmt::Debug for CoursingOrder {
     fn fmt (&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut s = String::with_capacity (self.order.len () + 2);
-
-        for b in &self.order {
-            s.push (b.as_char ());
-        }
-
-        write! (f, "<{}>", s)
+        write! (f, "<{}>", self.to_string ())
     }
 }
 
