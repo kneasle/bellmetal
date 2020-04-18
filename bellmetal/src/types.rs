@@ -92,7 +92,7 @@ impl fmt::Debug for Mask {
         let mut s = String::with_capacity (Mask::limit () as usize);
 
         for i in 0..Mask::limit () {
-            s.push (if self.get (i) { '1' } else { '1' });
+            s.push (if self.get (i) { '1' } else { '0' });
         }
 
         write! (f, "{}", s)
@@ -256,9 +256,9 @@ impl Stage {
             string.push_str ("<stage ");
             string.push_str (&self.0.to_string ());
             string.push ('>');
+        } else {
+            string.push_str (STAGE_NAMES [self.0 as usize]);
         }
-
-        string.push_str (STAGE_NAMES [self.0 as usize]);
     }
 }
 
@@ -275,6 +275,20 @@ impl From<char> for Bell {
 mod stage_tests {
     use crate::Stage;
 
+    macro_rules! stage_from_string_panic {
+        ($name : ident, $val : expr) => {
+            #[test]
+            #[should_panic]
+            fn $name () {
+                Stage::from_str ($val);
+            }
+        }
+    }
+
+    stage_from_string_panic! (from_string_empty, "");
+    stage_from_string_panic! (from_string_garbage, "laksdjflaksgibhsajdflaksbiha");
+    stage_from_string_panic! (from_string_close, "Sixteens");
+
     #[test]
     fn string_conversions () {
         for i in 0..23 {
@@ -282,7 +296,72 @@ mod stage_tests {
 
             assert_eq! (Stage::from_str (&s.to_string ()), s);
         }
+
+        assert_eq! (Stage::from (100).to_string (), "<stage 100>");
     }
+}
+
+#[cfg(test)]
+mod parity_tests {
+    use crate::{ Parity };
+
+    #[test]
+    fn not () {
+        assert_eq! (!Parity::Even, Parity::Odd);
+        assert_eq! (!Parity::Odd, Parity::Even);
+    }
+
+    #[test]
+    fn multiply () {
+        assert_eq! (Parity::Even * Parity::Even, Parity::Even);
+        assert_eq! (Parity::Even * Parity::Odd , Parity::Odd);
+        assert_eq! (Parity::Odd  * Parity::Even, Parity::Odd);
+        assert_eq! (Parity::Odd  * Parity::Odd , Parity::Even);
+    }
+}
+
+#[cfg(test)]
+mod stroke_tests {
+    use crate::{ Stroke };
+
+    #[test]
+    fn not () {
+        assert_eq! (!Stroke::Hand, Stroke::Back);
+        assert_eq! (!Stroke::Back, Stroke::Hand);
+    }
+}
+
+#[cfg(test)]
+mod type_tests {
+    use crate::{ Place, Bell, Stage };
+
+    macro_rules! panic_negative_conversion {
+        ($name : ident, $type : ident, $val : expr) => {
+            #[test]
+            #[should_panic]
+            fn $name () {
+                $type::from ($val);
+            }
+        }
+    }
+
+    panic_negative_conversion! (negative_conversion_bell, Bell, -1);
+    panic_negative_conversion! (negative_conversion_stage, Stage, -1);
+    panic_negative_conversion! (negative_conversion_place, Place, -1);
+
+    macro_rules! panic_too_large_string_conversion {
+        ($name : ident, $type : ident, $val : expr) => {
+            #[test]
+            #[should_panic]
+            fn $name () {
+                $type::from ($val).as_char ();
+            }
+        }
+    }
+
+    panic_too_large_string_conversion! (too_large_conversion_place, Place, 10000);
+    panic_too_large_string_conversion! (too_large_conversion_bell, Bell, 10000);
+    panic_too_large_string_conversion! (too_large_conversion_stage, Stage, 10000);
 }
 
 #[cfg(test)]
@@ -339,5 +418,17 @@ mod mask_tests {
 
         assert! (!mask.get (3));
         assert! (!mask.get (0));
+    }
+
+    #[test]
+    fn debug_print () {
+        assert_eq! (
+            format! ("{:?}", Mask::empty ()),
+            "0000000000000000000000000000000000000000000000000000000000000000"
+        );
+        assert_eq! (
+            format! ("{:?}", Mask::from_bitmask (0b1001_1000u64)), 
+            "0001100100000000000000000000000000000000000000000000000000000000"
+        );
     }
 }
