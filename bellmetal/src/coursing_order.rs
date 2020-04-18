@@ -549,6 +549,24 @@ mod co_tests {
     }
 
     #[test]
+    fn debug_print () {
+        for order in &[
+            "8753462",
+            "98762453",
+            "5324",
+            "65342",
+            "8657234",
+            "2"
+        ] {
+            assert_eq! (
+                format! ("{:?}", CoursingOrder::from (*order)), 
+                format! ("<{}>", order)
+            );
+        }
+    }
+
+
+    #[test]
     fn basic_iterator () {
         for order in &[
             "8753462",
@@ -578,9 +596,10 @@ mod co_tests {
             "17364528",
             "17654328"
         ] {
-            let co = Change::from (*coursehead);
+            let ch = Change::from (*coursehead);
 
-            assert_eq! (LeadheadCoursingOrderIterator::new (&co).to_coursehead (), co);
+            assert_eq! (CoursingOrder::from_leadhead (&ch).to_coursehead (), ch);
+            assert_eq! (LeadheadCoursingOrderIterator::new (&ch).to_coursehead (), ch);
         }
     }
 
