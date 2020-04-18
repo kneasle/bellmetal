@@ -573,6 +573,7 @@ mod change_tests {
     #[test]
     fn exponentiation () {
         assert_eq! (Change::from ("18765432").pow (2i32), Change::rounds (Stage::from (8)));
+        assert_eq! (Change::from ("81275643").pow (0), Change::rounds (Stage::from (8)));
         assert_eq! (Change::from ("912345678").pow (-4), Change::from ("567891234"));
         assert_eq! (Change::from ("134265").pow (2), Change::from ("142356"));
         assert_eq! (Change::from ("134265").pow (-3), Change::from ("123465"));
@@ -581,7 +582,28 @@ mod change_tests {
     #[test]
     #[should_panic]
     fn multiplication_nonequal_stages () {
-        let _c = Change::from ("1234") * Change::from ("12345");
+        let _ = Change::from ("1234") * Change::from ("12345");
+    }
+
+    #[test]
+    #[should_panic]
+    fn multiplicaty_invert_nonequal_stages () {
+        Change::from ("1234").multiply_inverse_into (&Change::from ("12345"), &mut Change::empty ());
+    }
+
+    #[test]
+    #[should_panic]
+    fn pre_multiplication_into_nonequal_stages_1 () {
+        Change::from ("1234").pre_multiply_into (&Change::from ("12345"), &mut Change::empty ());
+    }
+
+    #[test]
+    fn pre_multiplication_into_nonequal_stages_2 () {
+        let mut c = Change::empty ();
+
+        Change::from ("32145678").pre_multiply_into (&Change::from ("78123456"), &mut c);
+
+        assert_eq! (c, Change::from ("18723456"));
     }
 
     #[test]
@@ -750,5 +772,96 @@ mod change_tests {
         write! (&mut s, "{:?}", Change::from ("1678902345ET")).unwrap ();
         assert_eq! (s, "<1678902345ET>");
         s.clear ();
+    }
+}
+
+#[cfg(test)]
+mod change_accum_tests {
+    use crate::{ Stage, Change, ChangeAccumulator };
+
+    #[test]
+    #[should_panic]
+    fn set_wrong_stage () {
+        let mut acc = ChangeAccumulator::new (Stage::MAJOR);
+
+        acc.set (&Change::from ("123"));
+    }
+
+    #[test]
+    fn non_panicking_behaviour () {
+        let mut acc = ChangeAccumulator::new (Stage::MAJOR);
+
+        assert_eq! (acc.total (), &Change::rounds (Stage::MAJOR));
+        
+        acc.accumulate (&Change::from ("43215678"));
+        assert_eq! (acc.total (), &Change::from ("43215678"));
+        acc.accumulate (&Change::from ("43215678"));
+        assert_eq! (acc.total (), &Change::from ("12345678"));
+        
+        acc.accumulate (&Change::from ("34567812"));
+        assert_eq! (acc.total (), &Change::from ("34567812"));
+        acc.accumulate (&Change::from ("34567812"));
+        assert_eq! (acc.total (), &Change::from ("56781234"));
+
+        acc.accumulate_inverse (&Change::from ("31245678"));
+        assert_eq! (acc.total (), &Change::from ("67581234"));
+
+        acc.pre_accumulate (&Change::from ("81234567"));
+        assert_eq! (acc.total (), &Change::from ("56478123"));
+        acc.pre_accumulate (&Change::from ("45678123"));
+        assert_eq! (acc.total (), &Change::from ("81723456"));
+
+        acc.set (&Change::from ("74651238"));
+        assert_eq! (acc.total (), &Change::from ("74651238"));
+        
+        acc.pre_accumulate (&Change::from ("45678123"));
+        assert_eq! (acc.total (), &Change::from ("27184563"));
+
+        acc.set (&Change::from ("74865123"));
+        assert_eq! (acc.total (), &Change::from ("74865123"));
+
+        acc.reset ();
+        assert_eq! (acc.total (), &Change::rounds (Stage::MAJOR));
+    }
+}
+
+#[cfg(test)]
+mod change_collection_tests {
+    use crate::{ Stage, Change, ChangeCollectIter, Transposition };
+
+    #[test]
+    fn normal_usage () {
+        let c = Change::from ("123452143524153425134523154321");
+
+        let mut iter = ChangeCollectIter::new (
+            c.iter (), 
+            Stage::DOUBLES
+        );
+
+        assert_eq! (iter.next (), Some (Change::from ("12345")));
+        assert_eq! (iter.next (), Some (Change::from ("21435")));
+        assert_eq! (iter.next (), Some (Change::from ("24153")));
+        assert_eq! (iter.next (), Some (Change::from ("42513")));
+        assert_eq! (iter.next (), Some (Change::from ("45231")));
+        assert_eq! (iter.next (), Some (Change::from ("54321")));
+        assert_eq! (iter.next (), None);
+    }
+
+    #[test]
+    fn incorrect_length () {
+        let c = Change::from ("1234521435241534251345231543214523");
+
+        let mut iter = ChangeCollectIter::new (
+            c.iter (), 
+            Stage::DOUBLES
+        );
+
+        assert_eq! (iter.next (), Some (Change::from ("12345")));
+        assert_eq! (iter.next (), Some (Change::from ("21435")));
+        assert_eq! (iter.next (), Some (Change::from ("24153")));
+        assert_eq! (iter.next (), Some (Change::from ("42513")));
+        assert_eq! (iter.next (), Some (Change::from ("45231")));
+        assert_eq! (iter.next (), Some (Change::from ("54321")));
+        assert_eq! (iter.next (), None);
     }
 }
