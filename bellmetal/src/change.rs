@@ -518,14 +518,14 @@ mod change_tests {
     fn copy_into () {
         let mut change = Change::empty ();
 
-        for c in [
+        for c in &[
             Change::from ("1234"),
             Change::from (""),
             Change::from ("17342685"),
             Change::from ("85672341"),
             Change::from ("0987123456"),
             Change::from ("")
-        ].iter () {
+        ] {
             c.copy_into (&mut change);
 
             assert_eq! (*c, change);
