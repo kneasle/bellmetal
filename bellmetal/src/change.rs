@@ -297,15 +297,6 @@ pub struct ChangeAccumulator {
 }
 
 impl ChangeAccumulator {
-    pub fn new (stage : Stage) -> ChangeAccumulator {
-        ChangeAccumulator {
-            change_1 : Change::rounds (stage),
-            change_2 : Change::rounds (stage),
-            stage : stage,
-            using_second_change : false
-        }
-    }
-
     pub fn total (&self) -> &Change {
         if self.using_second_change {
             &(self.change_2)
@@ -374,6 +365,17 @@ impl ChangeAccumulator {
             self.change_2.seq [i] = Bell::from (i);
 
             self.using_second_change = false;
+        }
+    }
+}
+
+impl ChangeAccumulator {
+    pub fn new (stage : Stage) -> ChangeAccumulator {
+        ChangeAccumulator {
+            change_1 : Change::rounds (stage),
+            change_2 : Change::rounds (stage),
+            stage : stage,
+            using_second_change : false
         }
     }
 }
