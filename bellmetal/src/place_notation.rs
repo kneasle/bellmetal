@@ -198,7 +198,7 @@ impl PlaceNotation {
         PlaceNotation { places : places, stage : stage }
     }
 
-    pub fn to_multiple_string_short (place_notations : &Vec<PlaceNotation>) -> String {
+    pub fn to_multiple_string_short (place_notations : &[PlaceNotation]) -> String {
         let mut string = String::with_capacity (200);
 
         PlaceNotation::into_multiple_string_short (place_notations, &mut string);
@@ -206,7 +206,7 @@ impl PlaceNotation {
         string
     }
 
-    pub fn into_multiple_string_short (place_notations : &Vec<PlaceNotation>, string : &mut String) {
+    pub fn into_multiple_string_short (place_notations : &[PlaceNotation], string : &mut String) {
         let len = place_notations.len ();
 
         let is_symmetrical = |i : usize| -> bool {
@@ -302,7 +302,7 @@ impl PlaceNotation {
         }
     }
 
-    pub fn to_multiple_string (place_notations : &Vec<PlaceNotation>) -> String {
+    pub fn to_multiple_string (place_notations : &[PlaceNotation]) -> String {
         let mut string = String::with_capacity (200);
 
         PlaceNotation::into_multiple_string (place_notations, &mut string);
@@ -310,7 +310,7 @@ impl PlaceNotation {
         string
     }
 
-    pub fn into_multiple_string (place_notations : &Vec<PlaceNotation>, string : &mut String) {
+    pub fn into_multiple_string (place_notations : &[PlaceNotation], string : &mut String) {
         let mut was_last_place_notation_cross = true; // Used to decide whether to insert a dot
 
         for p in place_notations {
