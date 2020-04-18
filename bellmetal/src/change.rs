@@ -25,17 +25,11 @@ impl Change {
     }
 
     pub fn multiply (&self, rhs : &impl Transposition) -> Change {
-        if self.stage () != rhs.stage () {
-            panic! ("Can't use transpositions of different stages!");
-        }
+        let mut c = Change::empty ();
 
-        let mut new_seq : Vec<Bell> = Vec::with_capacity (self.stage ().as_usize ());
+        self.multiply_into (rhs, &mut c);
 
-        for i in 0..self.stage ().as_usize () {
-            new_seq.push (self.seq [rhs.bell_at (Place::from (i)).as_usize ()]);
-        }
-
-        Change { seq : new_seq }
+        c
     }
 
     pub fn set_bell (&mut self, place : Place, bell : Bell) {
@@ -54,10 +48,6 @@ impl Change {
 
     pub fn pre_multiply_into (&self, lhs : &impl Transposition, into : &mut Change) {
         if self.stage () != lhs.stage () {
-            panic! ("Can't use transpositions of different stages!");
-        }
-
-        if self.stage () != into.stage () {
             panic! ("Can't use transpositions of different stages!");
         }
 
@@ -91,10 +81,6 @@ impl Change {
             panic! ("Can't use transpositions of different stages!");
         }
 
-        if self.stage () != into.stage () {
-            panic! ("Can't multiply into a change of the wrong stage");
-        }
-
         into.seq.clear ();
 
         for i in 0..self.stage ().as_usize () {
@@ -105,10 +91,6 @@ impl Change {
     pub fn multiply_inverse_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
-        }
-
-        if self.stage () != into.stage () {
-            panic! ("Can't multiply into a change of the wrong stage");
         }
 
         for i in 0..self.stage ().as_usize () {
