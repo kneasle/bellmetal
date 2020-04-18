@@ -64,6 +64,20 @@ impl PlaceNotation {
         }
     }
 
+    pub fn shares_places_with (&self, other : &PlaceNotation) -> bool {
+        if other.stage != self.stage {
+            panic! ("Can't figure out if two place notations of different stages share a place");
+        }
+
+        for p in 0..self.stage.as_number () {
+            if self.places.get (p) && other.places.get (p) {
+                return true;
+            }
+        }
+
+        false
+    }
+
     pub fn transposition (&self) -> Change {
         let stage = self.stage.as_usize ();
         let mut bell_vec : Vec<Bell> = Vec::with_capacity (stage);
