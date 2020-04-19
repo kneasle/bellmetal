@@ -63,19 +63,11 @@ impl MethodLibrary {
 }
 
 impl MethodLibrary {
-    pub fn from_string (string : &String) -> MethodLibrary {
-        let mut stored_methods : Vec<StoredMethod> = Vec::with_capacity (2000);
-
-        for s in string.lines () {
-            stored_methods.push (deserialise_stored_method (s));
-        }
-
-        MethodLibrary {
-            stored_methods : stored_methods,
-        }
+    pub fn from_string (string : &str) -> MethodLibrary {
+        MethodLibrary::from_string_filtered (string, None)
     }
 
-    pub fn from_string_filtered (string : &String, stage : Option<Stage>) -> MethodLibrary {
+    pub fn from_string_filtered (string : &str, stage : Option<Stage>) -> MethodLibrary {
         let mut stored_methods : Vec<StoredMethod> = Vec::with_capacity (2000);
 
         match stage {
