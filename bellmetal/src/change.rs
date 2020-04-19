@@ -228,6 +228,16 @@ impl Change {
     pub fn new (bell_vec : Vec<Bell>) -> Change {
         Change { seq : bell_vec }
     }
+
+    pub fn from_iterator<T> (iter : T) -> Change 
+        where T : Iterator<Item = Bell>, T : Sized 
+    {
+        let mut c = Change::empty ();
+        
+        c.overwrite_from_iterator (iter);
+
+        c
+    }
 }
 
 impl fmt::Debug for Change {
