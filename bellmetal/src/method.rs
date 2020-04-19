@@ -18,18 +18,7 @@ pub struct Call {
 
 impl Call {
     pub fn from_place_notation_string (notation : char, string : &str, stage : Stage) -> Call {
-        let place_notations = PlaceNotation::from_multiple_string (string, stage);
-
-        if place_notations.len () == 0 {
-            panic! ("Can't have a call with empty place notation array");
-        }
-
-        Call {
-            transposition : PlaceNotation::overall_transposition (&place_notations),
-            place_notations : place_notations,
-            notation : notation,
-            stage : stage
-        }
+        Call::new (notation, PlaceNotation::from_multiple_string (string, stage))
     }
 
     pub fn new (notation : char, place_notations : Vec<PlaceNotation>) -> Call {
@@ -80,13 +69,7 @@ impl Method {
     }
 
     pub fn lead_end (&self) -> Change {
-        let mut vec : Vec<Bell> = Vec::with_capacity (self.stage.as_usize ());
-
-        for b in self.plain_lead.row_at (self.plain_lead.length - 1).slice () {
-            vec.push (*b);
-        }
-
-        Change::new (vec)
+        Change::from_iterator (self.lead_end_iterator ())
     }
 
     pub fn lead_end_row<'a> (&'a self) -> Row<'a> {
