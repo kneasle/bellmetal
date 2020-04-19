@@ -159,11 +159,36 @@ impl Method {
 
 
 #[cfg(test)]
-mod tests {
+mod call_tests {
     use crate::{
-        Method,
+        Call,
         Stage,
-        Change
+        PlaceNotation
+    };
+
+    #[test]
+    #[should_panic]
+    fn different_pn_stages () {
+        Call::new (
+            '-',
+            vec![
+                PlaceNotation::from_string ("14", Stage::MAJOR),
+                PlaceNotation::from_string ("x", Stage::MINOR)
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn empty_pn () {
+        Call::from_place_notation_string ('-', "", Stage::MAJOR);
+    }
+}
+
+#[cfg(test)]
+mod method_tests {
+    use crate::{
+        Method, Call, Stage, Change, PlaceNotation
     };
 
     #[test]
@@ -194,6 +219,44 @@ mod tests {
             assert_eq! (
                 Method::from_str ("No Name", pns, Stage::from (lh.len ())).lead_end (),
                 Change::from (*lh)
+            );
+        }
+    }
+
+    #[test]
+    fn lead_head_after_call () {
+        assert_eq! (
+            Method::from_str ("No Name", "7.1.7.1.7.1.7,127", Stage::TRIPLES).lead_head_after_call (
+                &Call::from_place_notation_string ('-', "147", Stage::TRIPLES)
+            ),
+            Change::from ("1235746")
+        )
+    }
+
+    #[test]
+    fn partial () {
+        assert_eq! (
+            Method::partial (
+                "Partial Method", 
+                PlaceNotation::from_multiple_string ("x30", Stage::ROYAL),
+                Change::from ("1352749608"),
+                PlaceNotation::from_string ("12", Stage::ROYAL)
+            ).plain_lead.to_string (),
+            "1234567890\n2143658709\n1246385079\n1357294068\n3152749608\n1325476980"
+        );
+    }
+
+    #[test]
+    fn from_string () {
+        for (pns, lh) in &[
+            ("7.1.7.1.7.1.7,127", "1352746"), // Plain Bob Triples
+            ("x3x4x25x36x47x58x69x70x8x9x0xE,2", "157392E4T608"), // Camb S Max
+            ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", "4623751"), // Scientific Triples
+            ("3,1.9.1.5.1", "126849375") // Little Grandsire Caters
+        ] {
+            assert_eq! (
+                Method::from_str ("No Name", pns, Stage::from (lh.len ())),
+                Method::from_string ("No Name".to_string (), pns, Stage::from (lh.len ()))
             );
         }
     }
