@@ -61,7 +61,7 @@ impl Call {
 
 
 
-
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Method {
     pub name : String,
     pub stage : Stage,

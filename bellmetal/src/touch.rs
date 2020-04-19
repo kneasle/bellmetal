@@ -275,7 +275,7 @@ impl<'a> PartialOrd for Row<'a> {
 
 
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Touch {
     pub stage : Stage,
     pub length : usize,
