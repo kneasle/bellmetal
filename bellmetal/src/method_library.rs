@@ -155,10 +155,14 @@ pub fn serialise_method (method : &Method, string : &mut String) {
 
 #[cfg(test)]
 mod lib_tests {
-    use crate::{ Method, Stage, deserialise_method, serialise_method };
+    use crate::{
+        Method, MethodLibrary,
+        Stage, PlaceNotation,
+        deserialise_method, serialise_method
+    };
 
     #[test]
-    fn to_from_text () {
+    fn serialisation () {
         let mut s = String::with_capacity (100);
 
         for m in &[
@@ -184,5 +188,72 @@ mod lib_tests {
             assert_eq! (method.stage, m.stage);
             assert_eq! (method.place_notation, m.place_notation);
         }
+    }
+
+    #[test]
+    fn library () {
+        let meth_string = "3|St Remigius Place Singles|3.1.3,2
+3|Titanic Singles|3.1,3
+4|Grandsire Minimus|3,1x1x
+4|Ada Minimus|2x2.1.2,1x
+6|NFFC Treble Place Minor|x5x4x2x23x45x5,2
+6|Gasherbrum II Treble Place Minor|x5x4x3.2.345.2.3x34,1
+7|Little Orchard Bob Triples|5.1.5.23.7.45.7,2
+7|Cold Ash Bob Triples|5.1.7.3.7.5.7,25
+7|Fellowship of the Ring Alliance Triples|7.1.5.3.7.5.3.5.7,1
+8|Lagargawan Bob Major|567.4.2567.367.34.345.256.7,2
+8|Unchhera Bob Major|567.456x236.34.5.23456.7,2
+8|Ancient Society of Efquire Leeds Youths Treble Place Major|x3x4x5x6x4x5x367x7,2
+8|Cockup Bridge Treble Place Major|x3x4x5x36x4x1x2567x7,2
+8|Tiffield Treble Bob Major|34x34.1x2x1x2x1x2x7,2
+8|Fairford Surprise Major|x36x6x5x36x2x3.4x4.7,2
+12|Folgate Surprise Maximus|3x56.4x56x3x4x5x4x5x4x5x4x5,2
+12|Cirencester Surprise Maximus|70.36x450.78.9x6x29x0x90x7x78x67x690x1,2
+12|Ripon Surprise Maximus|3x5.4x2x6x4x3.4x4.5.4x4.5.4x4.5,2";
+
+        let method_lib = MethodLibrary::from_string (meth_string);
+        let method_lib_triples = MethodLibrary::from_string_filtered (meth_string, Some (Stage::MAJOR));
+
+        assert_eq! (method_lib.all_methods ().count (), 18);
+
+        assert_eq! (
+            method_lib.get_method_by_notation (
+                &PlaceNotation::from_multiple_string ("x5x4x2x23x45x5,2", Stage::MINOR)
+            ).unwrap ().name,
+            "NFFC Treble Place Minor"
+        );
+        
+        assert_eq! (
+            method_lib_triples.get_method_by_notation (
+                &PlaceNotation::from_multiple_string ("x5x4x2x23x45x5,2", Stage::MINOR)
+            ),
+            None
+        );
+        
+        assert_eq! (
+            method_lib.get_method_by_notation (
+                &PlaceNotation::from_multiple_string ("x5x4x2x23x45x3,2", Stage::MINOR)
+            ),
+            None
+        );
+        
+        assert_eq! (
+            method_lib.get_method ("Fellowship of the Ring Alliance Triples"),
+            Some (Method::from_str (
+                "Fellowship of the Ring Alliance Triples",
+                "7.1.5.3.7.5.3.5.7,1",
+                Stage::TRIPLES
+            ))
+        );
+        
+        assert_eq! (
+            method_lib_triples.get_method ("Fellowship of the Ring Alliance Triples"),
+            None
+        );
+        
+        assert_eq! (
+            method_lib.get_method ("Fellowship of The Ring Alliance Triples"),
+            None
+        );
     }
 }
