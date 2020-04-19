@@ -107,9 +107,11 @@ impl Change {
         }
     }
 
-    pub fn overwrite_from_iterator (&mut self, other : &mut impl Iterator<Item = Bell>) {
+    pub fn overwrite_from_iterator<T> (&mut self, iter : T)
+        where T : Iterator<Item = Bell>, T : Sized
+    {
         self.seq.clear ();
-        self.seq.extend (other);
+        self.seq.extend (iter);
     }
 
     pub fn overwrite_from_slice (&mut self, slice : &[Bell]) {
