@@ -51,7 +51,7 @@ pub fn name_to_number (name : char) -> Number {
 #[cfg(test)]
 mod const_tests {
     use crate::{ BELL_NAMES, Bell, name_to_number };
-    use crate::consts::get_number;
+    use crate::consts::{ get_number, is_bell_name };
 
     macro_rules! name_to_number_panic_test {
         ($n : ident, $e : expr) => {
@@ -87,6 +87,17 @@ mod const_tests {
 
             assert_eq! (get_from_names (c), get_number (c));
         }
+    }
+
+    #[test]
+    fn bell_name_tests () {
+        assert! (is_bell_name ('1'));
+        assert! (!is_bell_name ('X'));
+        assert! (!is_bell_name ('I'));
+        assert! (is_bell_name ('F'));
+        assert! (!is_bell_name ('\n'));
+        assert! (!is_bell_name ('\0'));
+        assert! (!is_bell_name ('!'));
     }
 
     #[test]
