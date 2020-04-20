@@ -179,10 +179,6 @@ impl PlaceNotation {
             // Nothing to be done here, since places defaults to 0
         } else { // Should decode bell names as places
             for c in notation.chars () {
-                if !consts::is_bell_name (c) {
-                    panic! ("Unknown bell name '{}' found in place notation '{}'", c, notation);
-                }
-
                 places.add (consts::name_to_number (c));
             }
 
