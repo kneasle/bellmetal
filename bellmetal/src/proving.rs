@@ -583,11 +583,9 @@ mod bitmap_tests {
             assert_eq! (map.get (i), true);
 
             map.set_false (i);
-
             assert_eq! (map.get (i), false);
 
             map.set_true (i);
-
             assert_eq! (map.get (i), true);
 
             assert_eq! (map.get (0), true);
