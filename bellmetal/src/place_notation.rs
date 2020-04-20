@@ -237,7 +237,7 @@ impl PlaceNotation {
         // Decide on the location, if any, of the comma
         let mut comma_index : Option<usize> = None;
 
-        if place_notations.len () % 2 == 0 {
+        if place_notations.len () % 2 == 0 && place_notations.len () > 2 {
             if is_symmetrical (len - 1) {
                 comma_index = Some (len - 1);
             } else {
