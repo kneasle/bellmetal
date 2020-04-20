@@ -501,19 +501,81 @@ pub mod pn_tests {
     }
 
     #[test]
-    fn multiple_string_conversions () {
+    #[should_panic]
+    fn parser_cross_odd_stage_before_comma () {
+        PlaceNotation::from_multiple_string ("1.7.9x,1",Stage::CINQUES);
+    }
+
+    #[test]
+    #[should_panic]
+    fn parser_cross_odd_stage_internal () {
+        PlaceNotation::from_multiple_string ("1.7.9x9.1",Stage::CINQUES);
+    }
+
+    #[test]
+    #[should_panic]
+    fn parser_cross_odd_stage_cross () {
+        PlaceNotation::from_string ("x",Stage::CINQUES);
+    }
+
+    #[test]
+    #[should_panic]
+    fn single_parser_odd_stage_cross () {
+        PlaceNotation::cross (Stage::CINQUES);
+    }
+
+    #[test]
+    #[should_panic]
+    fn cross_odd_stage () {
+        PlaceNotation::cross (Stage::CINQUES);
+    }
+    
+    #[test]
+    fn multiple_string_conversion_long () {
+        for (input, stage, expansion) in &[
+            (
+                "x4x4x7x7x7.36.7.8x,2",
+                Stage::ROYAL,
+                "x14x14x70x70x70.36.70.18x18.70.36.70x70x70x14x14x12"
+            ), // Hurricane Jack Differential Royal
+            ("x1", Stage::MINOR, "x16"), // Original Minor
+            ("3.4.5.1.5.1.5.1.5.1", Stage::DOUBLES, "3.145.5.1.5.1.5.1.5.1"), // Gnu Bob Doubles
+            (
+                "3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7",
+                Stage::TRIPLES,
+                "3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7"
+            ), // Scientific Triples
+            ("x2,1", Stage::MINOR, "x12x16"), // Bastow Minor
+            ("1,2x", Stage::MINOR, "16.12x12"), // Unnamed (for good reason) Minor
+            (
+                "3,1.E.1.E.1.E.1.E.1.E.1",
+                Stage::CINQUES,
+                "3.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1.E.1"
+            ), // Grandsire Cinques
+        ] {
+            assert_eq! (
+                PlaceNotation::to_multiple_string (&PlaceNotation::from_multiple_string (input, *stage)),
+                *expansion
+            );
+        }
+    }
+    #[test]
+    fn multiple_string_conversion_short () {
         for (string, length, leadhead) in &[
-            ("-14-14-70-70-70.36.70.18-,12", 28, "8756341290"), // Hurricane Jack Differential Royal
-            ("x16", 2, "241635"), // Original Minor
-            ("3.145.5.1.5.1.5.1.5.1", 10, "12435"), // Gnu Bob Doubles
+            ("x4x4x7x7x7.36.7.8x,2", 28, "8756341290"), // Hurricane Jack Differential Royal
+            ("x1", 2, "241635"), // Original Minor
+            ("3.4.5.1.5.1.5.1.5.1", 10, "12435"), // Gnu Bob Doubles
             ("3.1.7.1.5.1.7.1.7.5.1.7.1.7.1.7.1.7.1.5.1.5.1.7.1.7.1.7.1.7", 30, "4623751"), // Scientific Triples
-            ("x12,16", 4, "142635"), // Bastow Minor
+            ("x2,1", 4, "142635"), // Bastow Minor
+            ("1,2x", 4, "315264"), // Bastow Minor
             ("3,1.E.1.E.1.E.1.E.1.E.1", 22, "12537496E80"), // Grandsire Cinques
         ] {
             let lh = Change::from (*leadhead);
             let pns = PlaceNotation::from_multiple_string (string, lh.stage ());
 
             let touch = Touch::from (&pns [..]);
+
+            assert_eq! (PlaceNotation::to_multiple_string_short (&pns [..]), *string);
 
             assert_eq! (touch.length, *length);
             assert_eq! (touch.leftover_change, lh);
@@ -522,8 +584,6 @@ pub mod pn_tests {
 
     #[test]
     fn single_string_conversions () {
-        let mut s = String::with_capacity (10);
-
         for (pn, stage, exp) in &[
             ("x", Stage::MAJOR, "x"),
             ("123", Stage::SINGLES, "123"),
@@ -534,11 +594,41 @@ pub mod pn_tests {
             ("", Stage::ROYAL, "x"),
             ("4", Stage::SIXTEEN, "14"),
         ] {
-            PlaceNotation::from_string (pn, *stage).into_string (&mut s);
+            assert_eq! (format! ("{:?}", PlaceNotation::from_string (pn, *stage)), *exp);
+        }
+    }
 
-            assert_eq! (s, *exp);
+    #[test]
+    #[should_panic]
+    fn overall_transposition_empty_panic () {
+        PlaceNotation::overall_transposition (&[]);
+    }
 
-            s.clear ();
+    #[test]
+    #[should_panic]
+    fn shares_places_with_panic () {
+        PlaceNotation::from_string ("14", Stage::MAJOR).shares_places_with (
+            &PlaceNotation::from_string ("14", Stage::ROYAL)
+        );
+    }
+
+    #[test]
+    fn shares_places_with () {
+        for (lhs, rhs, stage, expected_value) in &[
+            ("x", "x", Stage::MINIMUS, false),
+            ("147", "1", Stage::TRIPLES, true),
+            ("1", "7", Stage::TRIPLES, false),
+            ("14", "34", Stage::MAJOR, true),
+            ("12", "18", Stage::MAJOR, true),
+            ("x", "18", Stage::MAJOR, false),
+            ("1490", "1270", Stage::ROYAL, true)
+        ] {
+            assert_eq! (
+                PlaceNotation::from_string (lhs, *stage).shares_places_with (
+                    &PlaceNotation::from_string (rhs, *stage)
+                ),
+                *expected_value
+            );
         }
     }
 
