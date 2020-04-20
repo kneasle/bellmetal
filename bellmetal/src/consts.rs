@@ -1,7 +1,7 @@
 use crate::Number;
 
 pub const MAX_STAGE : usize = 64;
-pub static BELL_NAMES : &str = "1234567890ETABCDFGHJKLMNPRSUVWXYZ";
+pub static BELL_NAMES : &str = "1234567890ETABCDFGHJKLMNPRSUVWYZ";
 
 static BELL_NAME_LOOKUP_TABLE : [i8; 91] = [
     -1, -1, -1, -1, -1, // 0..5
@@ -22,12 +22,12 @@ static BELL_NAME_LOOKUP_TABLE : [i8; 91] = [
     16, 17, 18, -1, 19, // 70..75 = 'E'-'J'
     20, 21, 22, 23, -1, // 75..80 = 'K'-'O'
     24, -1, 25, 26, 11, // 80..85 = 'P'-'T'
-    27, 28, 29, 30, 31, 32 // 85..91 = 'U'-'Z'
+    27, 28, 29, -1, 30, 31 // 85..91 = 'U'-'Z'
 ];
 
 
 pub fn is_bell_name (c : char) -> bool {
-    ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z')) && c != 'I' && c != 'O' && c != 'Q'
+    ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z')) && c != 'I' && c != 'O' && c != 'Q' && c != 'X'
 }
 
 fn get_number (name : char) -> i8 {
