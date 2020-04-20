@@ -739,20 +739,19 @@ mod proof_tests {
     #[test]
     fn canon_func_fixed_treble_cyclic () {
         for (orig, canon) in &[
-            ("1\n1", "1"),
-            ("132\n123", "123"),
-            ("123456\n123456", "123456"),
-            ("42315678\n12345678", "27813456"),
-            ("71632548\n12345678", "21854763"),
-            ("18765432\n12345678", "12876543"),
-            ("15432876\n12345678", "12876543"),
-            ("87654321\n12345678", "28765431"),
-            ("4567890231\n1234567890", "2345678901")
+            ("1", "1"),
+            ("132", "123"),
+            ("123456", "123456"),
+            ("42315678", "27813456"),
+            ("71632548", "21854763"),
+            ("18765432", "12876543"),
+            ("15432876", "12876543"),
+            ("87654321", "28765431"),
+            ("4567890231", "2345678901")
         ] {
-            let touch = Touch::from (*orig);
             let mut change = Change::new (vec! [Bell::from (20); canon.len ()]);
 
-            canon_fixed_treble_cyclic (&touch.row_iterator ().next ().unwrap ().slice (), &mut change);
+            canon_fixed_treble_cyclic (&Change::from (*orig).slice (), &mut change);
 
             assert_eq! (change, Change::from (*canon));
         }
@@ -761,18 +760,17 @@ mod proof_tests {
     #[test]
     fn canon_func_full_cyclic () {
         for (orig, canon) in &[
-            ("1\n1", "1"),
-            ("132\n123", "132"),
-            ("123456\n123456", "123456"),
-            ("42315678\n12345678", "17862345"),
-            ("71632548\n12345678", "13854762"),
-            ("87654321\n12345678", "18765432"),
-            ("4567890231\n1234567890", "1234567908")
+            ("1", "1"),
+            ("132", "132"),
+            ("123456", "123456"),
+            ("42315678", "17862345"),
+            ("71632548", "13854762"),
+            ("87654321", "18765432"),
+            ("4567890231", "1234567908")
         ] {
-            let touch = Touch::from (*orig);
             let mut change = Change::new (vec! [Bell::from (20); canon.len ()]);
 
-            canon_full_cyclic (&touch.row_iterator ().next ().unwrap ().slice (), &mut change);
+            canon_full_cyclic (&Change::from (*orig).slice (), &mut change);
 
             assert_eq! (change, Change::from (*canon));
         }
