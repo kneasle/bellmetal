@@ -439,7 +439,9 @@ impl FullProvingContext for CompactHashProver {
             index : 0
         }.map (|(x, y)| (x as usize, y as usize)));
 
-        while fill (&mut iter.bell_iter (), &mut self.temporary_slice [..]) {
+        let mut bell_iter = iter.bell_iter ();
+
+        while fill (&mut bell_iter, &mut self.temporary_slice [..]) {
             canon (&self.temporary_slice, &mut self.temporary_change);
 
             self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
@@ -476,7 +478,9 @@ impl ProvingContext for CompactHashProver {
             index : 0
         }.next () == None;
 
-        while fill (&mut iter.bell_iter (), &mut self.temporary_slice [..]) {
+        let mut bell_iter = iter.bell_iter ();
+
+        while fill (&mut bell_iter, &mut self.temporary_slice [..]) {
             canon (&self.temporary_slice, &mut self.temporary_change);
 
             self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
