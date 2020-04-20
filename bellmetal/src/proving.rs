@@ -509,11 +509,15 @@ impl<'a, I : Iterator<Item = Bell>, T : FnMut(&[Bell], &mut Change) -> ()> Itera
 
             if falseness_index == -1 {
                 self.hash_prover.falseness_map [hash] = self.index as IndexType;
+            
+                self.index += 1;
             } else {
-                return Some ((falseness_index, self.index as IndexType));
-            }
+                let out = Some ((falseness_index, self.index as IndexType));
 
-            self.index += 1;
+                self.index += 1;
+
+                return out;
+            }
         }
 
         None
