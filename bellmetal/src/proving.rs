@@ -23,6 +23,7 @@ fn fill<T : Sized> (iter : &mut impl Iterator<Item = T>, slice : &mut [T]) -> bo
 pub trait ProvingContext {
     fn prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> bool;
 
+    #[cfg_attr (tarpaulin, skip)]
     fn prove<'a> (&mut self, iter : &impl TouchIterator<'a>) -> bool {
         self.prove_canonical (iter, canon_copy)
     }
@@ -44,6 +45,7 @@ pub trait ProvingContext {
 pub trait FullProvingContext : ProvingContext {
     fn full_prove_canonical<'a> (&mut self, iter : &impl TouchIterator<'a>, canon : impl FnMut(&[Bell], &mut Change) -> ()) -> ProofGroups;
 
+    #[cfg_attr (tarpaulin, skip)]
     fn full_prove<'a> (&mut self, iter : &impl TouchIterator<'a>) -> ProofGroups {
         self.full_prove_canonical (iter, canon_copy)
     }
@@ -579,7 +581,12 @@ mod bitmap_tests {
 
         for i in 400..450 {
             map.set (i, true);
+            assert_eq! (map.get (i), true);
 
+            map.set (i, false);
+            assert_eq! (map.get (i), false);
+            
+            map.set (i, true);
             assert_eq! (map.get (i), true);
 
             map.set_false (i);
@@ -710,6 +717,7 @@ mod proof_tests {
         for (t, b) in test_touches () {
             assert_eq! (NaiveProver { }.prove_touch_canonical (&t, canon_copy), b);
             assert_eq! (NaiveProver { }.prove_touch (&t), b);
+            assert_eq! (NaiveProver { }.prove (&mut t.iter ()), b);
         }
     }
 
@@ -717,8 +725,12 @@ mod proof_tests {
     fn hash () {
         for (t, b) in test_touches () {
             if t.stage.as_usize () <= 8 {
-                assert_eq! (HashProver::from_stage (t.stage).prove_touch_canonical (&t, canon_copy), b);
-                assert_eq! (HashProver::from_stage (t.stage).prove_touch (&t), b);
+                let mut prover = HashProver::from_stage (t.stage);
+
+                assert_eq! (prover.prove_touch_canonical (&t, canon_copy), b);
+                assert_eq! (prover.prove (&t.iter ()), b);
+                assert_eq! (prover.prove_canonical (&t.iter (), canon_copy), b);
+                assert_eq! (prover.prove_touch (&t), b);
             }
         }
     }
@@ -788,6 +800,14 @@ mod proof_tests {
                 *truth
             );
             assert_eq! (
+                HashProver::from_stage (t.stage).prove_canonical (&t.iter (), canon_fixed_treble_cyclic),
+                *truth
+            );
+            assert_eq! (
+                CompactHashProver::from_stage (t.stage).prove_canonical (&t.iter (), canon_fixed_treble_cyclic),
+                *truth
+            );
+            assert_eq! (
                 CompactHashProver::from_stage (t.stage).prove_touch_canonical (&t, canon_fixed_treble_cyclic),
                 *truth
             );
@@ -807,14 +827,22 @@ mod proof_tests {
         ] {
             let t = Touch::from (*touch);
 
+            let mut compact_truth_touch = CompactHashProver::from_stage (t.stage)
+                                .full_prove_touch_canonical (&t, canon_fixed_treble_cyclic);
             let mut compact_truth = CompactHashProver::from_stage (t.stage)
-                .full_prove_touch_canonical (&t, canon_fixed_treble_cyclic);
+                                .full_prove_canonical (&t.iter (), canon_fixed_treble_cyclic);
+            let mut naive_truth_touch = NaiveProver { }
+                                .full_prove_touch_canonical (&t, canon_fixed_treble_cyclic);
             let mut naive_truth = NaiveProver { }
-                .full_prove_touch_canonical (&t, canon_fixed_treble_cyclic);
+                                .full_prove_canonical (&t.iter (), canon_fixed_treble_cyclic);
 
+            compact_truth_touch.sort ();
+            naive_truth_touch.sort ();
             compact_truth.sort ();
             naive_truth.sort ();
 
+            assert_eq! (compact_truth_touch, *truth);
+            assert_eq! (naive_truth_touch, *truth);
             assert_eq! (compact_truth, *truth);
             assert_eq! (naive_truth, *truth);
         }
