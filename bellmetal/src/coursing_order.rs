@@ -318,6 +318,25 @@ pub trait CoursingOrderIterator {
         CoursingOrder::from_iterator (self)
     }
 
+    fn seek (&mut self, bell : Bell) {
+        // Seek to the required bell with a horrendous loop with side effects in the guard
+        while self.next () != bell { }
+    }
+
+    // Same as seek, but is can't get stuck in an infinite loop at the cost of speed
+    fn seek_safe (&mut self, bell : Bell) {
+        let start_bell = self.next ();
+        let mut next_bell = start_bell;
+
+        while next_bell != bell {
+            next_bell = self.next ();
+
+            if next_bell == start_bell {
+                panic! ("Bell not found in coursing order");
+            }
+        }
+    }
+
     fn seek_heaviest_bell (&mut self) -> Bell {
         let heaviest_bell = {
             let mut h = 0;
@@ -334,9 +353,7 @@ pub trait CoursingOrderIterator {
             Bell::from (h)
         };
 
-        // Seek to the heaviest bell so the iterator is rotated with a horrendous loop with
-        // side effects in the guard
-        while self.next () != heaviest_bell { }
+        self.seek (heaviest_bell);
 
         heaviest_bell
     }
