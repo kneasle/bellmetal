@@ -269,6 +269,25 @@ impl fmt::Debug for CoursingOrder {
 
 
 
+pub fn merge_iterators_to_lead_head<T : CoursingOrderIterator, S : CoursingOrderIterator> (
+    bell_iter : &mut T,
+    place_iter : &mut S,
+    stage : Stage
+) -> Change {
+    let mut vec : Vec<Bell> = vec![Bell::from (0);stage.as_usize ()];
+
+    for _ in 0..bell_iter.length () {
+        vec [place_iter.next ().as_usize ()] = bell_iter.next ();
+    }
+
+    Change::new (vec)
+}
+
+
+
+
+
+
 
 
 
@@ -358,21 +377,15 @@ pub trait CoursingOrderIterator {
         heaviest_bell
     }
 
-    fn to_coursehead (&mut self) -> Change {
+    fn to_coursehead (&mut self) -> Change where Self : Sized {
         let stage = self.length () + 1;
-
-        let mut vec : Vec<Bell> = vec![Bell::from (0);stage];
 
         let mut iter = PlainCoursingOrderIterator::new (Stage::from (stage));
 
         iter.seek_heaviest_bell ();
         self.seek_heaviest_bell ();
 
-        for _ in 0..self.length () {
-            vec [iter.next ().as_usize ()] = self.next ();
-        }
-
-        Change::new (vec)
+        merge_iterators_to_lead_head (self, &mut iter, Stage::from (stage))
     }
 }
 
