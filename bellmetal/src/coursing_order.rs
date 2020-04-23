@@ -288,6 +288,21 @@ pub fn merge_iterators_to_lead_head<T : CoursingOrderIterator, S : CoursingOrder
 
 
 
+pub fn first_plain_bob_lead_head (stage : Stage) -> Change {
+    let mut bell_iterator = PlainCoursingOrderIterator::new (stage);
+    let mut place_iterator = PlainCoursingOrderIterator::new (stage);
+
+    place_iterator.seek (Bell::from (1)); // Seek to 2nds place
+    bell_iterator.seek (Bell::from (2)); // Seek to the 3
+
+    merge_iterators_to_lead_head (&mut bell_iterator, &mut place_iterator, stage)
+}
+
+
+
+
+
+
 
 
 
@@ -521,7 +536,8 @@ mod co_tests {
         CoursingOrder,
         CoursingOrderIterator,
         BasicCoursingOrderIterator, PlainCoursingOrderIterator,
-        LeadheadCoursingOrderIterator
+        LeadheadCoursingOrderIterator,
+        first_plain_bob_lead_head
     };
 
     use crate::coursing_order::ZigZagIterator;
@@ -548,6 +564,28 @@ mod co_tests {
                 assert_eq! (iter.next (), Some (s - i));
                 assert_eq! (iter.next (), Some (s + i));
             }
+        }
+    }
+
+    #[test]
+    fn plain_bob_lead_head () {
+        for lh in &[
+            "1342",
+            "13524",
+            "135264",
+            "1352746",
+            "13527486",
+            "135274968",
+            "1352749608",
+            "13527496E80",
+            "13527496E8T0"
+        ] {
+            let lh_change = Change::from (*lh);
+
+            assert_eq! (
+                first_plain_bob_lead_head (lh_change.stage ()),
+                lh_change
+            );
         }
     }
 

@@ -17,7 +17,7 @@ pub mod utils;
 // Flatten the module structure for easier importing
 pub use change::{ Change, ChangeAccumulator, ChangeCollectIter };
 pub use consts::{ MAX_STAGE, BELL_NAMES, is_bell_name, name_to_number };
-pub use coursing_order::{ CoursingOrder, CoursingOrderIterator, BasicCoursingOrderIterator, LeadheadCoursingOrderIterator, PlainCoursingOrderIterator };
+pub use coursing_order::{ CoursingOrder, CoursingOrderIterator, BasicCoursingOrderIterator, LeadheadCoursingOrderIterator, PlainCoursingOrderIterator, first_plain_bob_lead_head };
 pub use method::{ Method, Call };
 pub use method_library::{ MethodLibrary, serialise_method, deserialise_method };
 pub use place_notation::PlaceNotation;
