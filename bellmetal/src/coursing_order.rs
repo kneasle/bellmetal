@@ -221,6 +221,12 @@ impl CoursingOrder {
         }
     }
 
+    pub fn from_slice (slice : &[Bell]) -> CoursingOrder {
+        CoursingOrder {
+            order : slice.iter ().copied ().collect ()
+        }
+    }
+
     pub fn from_leadhead (lh : &Change) -> CoursingOrder {
         let mut co = CoursingOrder::empty ();
 
@@ -532,11 +538,12 @@ impl CoursingOrderIterator for PlainCoursingOrderIterator {
 #[cfg(test)]
 mod co_tests {
     use crate::{
-        Stage, Change,
+        Stage, Change, Bell,
         CoursingOrder,
         CoursingOrderIterator,
         BasicCoursingOrderIterator, PlainCoursingOrderIterator,
         LeadheadCoursingOrderIterator,
+        Transposition,
         first_plain_bob_lead_head
     };
 
@@ -564,6 +571,41 @@ mod co_tests {
                 assert_eq! (iter.next (), Some (s - i));
                 assert_eq! (iter.next (), Some (s + i));
             }
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn seek_safe_panic () {
+        let co = &CoursingOrder::from_slice (Change::from ("7654823").slice ());
+
+        let mut iter = BasicCoursingOrderIterator::new (&co);
+
+        iter.seek_safe (Bell::from ('0'));
+    }
+
+    #[test]
+    fn seek_safe () {
+        for string in &[
+            "2453687",
+            "680972345",
+            "5432876"
+        ] {
+            let co = &CoursingOrder::from_slice (Change::from (*string).slice ());
+
+            let mut iter = BasicCoursingOrderIterator::new (&co);
+
+            let mut chars = string.chars ();
+
+            chars.next ();
+            iter.next ();
+
+            chars.next ();
+            iter.next ();
+
+            iter.seek_safe (Bell::from (chars.next ().unwrap ()));
+
+            assert_eq! (iter.next (), Bell::from (chars.next ().unwrap ()));
         }
     }
 
