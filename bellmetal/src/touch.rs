@@ -312,7 +312,7 @@ impl Touch {
         self.bells.extend (iterator.bell_iter ());
         self.ruleoffs.extend (iterator.ruleoff_iter ().map (|x| x + len));
         self.calls.extend (iterator.call_iter ().map (|(ind, call)| (ind + len, call)));
-        self.method_names.extend (iterator.method_name_iter ().map (|(ind, name)| (ind + len, name.clone ())));
+        self.method_names.extend (iterator.method_name_iter ().map (|(ind, name)| (ind + len, name.to_string ())));
 
         self.leftover_change.overwrite_from_iterator (&mut iterator.leftover_change_iter ());
 
@@ -970,9 +970,9 @@ pub struct MethodNameDerefIter<'a, T : Iterator<Item = (&'a usize, &'a String)>>
 }
 
 impl<'a, T : Iterator<Item = (&'a usize, &'a String)>> Iterator for MethodNameDerefIter<'a, T> {
-    type Item = (usize, &'a String);
+    type Item = (usize, &'a str);
 
-    fn next (&mut self) -> Option<(usize, &'a String)> {
+    fn next (&mut self) -> Option<(usize, &'a str)> {
         match self.iterator.next () {
             None => {
                 None

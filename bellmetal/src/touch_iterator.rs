@@ -4,7 +4,7 @@ pub trait TouchIterator<'a> {
     type BellIter : Iterator<Item = Bell>;
     type RuleoffIter : Iterator<Item = usize>;
     type CallIter : Iterator<Item = (usize, char)>;
-    type MethodNameIter : Iterator<Item = (usize, &'a String)>;
+    type MethodNameIter : Iterator<Item = (usize, &'a str)>;
     type LeftoverChangeIter : Iterator<Item = Bell>;
 
     fn bell_iter (&self) -> Self::BellIter;
