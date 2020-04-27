@@ -88,6 +88,14 @@ impl Change {
         }
     }
 
+    pub fn multiply_inverse (&self, rhs : &impl Transposition) -> Change {
+        let mut change = Change::rounds (self.stage ());
+
+        self.multiply_inverse_into (rhs, &mut change);
+
+        change
+    }
+
     pub fn multiply_inverse_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
