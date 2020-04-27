@@ -8,7 +8,7 @@ use std::cmp::Ordering;
 
 pub type ProofGroups = Vec<Vec<usize>>;
 
-fn fill<T : Sized> (iter : &mut impl Iterator<Item = T>, slice : &mut [T]) -> bool {
+pub fn fill_from_iterator<T : Sized> (iter : &mut impl Iterator<Item = T>, slice : &mut [T]) -> bool {
     for i in 0..slice.len () {
         if let Some (v) = iter.next () {
             slice [i] = v;
@@ -123,7 +123,7 @@ impl FullProvingContext for NaiveProver {
         let mut bell_iter = iter.bell_iter ();
         let mut index = 0;
 
-        while fill (&mut bell_iter, &mut temp_slice) {
+        while fill_from_iterator (&mut bell_iter, &mut temp_slice) {
             canon (&temp_slice, &mut temporary_change);
 
             indexed_changes.push (
@@ -173,7 +173,7 @@ impl ProvingContext for NaiveProver {
         let mut temp_slice = vec![Bell::from (0); iter.stage ().as_usize ()];
         let mut bell_iter = iter.bell_iter ();
         
-        while fill (&mut bell_iter, &mut temp_slice) {
+        while fill_from_iterator (&mut bell_iter, &mut temp_slice) {
             canon (&temp_slice, &mut temporary_change);
 
             changes.push (temporary_change.clone ());
@@ -323,7 +323,7 @@ impl ProvingContext for HashProver {
         let mut temp_slice = vec![Bell::from (0); iter.stage ().as_usize ()];
         let mut bell_iter = iter.bell_iter ();
         
-        while fill (&mut bell_iter, &mut temp_slice) {
+        while fill_from_iterator (&mut bell_iter, &mut temp_slice) {
             canon (&temp_slice, &mut temporary_change);
 
             let hash = temporary_change.naive_hash ();
@@ -339,7 +339,7 @@ impl ProvingContext for HashProver {
         bell_iter = iter.bell_iter ();
 
         // Reset the hash map before returning
-        while fill (&mut bell_iter, &mut temporary_change.mut_slice ()) {
+        while fill_from_iterator (&mut bell_iter, &mut temporary_change.mut_slice ()) {
             self.bit_map.set_false (temporary_change.naive_hash ());
         }
 
@@ -355,7 +355,7 @@ impl ProvingContext for HashProver {
 
         let mut bell_iter = iter.bell_iter ();
         
-        while fill (&mut bell_iter, temporary_change.mut_slice ()) {
+        while fill_from_iterator (&mut bell_iter, temporary_change.mut_slice ()) {
             let hash = temporary_change.naive_hash ();
 
             if self.bit_map.get (hash) {
@@ -369,7 +369,7 @@ impl ProvingContext for HashProver {
         bell_iter = iter.bell_iter ();
 
         // Reset the hash map before returning
-        while fill (&mut bell_iter, temporary_change.mut_slice ()) {
+        while fill_from_iterator (&mut bell_iter, temporary_change.mut_slice ()) {
             self.bit_map.set_false (temporary_change.naive_hash ());
         }
 
@@ -443,7 +443,7 @@ impl FullProvingContext for CompactHashProver {
 
         let mut bell_iter = iter.bell_iter ();
 
-        while fill (&mut bell_iter, &mut self.temporary_slice [..]) {
+        while fill_from_iterator (&mut bell_iter, &mut self.temporary_slice [..]) {
             canon (&self.temporary_slice, &mut self.temporary_change);
 
             self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
@@ -482,7 +482,7 @@ impl ProvingContext for CompactHashProver {
 
         let mut bell_iter = iter.bell_iter ();
 
-        while fill (&mut bell_iter, &mut self.temporary_slice [..]) {
+        while fill_from_iterator (&mut bell_iter, &mut self.temporary_slice [..]) {
             canon (&self.temporary_slice, &mut self.temporary_change);
 
             self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
@@ -503,7 +503,7 @@ impl<'a, I : Iterator<Item = Bell>, T : FnMut(&[Bell], &mut Change) -> ()> Itera
     type Item = (IndexType, IndexType);
 
     fn next (&mut self) -> Option<Self::Item> {
-        while fill (self.bell_iter, &mut self.hash_prover.temporary_slice [..]) {
+        while fill_from_iterator (self.bell_iter, &mut self.hash_prover.temporary_slice [..]) {
             (self.canon_func) (&self.hash_prover.temporary_slice [..], &mut self.hash_prover.temporary_change);
 
             let hash = self.hash_prover.temporary_change.destructive_hash ();
