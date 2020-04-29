@@ -100,6 +100,27 @@ impl Method {
             place_notation : self.place_notation.iter ().map (|x| x.reversed ()).collect ()
         }
     }
+
+    pub fn is_lead_end_variant_of (&self, other : &Method) -> bool {
+        if self.lead_length () != other.lead_length () {
+            return false;
+        }
+
+        let mut own_iterator = self.place_notation.iter ().rev ().peekable ();
+        let mut others_iterator = other.place_notation.iter ().rev ().peekable ();
+
+        // Pop the lead end PNs
+        own_iterator.next ();
+        others_iterator.next ();
+
+        while own_iterator.peek () != None {
+            if own_iterator.next () != others_iterator.next () {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 impl Method {
@@ -219,6 +240,23 @@ mod method_tests {
             assert_eq! (
                 Method::from_str ("No Name", pns, Stage::from (lh.len ())).lead_end (),
                 Change::from (*lh)
+            );
+        }
+    }
+
+    #[test]
+    fn lead_end_variant () {
+        for (a, b, stage_a, stage_b, exp) in &[
+            ("1.5.1.3.2", "1.5.1.3.1", Stage::DOUBLES, Stage::DOUBLES, true),
+            ("1.5.1.3.2", "1.5.1.3.1", Stage::DOUBLES, Stage::MINOR, false),
+            ("x30x14x50x16x1270x38x14x50x16x90,12", "x30x14x50x16x1270x38x14x50x16x90,12", Stage::ROYAL, Stage::ROYAL, true),
+            ("x1x1x1,2", "x1x1x1,1", Stage::MINOR, Stage::MINOR, true)
+        ] {
+            assert_eq! (
+                Method::from_str ("A", a, *stage_a).is_lead_end_variant_of (
+                    &Method::from_str ("B", b, *stage_b)
+                ),
+                *exp
             );
         }
     }
