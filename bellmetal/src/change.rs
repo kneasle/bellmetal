@@ -175,6 +175,22 @@ impl Change {
         }
     }
 
+    pub fn in_place_inverse (&mut self) {
+        let stage = self.seq.len ();
+
+        for i in 0..stage {
+            self.seq [i] = Bell::from (stage - 1 - self.seq [i].as_usize ());
+        }
+    }
+
+    pub fn in_place_full_cyclic_rotate (&mut self, amount : usize) {
+        let stage = self.seq.len ();
+
+        for i in 0..stage {
+            self.seq [i] = Bell::from ((self.seq [i].as_usize () + amount) % stage);
+        }
+    }
+
     pub fn in_place_reverse (&mut self) {
         let stage = self.seq.len ();
 
@@ -728,6 +744,38 @@ mod change_tests {
         assert_eq! (Change::from ("15234").music_score (), 0);
         assert_eq! (Change::from ("9876543210").music_score (), 21);
         assert_eq! (Change::from ("0987654321").music_score (), 56);
+    }
+
+    #[test]
+    fn in_place_inverse () {
+        for (from, to) in &[
+            ("1", "1"),
+            ("4231", "1324"),
+            ("14235", "52431"),
+            ("12345678", "87654321")
+        ] {
+            let mut change = Change::from (*from);
+
+            change.in_place_inverse ();
+
+            assert_eq! (change, Change::from (*to));
+        }
+    }
+
+    #[test]
+    fn in_place_full_cyclic_rotate () {
+        for (from, amount, to) in &[
+            ("1", 5, "1"),
+            ("12345", 3, "45123"),
+            ("43215678", 6, "21873456"),
+            ("1425367890", 5, "6970812345")
+        ] {
+            let mut change = Change::from (*from);
+
+            change.in_place_full_cyclic_rotate (*amount);
+
+            assert_eq! (change, Change::from (*to));
+        }
     }
 
     #[test]
