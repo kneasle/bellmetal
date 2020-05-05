@@ -23,7 +23,7 @@ pub use method_library::{ MethodLibrary, serialise_method, deserialise_method };
 pub use place_notation::PlaceNotation;
 pub use proving::{ ProvingContext, FullProvingContext, NaiveProver, HashProver, CompactHashProver, canon_copy, canon_fixed_treble_cyclic, canon_full_cyclic };
 pub use touch::{ Row, Touch, BasicTouchIterator };
-pub use touch_iterator::{ TouchIterator, TransfiguredTouchIterator };
+pub use touch_iterator::{ TouchIterator, TransfiguredTouchIterator, MultiChainTouchIterator };
 pub use transposition::{ Transposition, MultiplicationIterator };
 pub use types::{ Stroke, Bell, Place, Parity, Stage, Number, Mask, MaskMethods };
 pub use touch_generation::{ one_part_spliced_touch };
