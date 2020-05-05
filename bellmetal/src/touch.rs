@@ -112,11 +112,11 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
 #[derive(Debug, Clone, Copy)]
 pub struct Row<'a> {
     pub index : usize,
-    is_ruled_off : bool,
-    call_char : char,
-    method_name : Option<&'a str>,
-    stroke : Stroke,
-    bells : &'a [Bell]
+    pub is_ruled_off : bool,
+    pub call_char : char,
+    pub method_name : Option<&'a str>,
+    pub stroke : Stroke,
+    pub bells : &'a [Bell]
 }
 
 
