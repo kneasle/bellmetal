@@ -16,27 +16,34 @@ use std::marker::PhantomData;
 use crate::utils::AndNext;
 use crate::proving::ProofGroups;
 
+fn depth_first_search (
+    edges : &Vec<(usize, usize)>,
+    groups : &mut Vec<Option<usize>>,
+    num_verts_covered : &mut usize,
+    current_group_id : usize,
+    current_vertex : usize
+) {
+    groups [current_vertex] = Some (current_group_id);
+    *num_verts_covered += 1;
+
+    for (_, v) in edges.iter ().filter (|(i, _)| *i == current_vertex) {
+        if groups [*v] == None {
+            depth_first_search (edges, groups, num_verts_covered, current_group_id, *v);
+        }
+    }
+}
+
 fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize> {
-    // Combine mappings
-    let mut combination_tree : Vec<Option<usize>> = vec![None; falseness_map.len ()];
+    // Create a tree of mappings which are adjacent to one another
+    let mut tree_edges : Vec<(usize, usize)> = Vec::with_capacity (falseness_map.len () * falseness_map.len ());
 
     for i in 1..falseness_map.len () {
         for j in 0..i {
             if falseness_map [i].len () == falseness_map [j].len () {
                 let mut is_adjacent = true;
-                let mut is_all_one = true;
-                let mut is_all_minus_one = true;
-                let mut is_first_diff_one = false;
 
                 for k in 0..falseness_map [i].len () {
                     let diff = falseness_map [i] [k] as isize - falseness_map [j] [k] as isize;
-
-                    is_all_one = is_all_one && diff == 1;
-                    is_all_minus_one = is_all_minus_one && diff == -1;
-
-                    if k == 0 && diff == 1 {
-                        is_first_diff_one = true;
-                    }
 
                     if diff != -1 && diff != 1 {
                         is_adjacent = false;
@@ -45,55 +52,30 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
                 }
 
                 if is_adjacent {
-                    if is_all_minus_one {
-                        assert_eq! (combination_tree [j], None);
-
-                        combination_tree [j] = Some (i);
-                    } else {
-                        if !is_all_one && is_first_diff_one {
-                            assert_eq! (combination_tree [i], None);
-
-                            combination_tree [i] = Some (j);
-                        } else {
-                            assert_eq! (combination_tree [j], None);
-
-                            combination_tree [j] = Some (i);
-                        }
-                    }
+                    tree_edges.push ((i, j));
+                    tree_edges.push ((j, i));
                 }
             }
         }
     }
 
-    // Map transiative closure / combine groups
-    for i in 0..combination_tree.len () {
-        let mut j = i;
+    // Run DFS on the resulting forest
+    let mut current_group_id = 0;
+    let mut groups : Vec<Option<usize>> = vec![None; falseness_map.len ()];
+    let mut num_verts_covered = 0;
 
-        while let Some (x) = combination_tree [j] {
-            if x == j {
-                break;
-            }
+    while num_verts_covered < falseness_map.len () {
+        let first_vert = groups.iter ().position (|x| *x == None).unwrap ();
 
-            j = x;
-        }
+        depth_first_search (
+            &tree_edges,
+            &mut groups,
+            &mut num_verts_covered,
+            current_group_id,
+            first_vert
+        );
 
-        combination_tree [i] = Some (j);
-    }
-
-    let mut transiative_closure : Vec<usize> = combination_tree.iter ().map (|x| x.unwrap ()).collect ();
-
-    // Renumber groups to lower, sequential numbers
-    let mut group_renaming_map : HashMap<usize, usize> = HashMap::with_capacity (50);
-
-    for i in 0..combination_tree.len () {
-        let root = transiative_closure [i];
-
-        if let Some (new_root) = group_renaming_map.get (&root) {
-            transiative_closure [i] = *new_root;
-        } else {
-            transiative_closure [i] = group_renaming_map.len ();
-            group_renaming_map.insert (root, group_renaming_map.len ());
-        }
+        current_group_id += 1;
     }
 
     // Generate hash map from combined mappings
@@ -101,7 +83,7 @@ fn falseness_to_table (falseness_map : &Vec<Vec<usize>>) -> HashMap<usize, usize
 
     for (i, g) in falseness_map.iter ().enumerate () {
         for b in g {
-            hash_map.insert (*b, transiative_closure [i]);
+            hash_map.insert (*b, groups [i].unwrap ());
         }
     }
 
@@ -1051,7 +1033,119 @@ impl<'a> TouchIterator<'a> for BasicTouchIterator<'a> {
 
 #[cfg(test)]
 mod touch_tests {
-    use crate::{ Touch, Transposition, PlaceNotation, Stage };
+    use crate::{ Method, Call, Touch, Transposition, PlaceNotation, Stage, one_part_spliced_touch, canon_full_cyclic };
+
+    #[test]
+    fn pretty_string () {
+        let bristol = Method::from_str (
+            "Bristol Surprise Major", "-58-14.58-58.36.14-14.58-14-18,18", Stage::MAJOR);
+        let plain_bob = Method::from_str (
+            "Plain Bob Major", "-18-18-18-18,12", Stage::MAJOR);
+        let cornwall = Method::from_str (
+            "Cornwall Surprise Major", "-56-14-56-38-14-58-14-58,18", Stage::MAJOR);
+        let cambridge = Method::from_str (
+            "Cambridge Surprise Major", "-38-14-1258-36-14-58-16-78,12", Stage::MAJOR);
+        let lessness = Method::from_str (
+            "Lessness Surprise Major", "-38-14-56-16-12-58-14-58,12", Stage::MAJOR);
+
+        let bob = Call::from_place_notation_string ('-', "14", Stage::MAJOR);
+
+        let methods = [
+            ("B", &bristol),
+            ("P", &plain_bob),
+            ("Co", &cornwall),
+            ("Ca", &cambridge),
+            ("E", &lessness)
+        ];
+
+        let calls = [
+            ('-', bob)
+        ];
+
+        // Touch #1
+        let touch = one_part_spliced_touch (&methods, &calls, "CoPE");
+
+        assert_eq! (
+            touch.pretty_string_multi_column (6, Some (&touch.full_truth_canonical (canon_full_cyclic))),
+            "Co   \x1b[91;42m1\x1b[97;42m234567\x1b[96;42m8\x1b[0m    P   \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m    E   \x1b[91;49m1\x1b[97;49m4263\x1b[96;49m8\x1b[97;49m57\x1b[0m  
+    2\x1b[91;49m1\x1b[97;49m4365\x1b[96;49m8\x1b[97;49m7\x1b[0m        6\x1b[91;49m1\x1b[96;49m8\x1b[97;49m47253\x1b[0m        4\x1b[91;49m1\x1b[97;49m62\x1b[96;49m8\x1b[97;49m375\x1b[0m  
+    \x1b[91;42m1\x1b[97;42m234\x1b[97;49m657\x1b[96;49m8\x1b[0m        6\x1b[96;49m8\x1b[91;49m1\x1b[97;49m74523\x1b[0m        \x1b[91;49m1\x1b[97;49m46\x1b[96;49m8\x1b[97;49m2735\x1b[0m  
+    2\x1b[91;49m1\x1b[97;49m4356\x1b[96;49m8\x1b[97;49m7\x1b[0m        \x1b[96;49m8\x1b[97;49m67\x1b[91;49m1\x1b[97;42m5432\x1b[0m        4\x1b[91;49m1\x1b[96;49m8\x1b[97;49m67253\x1b[0m  
+    24\x1b[91;49m1\x1b[97;49m3657\x1b[96;49m8\x1b[0m        \x1b[96;42m8\x1b[97;42m765\x1b[91;49m1\x1b[97;49m342\x1b[0m        4\x1b[96;49m8\x1b[91;49m1\x1b[97;49m62735\x1b[0m  
+    423\x1b[91;49m1\x1b[97;49m56\x1b[96;49m8\x1b[97;49m7\x1b[0m        7\x1b[96;49m8\x1b[97;49m563\x1b[91;49m1\x1b[97;49m24\x1b[0m        \x1b[96;49m8\x1b[97;49m46\x1b[91;49m1\x1b[97;49m7253\x1b[0m  
+    24\x1b[91;49m1\x1b[97;49m3\x1b[97;42m567\x1b[96;42m8\x1b[0m        75\x1b[96;49m8\x1b[97;49m362\x1b[91;49m1\x1b[97;49m4\x1b[0m        4\x1b[96;49m8\x1b[91;49m1\x1b[97;49m67235\x1b[0m  
+    423\x1b[91;49m1\x1b[97;49m65\x1b[96;49m8\x1b[97;49m7\x1b[0m        573\x1b[96;49m8\x1b[97;49m264\x1b[91;49m1\x1b[0m        \x1b[96;49m8\x1b[97;49m46\x1b[91;49m1\x1b[97;49m2753\x1b[0m  
+    2436\x1b[91;49m1\x1b[96;49m8\x1b[97;49m57\x1b[0m        5372\x1b[96;49m8\x1b[97;49m46\x1b[91;49m1\x1b[0m        \x1b[96;49m8\x1b[97;49m642\x1b[91;49m1\x1b[97;49m735\x1b[0m  
+    4263\x1b[96;49m8\x1b[91;49m1\x1b[97;49m75\x1b[0m        35274\x1b[96;49m8\x1b[91;49m1\x1b[97;49m6\x1b[0m        6\x1b[96;49m8\x1b[97;49m247\x1b[91;49m1\x1b[97;49m53\x1b[0m  
+    4623\x1b[91;49m1\x1b[96;49m8\x1b[97;49m57\x1b[0m        32547\x1b[91;49m1\x1b[96;49m8\x1b[97;49m6\x1b[0m      \x1b[91;1m┏\x1b[0m 6\x1b[96;49m8\x1b[97;49m42\x1b[91;49m1\x1b[97;49m735\x1b[0m \x1b[91;1m┓\x1b[0m
+    6432\x1b[96;49m8\x1b[91;49m1\x1b[97;49m75\x1b[0m        \x1b[97;42m2345\x1b[91;49m1\x1b[97;49m76\x1b[96;49m8\x1b[0m      \x1b[91;1m┃\x1b[0m \x1b[96;49m8\x1b[97;49m6247\x1b[91;49m1\x1b[97;49m53\x1b[0m \x1b[91;1m┃\x1b[0m
+    4623\x1b[96;49m8\x1b[97;49m7\x1b[91;49m1\x1b[97;49m5\x1b[0m        243\x1b[91;49m1\x1b[97;42m567\x1b[96;42m8\x1b[0m      \x1b[91;1m┃\x1b[0m 6\x1b[96;49m8\x1b[97;49m4275\x1b[91;49m1\x1b[97;49m3\x1b[0m \x1b[91;1m┃\x1b[0m
+    64327\x1b[96;49m8\x1b[97;49m5\x1b[91;49m1\x1b[0m        42\x1b[91;49m1\x1b[97;49m365\x1b[96;49m8\x1b[97;49m7\x1b[0m      \x1b[91;1m┗\x1b[0m \x1b[96;49m8\x1b[97;49m624573\x1b[91;49m1\x1b[0m \x1b[91;1m┛\x1b[0m
+    6342\x1b[96;49m8\x1b[97;49m7\x1b[91;49m1\x1b[97;49m5\x1b[0m      \x1b[92;1m┏\x1b[0m 4\x1b[91;49m1\x1b[97;49m263\x1b[96;49m8\x1b[97;49m57\x1b[0m \x1b[92;1m┓\x1b[0m      \x1b[96;49m8\x1b[97;49m26475\x1b[91;49m1\x1b[97;49m3\x1b[0m  
+    36247\x1b[96;49m8\x1b[97;49m5\x1b[91;49m1\x1b[0m      \x1b[92;1m┗\x1b[0m \x1b[91;49m1\x1b[97;49m462\x1b[96;49m8\x1b[97;49m375\x1b[0m \x1b[92;1m┛\x1b[0m      2\x1b[96;49m8\x1b[97;49m46573\x1b[91;49m1\x1b[0m  
+    634275\x1b[96;49m8\x1b[91;49m1\x1b[0m        ────────        \x1b[96;49m8\x1b[97;49m264537\x1b[91;49m1\x1b[0m  
+    362457\x1b[91;49m1\x1b[96;49m8\x1b[0m    E   \x1b[91;49m1\x1b[97;49m4263\x1b[96;49m8\x1b[97;49m57\x1b[0m        2\x1b[96;49m8\x1b[97;49m4635\x1b[91;49m1\x1b[97;49m7\x1b[0m  
+    326475\x1b[96;49m8\x1b[91;49m1\x1b[0m                      \x1b[91;1m┏\x1b[0m 24\x1b[96;49m8\x1b[97;49m6537\x1b[91;49m1\x1b[0m \x1b[91;1m┓\x1b[0m
+    234657\x1b[91;49m1\x1b[96;49m8\x1b[0m                      \x1b[91;1m┃\x1b[0m 426\x1b[96;49m8\x1b[97;49m35\x1b[91;49m1\x1b[97;49m7\x1b[0m \x1b[91;1m┃\x1b[0m
+    32645\x1b[91;49m1\x1b[97;49m7\x1b[96;49m8\x1b[0m                      \x1b[91;1m┃\x1b[0m 24\x1b[96;49m8\x1b[97;49m63\x1b[91;49m1\x1b[97;49m57\x1b[0m \x1b[91;1m┃\x1b[0m
+    2346\x1b[91;49m1\x1b[97;49m5\x1b[96;49m8\x1b[97;49m7\x1b[0m                      \x1b[91;1m┗\x1b[0m 426\x1b[96;49m8\x1b[91;49m1\x1b[97;49m375\x1b[0m \x1b[91;1m┛\x1b[0m
+    24365\x1b[91;49m1\x1b[97;49m7\x1b[96;49m8\x1b[0m                        42\x1b[96;49m8\x1b[97;49m63\x1b[91;49m1\x1b[97;49m57\x1b[0m  
+    4263\x1b[91;49m1\x1b[97;49m5\x1b[96;49m8\x1b[97;49m7\x1b[0m                        246\x1b[96;49m8\x1b[91;49m1\x1b[97;49m375\x1b[0m  
+    246\x1b[91;49m1\x1b[97;49m3\x1b[96;49m8\x1b[97;49m57\x1b[0m                        264\x1b[91;49m1\x1b[96;49m8\x1b[97;49m357\x1b[0m  
+    42\x1b[91;49m1\x1b[97;49m6\x1b[96;49m8\x1b[97;49m375\x1b[0m                        62\x1b[91;49m1\x1b[97;49m43\x1b[96;49m8\x1b[97;49m75\x1b[0m  
+    246\x1b[91;49m1\x1b[96;49m8\x1b[97;49m357\x1b[0m                        264\x1b[91;49m1\x1b[97;49m3\x1b[96;49m8\x1b[97;49m57\x1b[0m  
+    42\x1b[91;49m1\x1b[97;49m63\x1b[96;49m8\x1b[97;49m75\x1b[0m                        62\x1b[91;49m1\x1b[97;49m4\x1b[96;49m8\x1b[97;49m375\x1b[0m  
+    4\x1b[91;49m1\x1b[97;49m26\x1b[96;49m8\x1b[97;49m357\x1b[0m                        6\x1b[91;49m1\x1b[97;49m243\x1b[96;49m8\x1b[97;49m57\x1b[0m  
+    \x1b[91;49m1\x1b[97;49m4623\x1b[96;49m8\x1b[97;49m75\x1b[0m                        \x1b[91;49m1\x1b[97;49m642\x1b[96;49m8\x1b[97;49m375\x1b[0m  
+  \x1b[92;1m┏\x1b[0m 4\x1b[91;49m1\x1b[97;49m263\x1b[96;49m8\x1b[97;49m57\x1b[0m \x1b[92;1m┓\x1b[0m                      6\x1b[91;49m1\x1b[97;49m4\x1b[96;49m8\x1b[97;49m2735\x1b[0m  
+  \x1b[92;1m┗\x1b[0m \x1b[91;49m1\x1b[97;49m462\x1b[96;49m8\x1b[97;49m375\x1b[0m \x1b[92;1m┛\x1b[0m                      \x1b[91;49m1\x1b[97;49m6\x1b[96;49m8\x1b[97;49m47253\x1b[0m  
+    ────────                        ────────  
+P   \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m                        \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m
+\x1b[94m80\x1b[0m changes, \x1b[91mfalse\x1b[0m.  Score: \x1b[93m36\x1b[0m. 8 4-bell runs (4f, 4b)"
+        );
+
+        // Touch #2
+        let touch = one_part_spliced_touch (&methods, &calls, "B");
+
+        assert_eq! (
+            touch.pretty_string (Some (&touch.full_truth_canonical (canon_full_cyclic))),
+            "B \x1b[91;1m┏\x1b[0m \x1b[91;42m1\x1b[97;42m234567\x1b[96;42m8\x1b[0m \x1b[91;1m┓\x1b[0m
+  \x1b[91;1m┗\x1b[0m 2\x1b[91;49m1\x1b[97;49m4365\x1b[96;49m8\x1b[97;49m7\x1b[0m \x1b[91;1m┛\x1b[0m
+  \x1b[92;1m┏\x1b[0m \x1b[91;42m1\x1b[97;42m234\x1b[97;49m6\x1b[96;49m8\x1b[97;49m57\x1b[0m \x1b[92;1m┓\x1b[0m
+  \x1b[92;1m┃\x1b[0m 2\x1b[91;49m1\x1b[97;49m43\x1b[96;49m8\x1b[97;49m675\x1b[0m \x1b[92;1m┃\x1b[0m
+  \x1b[92;1m┃\x1b[0m 24\x1b[91;49m1\x1b[97;49m36\x1b[96;49m8\x1b[97;49m57\x1b[0m \x1b[92;1m┃\x1b[0m
+  \x1b[92;1m┃\x1b[0m 423\x1b[91;49m1\x1b[97;49m65\x1b[96;49m8\x1b[97;49m7\x1b[0m \x1b[92;1m┃\x1b[0m
+  \x1b[92;1m┗\x1b[0m 24\x1b[91;49m1\x1b[97;49m3\x1b[97;42m567\x1b[96;42m8\x1b[0m \x1b[92;1m┛\x1b[0m
+    423\x1b[91;49m1\x1b[97;49m576\x1b[96;49m8\x1b[0m  
+    2435\x1b[91;49m1\x1b[97;49m7\x1b[96;49m8\x1b[97;49m6\x1b[0m  
+  \x1b[92;1m┏\x1b[0m \x1b[97;42m2345\x1b[97;49m7\x1b[91;49m1\x1b[97;49m6\x1b[96;49m8\x1b[0m \x1b[92;1m┓\x1b[0m
+  \x1b[92;1m┃\x1b[0m 3254\x1b[91;49m1\x1b[97;49m7\x1b[96;49m8\x1b[97;49m6\x1b[0m \x1b[92;1m┃\x1b[0m
+  \x1b[92;1m┃\x1b[0m 35247\x1b[91;49m1\x1b[97;49m6\x1b[96;49m8\x1b[0m \x1b[92;1m┃\x1b[0m
+  \x1b[92;1m┃\x1b[0m 534276\x1b[91;49m1\x1b[96;49m8\x1b[0m \x1b[92;1m┃\x1b[0m
+  \x1b[92;1m┗\x1b[0m 352467\x1b[96;49m8\x1b[91;49m1\x1b[0m \x1b[92;1m┛\x1b[0m
+  \x1b[91;1m┏\x1b[0m 325476\x1b[91;49m1\x1b[96;49m8\x1b[0m \x1b[91;1m┓\x1b[0m
+  \x1b[91;1m┗\x1b[0m \x1b[97;42m234567\x1b[96;42m8\x1b[91;49m1\x1b[0m \x1b[91;1m┛\x1b[0m
+    24365\x1b[96;49m8\x1b[97;49m7\x1b[91;49m1\x1b[0m  
+    4263\x1b[96;49m8\x1b[97;49m5\x1b[91;49m1\x1b[97;49m7\x1b[0m  
+    46235\x1b[96;49m8\x1b[97;49m7\x1b[91;49m1\x1b[0m  
+    6432\x1b[96;49m8\x1b[97;49m5\x1b[91;49m1\x1b[97;49m7\x1b[0m  
+    4623\x1b[96;49m8\x1b[91;49m1\x1b[97;49m57\x1b[0m  
+    4263\x1b[91;49m1\x1b[96;49m8\x1b[97;49m75\x1b[0m  
+    2436\x1b[96;49m8\x1b[91;49m1\x1b[97;49m57\x1b[0m  
+    2346\x1b[91;49m1\x1b[96;49m8\x1b[97;49m75\x1b[0m  
+    324\x1b[91;49m1\x1b[97;49m6\x1b[96;49m8\x1b[97;49m57\x1b[0m  
+    23\x1b[91;49m1\x1b[97;49m465\x1b[96;49m8\x1b[97;49m7\x1b[0m  
+    324\x1b[91;49m1\x1b[97;42m567\x1b[96;42m8\x1b[0m  
+    23\x1b[91;49m1\x1b[97;49m4576\x1b[96;49m8\x1b[0m  
+    2\x1b[91;49m1\x1b[97;49m3475\x1b[96;49m8\x1b[97;49m6\x1b[0m  
+    \x1b[91;49m1\x1b[97;49m243576\x1b[96;49m8\x1b[0m  
+    2\x1b[91;49m1\x1b[97;42m34567\x1b[96;42m8\x1b[0m  
+    \x1b[91;49m1\x1b[97;49m24365\x1b[96;49m8\x1b[97;49m7\x1b[0m  
+    ────────  
+    \x1b[91;49m1\x1b[97;49m4263\x1b[96;49m8\x1b[97;49m57\x1b[0m
+\x1b[94m32\x1b[0m changes, \x1b[92mtrue\x1b[0m.  Score: \x1b[93m50\x1b[0m. 8 4-bell runs (4f, 4b)"
+        );
+    }
 
     #[test]
     fn basic_iterator () {
