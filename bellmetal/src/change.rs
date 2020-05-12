@@ -191,6 +191,22 @@ impl Change {
         }
     }
 
+    pub fn in_place_fixed_treble_cyclic_rotate (&mut self, amount : usize) {
+        let stage = self.seq.len ();
+
+        for i in 0..stage {
+            if self.seq [i] != Bell::from (0) {
+                let new_bell = self.seq [i].as_usize () + amount;
+                
+                if new_bell >= stage {
+                    self.seq [i] = Bell::from (new_bell + 1 - stage);
+                } else {
+                    self.seq [i] = Bell::from (new_bell);
+                }
+            }
+        }
+    }
+
     pub fn in_place_reverse (&mut self) {
         let stage = self.seq.len ();
 
@@ -757,6 +773,22 @@ mod change_tests {
             let mut change = Change::from (*from);
 
             change.in_place_inverse ();
+
+            assert_eq! (change, Change::from (*to));
+        }
+    }
+
+    #[test]
+    fn in_place_fixed_treble_cyclic_rotate () {
+        for (from, amount, to) in &[
+            ("1", 5, "1"),
+            ("12345", 3, "15234"),
+            ("43215678", 6, "32814567"),
+            ("1425367890", 5, "1970823456")
+        ] {
+            let mut change = Change::from (*from);
+
+            change.in_place_fixed_treble_cyclic_rotate (*amount);
 
             assert_eq! (change, Change::from (*to));
         }
