@@ -275,7 +275,7 @@ mod method_tests {
     fn partial () {
         assert_eq! (
             Method::partial (
-                "Partial Method", 
+                "Partial Method",
                 PlaceNotation::from_multiple_string ("x30", Stage::ROYAL),
                 Change::from ("1352749608"),
                 PlaceNotation::from_string ("12", Stage::ROYAL)

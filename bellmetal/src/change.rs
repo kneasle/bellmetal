@@ -197,7 +197,7 @@ impl Change {
         for i in 0..stage {
             if self.seq [i] != Bell::from (0) {
                 let new_bell = self.seq [i].as_usize () + amount;
-                
+
                 if new_bell >= stage {
                     self.seq [i] = Bell::from (new_bell + 1 - stage);
                 } else {
@@ -269,11 +269,11 @@ impl Change {
         Change { seq : bell_vec }
     }
 
-    pub fn from_iterator<T> (iter : T) -> Change 
-        where T : Iterator<Item = Bell>, T : Sized 
+    pub fn from_iterator<T> (iter : T) -> Change
+        where T : Iterator<Item = Bell>, T : Sized
     {
         let mut c = Change::empty ();
-        
+
         c.overwrite_from_iterator (iter);
 
         c
@@ -452,7 +452,7 @@ impl<T : Iterator<Item = Bell>> Iterator for ChangeCollectIter<T> {
         Some (Change::new (vec))
     }
 }
-    
+
 
 
 
@@ -892,12 +892,12 @@ mod change_accum_tests {
         let mut acc = ChangeAccumulator::new (Stage::MAJOR);
 
         assert_eq! (acc.total (), &Change::rounds (Stage::MAJOR));
-        
+
         acc.accumulate (&Change::from ("43215678"));
         assert_eq! (acc.total (), &Change::from ("43215678"));
         acc.accumulate (&Change::from ("43215678"));
         assert_eq! (acc.total (), &Change::from ("12345678"));
-        
+
         acc.accumulate (&Change::from ("34567812"));
         assert_eq! (acc.total (), &Change::from ("34567812"));
         acc.accumulate (&Change::from ("34567812"));
@@ -913,7 +913,7 @@ mod change_accum_tests {
 
         acc.set (&Change::from ("74651238"));
         assert_eq! (acc.total (), &Change::from ("74651238"));
-        
+
         acc.pre_accumulate (&Change::from ("45678123"));
         assert_eq! (acc.total (), &Change::from ("27184563"));
 
@@ -934,7 +934,7 @@ mod change_collection_tests {
         let c = Change::from ("123452143524153425134523154321");
 
         let mut iter = ChangeCollectIter::new (
-            c.iter (), 
+            c.iter (),
             Stage::DOUBLES
         );
 
@@ -952,7 +952,7 @@ mod change_collection_tests {
         let c = Change::from ("1234521435241534251345231543214523");
 
         let mut iter = ChangeCollectIter::new (
-            c.iter (), 
+            c.iter (),
             Stage::DOUBLES
         );
 

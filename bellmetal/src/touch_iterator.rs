@@ -397,7 +397,7 @@ impl<'a, T : TouchIterator<'a>> TouchIterator<'a> for MultiChainTouchIterator<'a
     type CallIter = MultiChainCallIterator<'a, T>;
     type MethodNameIter = MultiChainMethodNameIterator<'a, T>;
     type LeftoverChangeIter = T::LeftoverChangeIter;
-    
+
     fn bell_iter (&self) -> Self::BellIter {
         MultiChainBellIterator::new (self.iterators)
     }

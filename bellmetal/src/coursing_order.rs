@@ -669,7 +669,7 @@ mod co_tests {
             "2"
         ] {
             assert_eq! (
-                format! ("{:?}", CoursingOrder::from (*order)), 
+                format! ("{:?}", CoursingOrder::from (*order)),
                 format! ("<{}>", order)
             );
         }

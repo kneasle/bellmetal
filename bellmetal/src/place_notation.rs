@@ -529,7 +529,7 @@ pub mod pn_tests {
     fn cross_odd_stage () {
         PlaceNotation::cross (Stage::CINQUES);
     }
-    
+
     #[test]
     fn multiple_string_conversion_long () {
         for (input, stage, expansion) in &[

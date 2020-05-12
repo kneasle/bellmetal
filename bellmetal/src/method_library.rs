@@ -222,21 +222,21 @@ mod lib_tests {
             ).unwrap ().name,
             "NFFC Treble Place Minor"
         );
-        
+
         assert_eq! (
             method_lib_triples.get_method_by_notation (
                 &PlaceNotation::from_multiple_string ("x5x4x2x23x45x5,2", Stage::MINOR)
             ),
             None
         );
-        
+
         assert_eq! (
             method_lib.get_method_by_notation (
                 &PlaceNotation::from_multiple_string ("x5x4x2x23x45x3,2", Stage::MINOR)
             ),
             None
         );
-        
+
         assert_eq! (
             method_lib.get_method ("Fellowship of the Ring Alliance Triples"),
             Some (Method::from_str (
@@ -245,12 +245,12 @@ mod lib_tests {
                 Stage::TRIPLES
             ))
         );
-        
+
         assert_eq! (
             method_lib_triples.get_method ("Fellowship of the Ring Alliance Triples"),
             None
         );
-        
+
         assert_eq! (
             method_lib.get_method ("Fellowship of The Ring Alliance Triples"),
             None
