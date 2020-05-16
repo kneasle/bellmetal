@@ -155,7 +155,7 @@ impl Method {
     }
 
     pub fn partial (
-        name : &str, place_notations : Vec<PlaceNotation>,
+        name : &str, place_notations : &[PlaceNotation],
         lead_head : Change, lead_end_notation : PlaceNotation
     ) -> Method {
         let stage = lead_head.stage ();
@@ -323,7 +323,7 @@ mod method_tests {
         assert_eq! (
             Method::partial (
                 "Partial Method",
-                PlaceNotation::from_multiple_string ("x30", Stage::ROYAL),
+                &PlaceNotation::from_multiple_string ("x30", Stage::ROYAL),
                 Change::from ("1352749608"),
                 PlaceNotation::from_string ("12", Stage::ROYAL)
             ).plain_lead.to_string (),
