@@ -135,6 +135,25 @@ impl Method {
         }
     }
 
+    pub fn double_symmetry (
+        name : &str, first_quarter_place_notation : &[PlaceNotation],
+        lead_end_notation : PlaceNotation
+    ) -> Method {
+        let mut all_pns : Vec<PlaceNotation> = Vec::with_capacity (first_quarter_place_notation.len () * 4);
+
+        all_pns.extend (first_quarter_place_notation);
+        all_pns.extend (first_quarter_place_notation.iter ().rev ().skip (1).map (|x| x.reversed ()));
+        
+        all_pns.push (lead_end_notation.reversed ());
+        
+        all_pns.extend (first_quarter_place_notation.iter ().rev ().skip (1).map (|x| x.reversed ()).rev ());
+        all_pns.extend (first_quarter_place_notation.iter ().rev ());
+        
+        all_pns.push (lead_end_notation);
+
+        Method::new (name.to_string (), all_pns)
+    }
+
     pub fn partial (
         name : &str, place_notations : Vec<PlaceNotation>,
         lead_head : Change, lead_end_notation : PlaceNotation
@@ -269,6 +288,34 @@ mod method_tests {
             ),
             Change::from ("1235746")
         )
+    }
+
+    #[test]
+    fn double_symmetry () {
+        assert_eq! (
+            Method::double_symmetry (
+                "Double Norwich Court Bob Major",
+                &PlaceNotation::from_multiple_string ("x14x36", Stage::MAJOR),
+                PlaceNotation::from_string ("18", Stage::MAJOR)
+            ).plain_lead.to_string (),
+            "12345678\n21436587\n24135678\n42316587\n24361578\n42635187\n24365817\n42638571\n46283751
+64827315\n46287135\n64821753\n46812735\n64187253\n61482735\n16847253"
+        );
+        
+        assert_eq! (
+            Method::double_symmetry (
+                "Bristol Surprise Maximus",
+                &PlaceNotation::from_multiple_string ("x5Tx14.5Tx5T.36.14x7T.58", Stage::MAXIMUS),
+                PlaceNotation::from_string ("1T", Stage::MAXIMUS)
+            ).plain_lead.to_string (),
+            "1234567890ET\n2143658709TE\n123468507T9E\n21438605T7E9\n241368507T9E\n4231658709TE
+2413567890ET\n423157698E0T\n24351796E8T0\n234571698E0T\n32541796E8T0\n2345719E6T80\n3254791ET608
+352749E16T80\n5372941ET608\n352749E1T068\n537294ET1086\n57392E4T0168\n7593E2T41086\n795E3T240168
+97E5T3420618\n795E3T246081\n7593E2T40618\n57392E4T6081\n537294E6T801\n3527496E8T10\n3254769ET801
+234567E98T10\n3254769E81T0\n3527496E180T\n537294E681T0\n57392E46180T\n7593E24168T0\n57392E146T80
+7593E241T608\n795E32146T80\n97E53124T608\n795E132T4068\n97E531T20486\n9E75132T4068\nE97153T20486
+9E175T302846\nE971T5038264\n9E17T0583624\n91E70T856342\n197ET0583624\n91E7T5038264\n197E5T302846"
+        );
     }
 
     #[test]
