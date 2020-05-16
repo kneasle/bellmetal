@@ -194,7 +194,7 @@ impl Method {
         Method {
             name : name.to_string (),
             stage : stage,
-            plain_lead : Touch::from_changes (&changes [..], lead_head),
+            plain_lead : Touch::from_changes (&changes, lead_head),
             place_notation : Vec::with_capacity (0)
         }
     }

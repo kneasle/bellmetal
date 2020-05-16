@@ -443,7 +443,7 @@ impl FullProvingContext for CompactHashProver {
 
         let mut bell_iter = iter.bell_iter ();
 
-        while fill_from_iterator (&mut bell_iter, &mut self.temporary_slice [..]) {
+        while fill_from_iterator (&mut bell_iter, &mut self.temporary_slice) {
             canon (&self.temporary_slice, &mut self.temporary_change);
 
             self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
@@ -482,7 +482,7 @@ impl ProvingContext for CompactHashProver {
 
         let mut bell_iter = iter.bell_iter ();
 
-        while fill_from_iterator (&mut bell_iter, &mut self.temporary_slice [..]) {
+        while fill_from_iterator (&mut bell_iter, &mut self.temporary_slice) {
             canon (&self.temporary_slice, &mut self.temporary_change);
 
             self.falseness_map [self.temporary_change.destructive_hash ()] = -1;
@@ -503,8 +503,8 @@ impl<'a, I : Iterator<Item = Bell>, T : FnMut(&[Bell], &mut Change) -> ()> Itera
     type Item = (IndexType, IndexType);
 
     fn next (&mut self) -> Option<Self::Item> {
-        while fill_from_iterator (self.bell_iter, &mut self.hash_prover.temporary_slice [..]) {
-            (self.canon_func) (&self.hash_prover.temporary_slice [..], &mut self.hash_prover.temporary_change);
+        while fill_from_iterator (self.bell_iter, &mut self.hash_prover.temporary_slice) {
+            (self.canon_func) (&self.hash_prover.temporary_slice, &mut self.hash_prover.temporary_change);
 
             let hash = self.hash_prover.temporary_change.destructive_hash ();
             let falseness_index = self.hash_prover.falseness_map [hash];

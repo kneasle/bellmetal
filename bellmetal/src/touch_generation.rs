@@ -95,9 +95,9 @@ pub fn one_part_spliced_touch (
     let method_names : Vec<&str> = methods.iter ().map (|(a, _)| *a).collect ();
 
     one_part_spliced_touch_from_indices (
-        &method_list [..], &call_list [..],
-        &method_names [..],
-        &method_indices [..], &call_indices [..]
+        &method_list, &call_list,
+        &method_names,
+        &method_indices, &call_indices
     )
 }
 
@@ -126,7 +126,7 @@ fn one_part_spliced_touch_from_indices (
 
     // Find the number of calls used
     let num_calls = call_indices.iter ().filter (|i| **i > 0).count ();
-    let num_method_splices = method_indices [..].windows (2)
+    let num_method_splices = method_indices.windows (2)
         .filter (|pair| pair [0] != pair [1])
         .count ();
 
@@ -199,7 +199,7 @@ mod gen_tests {
             ("B-P - \0Co Ca\t\n-B** X-E-B-", "208 changes, true.  Score: 71. 23 4-bell runs (11f, 12b)"),
             ("BBCa", "96 changes, false.  Score: 58. 11 4-bell runs (4f, 7b)")
         ] {
-            let touch = one_part_spliced_touch (&methods, &calls [..], input_string);
+            let touch = one_part_spliced_touch (&methods, &calls, input_string);
 
             assert_eq! (touch.iter ().collect (), touch);
 

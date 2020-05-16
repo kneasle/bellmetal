@@ -46,7 +46,7 @@ impl Iterator for ExtentIterator {
                 bell_vec.push (Bell::from (0));
             }
 
-            self.generator.fill (&mut bell_vec [..]);
+            self.generator.fill (&mut bell_vec);
 
             self.is_done = !self.generator.step ();
 

@@ -11,7 +11,7 @@ pub struct Change {
 
 impl Transposition for Change {
     fn slice (&self) -> &[Bell] {
-        &self.seq [..]
+        &self.seq
     }
 }
 
@@ -21,7 +21,7 @@ impl Change {
     }
 
     pub fn mut_slice (&mut self) -> &mut [Bell] {
-        &mut self.seq [..]
+        &mut self.seq
     }
 
     pub fn multiply (&self, rhs : &impl Transposition) -> Change {

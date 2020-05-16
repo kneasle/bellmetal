@@ -575,7 +575,7 @@ pub mod pn_tests {
 
             let touch = Touch::from (&pns [..]);
 
-            assert_eq! (PlaceNotation::to_multiple_string_short (&pns [..]), *string);
+            assert_eq! (PlaceNotation::to_multiple_string_short (&pns), *string);
 
             assert_eq! (touch.length, *length);
             assert_eq! (touch.leftover_change, lh);
