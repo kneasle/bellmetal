@@ -154,6 +154,21 @@ impl Method {
         Method::new (name.to_string (), all_pns)
     }
 
+    pub fn partial_from_str (
+        name : &str, place_notation : &str,
+        lead_head : &str, lead_end_notation : &str
+    ) -> Method {
+        let lh = Change::from (lead_head);
+        let stage = lh.stage ();
+
+        Method::partial (
+            name,
+            &PlaceNotation::from_multiple_string (place_notation, stage),
+            lh,
+            PlaceNotation::from_string (lead_end_notation, stage)
+        )
+    }
+
     pub fn partial (
         name : &str, place_notations : &[PlaceNotation],
         lead_head : Change, lead_end_notation : PlaceNotation
@@ -320,6 +335,11 @@ mod method_tests {
 
     #[test]
     fn partial () {
+        assert_eq! (
+            Method::partial_from_str ("Partial Method", "x30", "1352749608", "12").plain_lead.to_string (),
+            "1234567890\n2143658709\n1246385079\n1357294068\n3152749608\n1325476980"
+        );
+
         assert_eq! (
             Method::partial (
                 "Partial Method",
