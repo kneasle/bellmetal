@@ -135,6 +135,17 @@ impl Method {
         }
     }
 
+    pub fn double_symmetry_from_str (
+        name : &str, first_quarter_place_notation : &str,
+        lead_end_notation : &str, stage : Stage
+    ) -> Method {
+        Method::double_symmetry (
+            name,
+            &PlaceNotation::from_multiple_string (first_quarter_place_notation, stage),
+            PlaceNotation::from_string (lead_end_notation, stage)
+        )
+    }
+
     pub fn double_symmetry (
         name : &str, first_quarter_place_notation : &[PlaceNotation],
         lead_end_notation : PlaceNotation
@@ -318,10 +329,11 @@ mod method_tests {
         );
         
         assert_eq! (
-            Method::double_symmetry (
+            Method::double_symmetry_from_str (
                 "Bristol Surprise Maximus",
-                &PlaceNotation::from_multiple_string ("x5Tx14.5Tx5T.36.14x7T.58", Stage::MAXIMUS),
-                PlaceNotation::from_string ("1T", Stage::MAXIMUS)
+                "x5Tx14.5Tx5T.36.14x7T.58",
+                "1T",
+                Stage::MAXIMUS
             ).plain_lead.to_string (),
             "1234567890ET\n2143658709TE\n123468507T9E\n21438605T7E9\n241368507T9E\n4231658709TE
 2413567890ET\n423157698E0T\n24351796E8T0\n234571698E0T\n32541796E8T0\n2345719E6T80\n3254791ET608
