@@ -536,7 +536,7 @@ impl CoursingOrderIterator for PlainCoursingOrderIterator {
 
 
 #[cfg(test)]
-mod co_tests {
+mod tests {
     use crate::{
         Stage, Change, Bell,
         CoursingOrder,

@@ -459,7 +459,7 @@ impl<T : Iterator<Item = Bell>> Iterator for ChangeCollectIter<T> {
 
 
 #[cfg(test)]
-mod change_tests {
+mod tests {
     use crate::{
         Change,
         Bell, Stage, Place, Parity,

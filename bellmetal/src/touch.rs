@@ -1027,7 +1027,7 @@ impl<'a> TouchIterator<'a> for BasicTouchIterator<'a> {
 
 
 #[cfg(test)]
-mod touch_tests {
+mod tests {
     use crate::{ 
         Method, Call, Touch, Transposition, PlaceNotation, Stage, 
         one_part_spliced_touch, canon_full_cyclic,

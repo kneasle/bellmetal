@@ -332,7 +332,7 @@ mod stroke_tests {
 }
 
 #[cfg(test)]
-mod type_tests {
+mod tests {
     use crate::{ Place, Bell, Stage };
 
     macro_rules! panic_negative_conversion {

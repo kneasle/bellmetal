@@ -692,7 +692,7 @@ pub fn canon_full_cyclic (slice : &[Bell], change : &mut Change) {
 
 
 #[cfg(test)]
-mod proof_tests {
+mod tests {
     use crate::{ Touch };
     use crate::proving::*;
 

@@ -252,7 +252,7 @@ mod call_tests {
 }
 
 #[cfg(test)]
-mod method_tests {
+mod tests {
     use crate::{
         Method, Call, Stage, Change, PlaceNotation
     };

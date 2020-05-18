@@ -208,7 +208,7 @@ static EXTENTS : [&[u8]; CACHED_EXTENTS] = [
 
 
 #[cfg(test)]
-mod utils_tests {
+mod tests {
     use crate::{ Change, Stage, extent, closure };
     use crate::utils::{ AndNext };
 

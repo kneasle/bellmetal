@@ -49,7 +49,7 @@ pub fn name_to_number (name : char) -> Number {
 }
 
 #[cfg(test)]
-mod const_tests {
+mod tests {
     use crate::{ BELL_NAMES, Bell, name_to_number };
     use crate::consts::{ get_number, is_bell_name };
 

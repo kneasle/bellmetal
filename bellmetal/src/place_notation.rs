@@ -481,7 +481,7 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
 
 
 #[cfg(test)]
-pub mod pn_tests {
+pub mod tests {
     use crate::{
         Stage,
         PlaceNotation,

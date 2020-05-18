@@ -163,7 +163,7 @@ fn one_part_spliced_touch_from_indices (
 
 
 #[cfg(test)]
-mod gen_tests {
+mod tests {
     use crate::{ Method, Call, Stage, TouchIterator, one_part_spliced_touch, DefaultScoring };
 
     #[test]
