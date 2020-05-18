@@ -1,5 +1,6 @@
 use crate::types::*;
-use crate::Change;
+use crate::{ Change, MusicScoring };
+use crate::music_scoring::run_length_from_iter;
 
 pub trait Transposition {
     fn slice (&self) -> &[Bell];
@@ -104,57 +105,16 @@ pub trait Transposition {
     }
 
     // Music scoring (follows roughly what CompLib does, but IMO it makes long runs overpowered)
-    fn music_score (&self) -> usize {
-        run_length_to_score (self.run_length_off_front ())
-            + run_length_to_score (self.run_length_off_back ())
+    fn music_score<T : MusicScoring> (&self) -> usize where Self : Sized {
+        T::score_transposition (self)
     }
 
     fn run_length_off_front (&self) -> usize {
-        let bells = self.slice ();
-
-        let stage = bells.len ();
-
-        if stage <= 1 {
-            return stage;
-        }
-
-        let mut last = bells [0].as_number ();
-        let mut i = 1;
-
-        while i < stage && (
-            bells [i].as_i32 () - last as i32 == -1
-         || bells [i].as_i32 () - last as i32 == 1
-        ) {
-            last = bells [i].as_number ();
-
-            i += 1;
-        }
-
-        i
+        run_length_from_iter (self.slice ().iter ().copied ())
     }
 
     fn run_length_off_back (&self) -> usize {
-        let bells = self.slice ();
-
-        let stage = bells.len ();
-
-        if stage <= 1 {
-            return stage;
-        }
-
-        let mut last = bells [stage - 1].as_number ();
-        let mut i = 1;
-
-        while i < stage && (
-            bells [stage - 1 - i].as_i32 () - last as i32 == -1
-         || bells [stage - 1 - i].as_i32 () - last as i32 == 1
-        ) {
-            last = bells [stage - 1 - i].as_number ();
-
-            i += 1;
-        }
-
-        i
+        run_length_from_iter (self.slice ().iter ().copied ().rev ())
     }
 
     // Useful change tests
@@ -299,27 +259,28 @@ pub trait Transposition {
     }
 
     // Pretty printing
-    fn pretty_string (&self) -> String {
+    fn pretty_string<T : MusicScoring> (&self) -> String where Self : Sized {
         let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
 
-        self.write_pretty_string (&mut string);
+        self.write_pretty_string::<T> (&mut string);
 
         string
     }
 
-    fn write_pretty_string (&self, string : &mut String) {
-        self.write_pretty_string_with_stroke (string, Stroke::Hand);
+    fn write_pretty_string<T : MusicScoring> (&self, string : &mut String) where Self : Sized {
+        self.write_pretty_string_with_stroke::<T> (string, Stroke::Hand);
     }
 
-    fn pretty_string_with_stroke (&self, stroke : Stroke) -> String {
+    fn pretty_string_with_stroke<T : MusicScoring> (&self, stroke : Stroke) -> String where Self : Sized {
         let mut string = String::with_capacity (self.slice ().len () * 3); // Seems a good length
 
-        self.write_pretty_string_with_stroke (&mut string, stroke);
+        self.write_pretty_string_with_stroke::<T> (&mut string, stroke);
 
         string
     }
 
-    fn write_pretty_string_with_stroke (&self, string : &mut String, stroke : Stroke) {
+    fn write_pretty_string_with_stroke<T : MusicScoring> (&self, string : &mut String, stroke : Stroke) 
+            where Self : Sized {
         #[derive(PartialEq, Eq)]
         enum CharState {
             Normal,
@@ -331,17 +292,7 @@ pub trait Transposition {
 
         let stage = bells.len ();
 
-        let run_front = {
-            let x = self.run_length_off_front ();
-
-            if x >= 4 { x } else { 0 }
-        };
-
-        let run_back = {
-            let x = self.run_length_off_back ();
-
-            if x >= 4 { x } else { 0 }
-        };
+        let music_mask = T::highlight_transposition (self);
 
         let is_87_at_back = stage % 2 == 0
             && stroke == Stroke::Back
@@ -361,7 +312,7 @@ pub trait Transposition {
                     else if bell.as_usize () == stage - 1 { 2 }
                     else { 0 };
 
-            let char_state = if i < run_front || (stage - 1 - i) < run_back { CharState::Musical }
+            let char_state = if music_mask.get (i as u32) { CharState::Musical }
                     else if is_87_at_back && i >= stage - 2 { CharState::Undesirable }
                     else { CharState::Normal };
 
@@ -420,19 +371,4 @@ impl<'a, T> Iterator for MultiplicationIterator<'a, T> where T : Iterator<Item =
     fn size_hint (&self) -> (usize, Option<usize>) {
         self.rhs.size_hint ()
     }
-}
-
-
-
-
-
-fn run_length_to_score (length : usize) -> usize {
-    if length < 4 {
-        return 0;
-    }
-
-    let x = length - 3;
-
-    // Triangular numbers = n * (n + 1) / 2
-    (x * (x + 1)) >> 1
 }

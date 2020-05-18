@@ -1,4 +1,4 @@
-use crate::{ Bell, Stage, Change, Touch, Transposition, MultiplicationIterator };
+use crate::{ Bell, Stage, Change, Touch, Transposition, MultiplicationIterator, MusicScoring };
 use crate::proving::fill_from_iterator;
 
 use core::iter::Chain;
@@ -33,20 +33,20 @@ pub trait TouchIterator<'a> {
         Touch::from_iterator (&self)
     }
 
-    fn music_score_without_alloc (&self, temp_change : &mut Change) -> usize {
+    fn music_score_without_alloc<T : MusicScoring> (&self, temp_change : &mut Change) -> usize {
         let mut score = 0;
 
         let mut iter = self.bell_iter ();
 
         while fill_from_iterator (&mut iter, temp_change.mut_slice ()) {
-            score += temp_change.music_score ();
+            score += temp_change.music_score::<T> ();
         }
 
         score
     }
 
-    fn music_score (&self) -> usize {
-        self.music_score_without_alloc (&mut Change::rounds (self.stage ()))
+    fn music_score<T : MusicScoring> (&self) -> usize {
+        self.music_score_without_alloc::<T> (&mut Change::rounds (self.stage ()))
     }
 }
 

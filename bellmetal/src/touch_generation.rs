@@ -164,7 +164,7 @@ fn one_part_spliced_touch_from_indices (
 
 #[cfg(test)]
 mod gen_tests {
-    use crate::{ Method, Call, Stage, TouchIterator, one_part_spliced_touch };
+    use crate::{ Method, Call, Stage, TouchIterator, one_part_spliced_touch, DefaultScoring };
 
     #[test]
     fn one_part_spliced () {
@@ -204,7 +204,7 @@ mod gen_tests {
             assert_eq! (touch.iter ().collect (), touch);
 
             // Assuming that it can't screw up and produce exactly the right summary string
-            assert_eq! (touch.summary_string (), *summary);
+            assert_eq! (touch.summary_string::<DefaultScoring> (), *summary);
         }
     }
 }

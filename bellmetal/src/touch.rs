@@ -5,7 +5,8 @@ use crate::{
     Transposition,
     NaiveProver, ProvingContext, FullProvingContext,
     Method,
-    TouchIterator
+    TouchIterator,
+    MusicScoring
 };
 
 use itertools::Itertools;
@@ -140,15 +141,15 @@ fn get_position (table : &HashMap<usize, usize>, index : usize) -> Position {
 }
 
 impl Row<'_> {
-    fn to_annotated_string (&self, table : &HashMap<usize, usize>) -> String {
+    fn to_annotated_string<T : MusicScoring> (&self, table : &HashMap<usize, usize>) -> String {
         let mut s = String::with_capacity (self.stage ().as_usize () * 2);
 
-        self.write_annotated_string (&mut s, table);
+        self.write_annotated_string::<T> (&mut s, table);
 
         s
     }
 
-    fn write_annotated_string (&self, string : &mut String, table : &HashMap<usize, usize>) {
+    fn write_annotated_string<T : MusicScoring> (&self, string : &mut String, table : &HashMap<usize, usize>) {
         match self.method_name {
             Some (s) => { string.push_str (s); }
             None => { string.push (' '); }
@@ -176,7 +177,7 @@ impl Row<'_> {
 
         string.push (' ');
 
-        self.write_pretty_string_with_stroke (string, self.stroke);
+        self.write_pretty_string_with_stroke::<T> (string, self.stroke);
 
         string.push (' ');
 
@@ -331,14 +332,8 @@ impl Touch {
         self.bells [index]
     }
 
-    pub fn music_score (&self) -> usize {
-        let mut music_score = 0;
-
-        for r in self.row_iterator () {
-            music_score += r.music_score ();
-        }
-
-        music_score
+    pub fn music_score<T : MusicScoring> (&self) -> usize {
+        T::score_touch (self)
     }
 
     pub fn number_of_4_bell_runs (&self) -> (usize, usize) {
@@ -377,7 +372,7 @@ impl Touch {
         falseness_to_table (&self.full_truth ())
     }
 
-    pub fn pretty_string_multi_column (&self, columns : usize, truth : Option<&Vec<Vec<usize>>>) -> String {
+    pub fn pretty_string_multi_column<T : MusicScoring> (&self, columns : usize, truth : Option<&Vec<Vec<usize>>>) -> String {
         let truth_table = match truth {
             Some (t) => {
                 falseness_to_table (t)
@@ -561,13 +556,13 @@ impl Touch {
             };
 
             if needs_new_column {
-                add! (r.to_annotated_string (&truth_table));
+                add! (r.to_annotated_string::<T> (&truth_table));
 
                 x += 1;
                 y = 0;
             }
 
-            add! (r.to_annotated_string (&truth_table));
+            add! (r.to_annotated_string::<T> (&truth_table));
 
             // Push the ruleoffs and discontinuity strings
             match (r.is_ruled_off, is_continuous) {
@@ -589,7 +584,7 @@ impl Touch {
 
             s.push_str (ANNOTATION_PADDING_LEFT);
 
-            self.leftover_change.write_pretty_string (&mut s);
+            self.leftover_change.write_pretty_string::<T> (&mut s);
 
             s
         });
@@ -601,37 +596,37 @@ impl Touch {
         ).join ("\n");
 
         final_string.push ('\n');
-        final_string.push_str (&self.coloured_summary_string ());
+        final_string.push_str (&self.coloured_summary_string::<T> ());
 
         final_string
     }
 
-    pub fn pretty_string (&self, truth : Option<&Vec<Vec<usize>>>) -> String {
-        self.pretty_string_multi_column (1, truth)
+    pub fn pretty_string<T : MusicScoring> (&self, truth : Option<&Vec<Vec<usize>>>) -> String {
+        self.pretty_string_multi_column::<T> (1, truth)
     }
 
     // Tested in touch_generation.rs
-    pub fn coloured_summary_string (&self) -> String {
+    pub fn coloured_summary_string<T : MusicScoring> (&self) -> String {
         let (f, b) = self.number_of_4_bell_runs ();
 
         format! (
             "\x1b[94m{}\x1b[0m changes, {}.  Score: \x1b[93m{}\x1b[0m. {} 4-bell runs ({}f, {}b)",
             &self.length.to_string (),
             if self.is_true () { "\x1b[92mtrue\x1b[0m" } else { "\x1b[91mfalse\x1b[0m" },
-            self.music_score (),
+            self.music_score::<T> (),
             f + b,
             f, b
         )
     }
 
-    pub fn summary_string (&self) -> String {
+    pub fn summary_string<T : MusicScoring> (&self) -> String {
         let (f, b) = self.number_of_4_bell_runs ();
 
         format! (
             "{} changes, {}.  Score: {}. {} 4-bell runs ({}f, {}b)",
             &self.length.to_string (),
             if self.is_true () { "true" } else { "false" },
-            self.music_score (),
+            self.music_score::<T> (),
             f + b,
             f, b
         )
@@ -1033,7 +1028,11 @@ impl<'a> TouchIterator<'a> for BasicTouchIterator<'a> {
 
 #[cfg(test)]
 mod touch_tests {
-    use crate::{ Method, Call, Touch, Transposition, PlaceNotation, Stage, one_part_spliced_touch, canon_full_cyclic };
+    use crate::{ 
+        Method, Call, Touch, Transposition, PlaceNotation, Stage, 
+        one_part_spliced_touch, canon_full_cyclic,
+        DefaultScoring
+    };
 
     #[test]
     fn pretty_string () {
@@ -1065,9 +1064,12 @@ mod touch_tests {
         // Touch #1
         let touch = one_part_spliced_touch (&methods, &calls, "CoPE");
 
-        assert_eq! (
-            touch.pretty_string_multi_column (6, Some (&touch.full_truth_canonical (canon_full_cyclic))),
-            "Co   \x1b[91;42m1\x1b[97;42m234567\x1b[96;42m8\x1b[0m    P   \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m    E   \x1b[91;49m1\x1b[97;49m4263\x1b[96;49m8\x1b[97;49m57\x1b[0m  
+        let testing_str = touch.pretty_string_multi_column::<DefaultScoring> (
+            6, 
+            Some (&touch.full_truth_canonical (canon_full_cyclic))
+        );
+
+        let correct_str = "Co   \x1b[91;42m1\x1b[97;42m234567\x1b[96;42m8\x1b[0m    P   \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m    E   \x1b[91;49m1\x1b[97;49m4263\x1b[96;49m8\x1b[97;49m57\x1b[0m  
     2\x1b[91;49m1\x1b[97;49m4365\x1b[96;49m8\x1b[97;49m7\x1b[0m        6\x1b[91;49m1\x1b[96;49m8\x1b[97;49m47253\x1b[0m        4\x1b[91;49m1\x1b[97;49m62\x1b[96;49m8\x1b[97;49m375\x1b[0m  
     \x1b[91;42m1\x1b[97;42m234\x1b[97;49m657\x1b[96;49m8\x1b[0m        6\x1b[96;49m8\x1b[91;49m1\x1b[97;49m74523\x1b[0m        \x1b[91;49m1\x1b[97;49m46\x1b[96;49m8\x1b[97;49m2735\x1b[0m  
     2\x1b[91;49m1\x1b[97;49m4356\x1b[96;49m8\x1b[97;49m7\x1b[0m        \x1b[96;49m8\x1b[97;49m67\x1b[91;49m1\x1b[97;42m5432\x1b[0m        4\x1b[91;49m1\x1b[96;49m8\x1b[97;49m67253\x1b[0m  
@@ -1101,14 +1103,19 @@ mod touch_tests {
   \x1b[92;1m┗\x1b[0m \x1b[91;49m1\x1b[97;49m462\x1b[96;49m8\x1b[97;49m375\x1b[0m \x1b[92;1m┛\x1b[0m                      \x1b[91;49m1\x1b[97;49m6\x1b[96;49m8\x1b[97;49m47253\x1b[0m  
     ────────                        ────────  
 P   \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m                        \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m
-\x1b[94m80\x1b[0m changes, \x1b[91mfalse\x1b[0m.  Score: \x1b[93m36\x1b[0m. 8 4-bell runs (4f, 4b)"
-        );
+\x1b[94m80\x1b[0m changes, \x1b[91mfalse\x1b[0m.  Score: \x1b[93m36\x1b[0m. 8 4-bell runs (4f, 4b)";
+
+        if testing_str != correct_str {
+            println! ("{}\n\n\n{}", testing_str, correct_str);
+
+            panic! ("String conversion incorrect!");
+        }
 
         // Touch #2
         let touch = one_part_spliced_touch (&methods, &calls, "B");
 
         assert_eq! (
-            touch.pretty_string (Some (&touch.full_truth_canonical (canon_full_cyclic))),
+            touch.pretty_string::<DefaultScoring> (Some (&touch.full_truth_canonical (canon_full_cyclic))),
             "B \x1b[91;1m┏\x1b[0m \x1b[91;42m1\x1b[97;42m234567\x1b[96;42m8\x1b[0m \x1b[91;1m┓\x1b[0m
   \x1b[91;1m┗\x1b[0m 2\x1b[91;49m1\x1b[97;49m4365\x1b[96;49m8\x1b[97;49m7\x1b[0m \x1b[91;1m┛\x1b[0m
   \x1b[92;1m┏\x1b[0m \x1b[91;42m1\x1b[97;42m234\x1b[97;49m6\x1b[96;49m8\x1b[97;49m57\x1b[0m \x1b[92;1m┓\x1b[0m

@@ -750,19 +750,6 @@ mod change_tests {
     }
 
     #[test]
-    fn music_scoring () {
-        assert_eq! (Change::from ("12347568").music_score (), 1);
-        assert_eq! (Change::from ("567894231").music_score (), 3);
-        assert_eq! (Change::from ("1234908765").music_score (), 2);
-        assert_eq! (Change::from ("1234560978").music_score (), 6);
-        assert_eq! (Change::from ("1234560987").music_score (), 7);
-        assert_eq! (Change::from ("1234").music_score (), 2);
-        assert_eq! (Change::from ("15234").music_score (), 0);
-        assert_eq! (Change::from ("9876543210").music_score (), 21);
-        assert_eq! (Change::from ("0987654321").music_score (), 56);
-    }
-
-    #[test]
     fn in_place_inverse () {
         for (from, to) in &[
             ("1", "1"),
