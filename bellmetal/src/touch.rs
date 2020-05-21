@@ -324,7 +324,7 @@ impl Touch {
         self.method_names.insert (index, String::from (method_name));
     }
 
-    pub fn append_iterator<'a, 'b> (&'a mut self, iterator : &impl TouchIterator<'b>) {
+    pub fn append_iterator<'b> (&mut self, iterator : &impl TouchIterator<'b>) {
         assert_eq! (self.stage, iterator.stage ());
 
         let len = self.length;
