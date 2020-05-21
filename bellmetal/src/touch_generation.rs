@@ -13,14 +13,12 @@ pub fn one_part_spliced_touch (
     string : &str
 ) -> Touch {
     // Generate hashmaps and vectors from the arrays given
-    let mut method_hashmap : HashMap<&str, usize> = HashMap::with_capacity (methods.len ());
-    let mut method_list : Vec<&Method> = Vec::with_capacity (methods.len ());
+    let mut method_hashmap : HashMap<&str, &Method> = HashMap::with_capacity (methods.len ());
     let mut legit_method_starts : HashSet<char> = HashSet::with_capacity (methods.len ());
     let mut max_method_length = 0;
 
-    for (i, (notation, method)) in methods.iter ().enumerate () {
-        method_list.push (method);
-        method_hashmap.insert (notation, i);
+    for (notation, method) in methods.iter () {
+        method_hashmap.insert (notation, method);
 
         legit_method_starts.insert (notation.chars ().next ().unwrap ());
 
@@ -29,17 +27,15 @@ pub fn one_part_spliced_touch (
         }
     }
 
-    let mut call_hashmap : HashMap<char, usize> = HashMap::with_capacity (calls.len ());
-    let mut call_list : Vec<&Call> = Vec::with_capacity (calls.len ());
+    let mut call_hashmap : HashMap<char, &Call> = HashMap::with_capacity (calls.len ());
 
-    for (i, (notation, call)) in calls.iter ().enumerate () {
-        call_list.push (call);
-        call_hashmap.insert (*notation, i);
+    for (notation, call) in calls.iter () {
+        call_hashmap.insert (*notation, &call);
     }
 
     // Parse the string
-    let mut method_indices : Vec<usize> = Vec::with_capacity (string.len ());
-    let mut call_indices : Vec<usize> = Vec::with_capacity (string.len ());
+    let mut methods : Vec<(String, &Method)> = Vec::with_capacity (string.len ());
+    let mut calls : Vec<Option<&Call>> = Vec::with_capacity (string.len ());
 
     {
         let mut partial_method_name = String::with_capacity (max_method_length);
@@ -48,9 +44,9 @@ pub fn one_part_spliced_touch (
         for c in string.chars () {
             if partial_method_name.len () == 0 { // We're between method names
                 match call_hashmap.get (&c) {
-                    Some (x) => {
+                    Some (call) => {
                         if !has_consumed_call {
-                            call_indices.push (*x + 1);
+                            calls.push (Some (call));
 
                             has_consumed_call = true;
 
@@ -64,7 +60,7 @@ pub fn one_part_spliced_touch (
                         }
 
                         if !has_consumed_call {
-                            call_indices.push (0);
+                            calls.push (None);
                         }
                     }
                 }
@@ -76,7 +72,7 @@ pub fn one_part_spliced_touch (
 
             match method_hashmap.get (&partial_method_name [..]) {
                 Some (x) => {
-                    method_indices.push (*x);
+                    methods.push ((partial_method_name.clone (), *x));
 
                     partial_method_name.clear ();
                 }
@@ -85,69 +81,57 @@ pub fn one_part_spliced_touch (
         }
 
         if !has_consumed_call {
-            call_indices.push (0);
+            calls.push (None);
         }
 
         assert_eq! (partial_method_name.len (), 0);
-        assert_eq! (method_indices.len (), call_indices.len ());
+        assert_eq! (methods.len (), calls.len ());
     }
 
-    let method_names : Vec<&str> = methods.iter ().map (|(a, _)| *a).collect ();
-
-    one_part_spliced_touch_from_indices (
-        &method_list, &call_list,
-        &method_names,
-        &method_indices, &call_indices
-    )
+    one_part_spliced_touch_from_indices (&methods [..], &calls [..])
 }
 
 fn one_part_spliced_touch_from_indices (
-    methods : &[&Method], calls : &[&Call],
-    method_names : &[&str],
-    method_indices : &[usize], call_indices : &[usize]
+    methods : &[(String, &Method)], calls : &[Option<&Call>],
 ) -> Touch {
     // There should be at least one method otherwise the behaviour is undefined
     assert! (methods.len () > 0);
-    assert! (method_indices.len () == call_indices.len ());
+    assert! (methods.len () == methods.len ());
 
     // Find the stage of the touch
-    let stage = methods [0].stage;
+    let stage = methods [0].1.stage;
 
     for m in 1..methods.len () {
-        assert_eq! (stage, methods [m].stage);
+        assert_eq! (stage, methods [m].1.stage);
     }
 
     // Find the length of the touch
     let mut length = 0;
 
-    for i in method_indices.iter () {
-        length += methods [*i].lead_length ();
+    for m in methods.iter () {
+        length += m.1.lead_length ();
     }
 
     // Find the number of calls used
-    let num_calls = call_indices.iter ().filter (|i| **i > 0).count ();
-    let num_method_splices = method_indices.windows (2)
+    let num_calls = calls.iter ().filter (|i| i.is_none ()).count ();
+    let num_method_splices = methods.windows (2)
         .filter (|pair| pair [0] != pair [1])
         .count ();
 
     // Generate the touch
     let mut lead_head_accumulator = ChangeAccumulator::new (stage);
-    let mut touch = Touch::with_capacity (stage, length, method_indices.len (), num_calls, num_method_splices);
+    let mut touch = Touch::with_capacity (stage, length, methods.len (), num_calls, num_method_splices);
 
-    for i in 0..method_indices.len () {
-        let method = &methods [method_indices [i]];
+    for i in 0..methods.len () {
+        let (name, method) = &methods [i];
 
-        if i == 0 || method_indices [i - 1] != method_indices [i] {
-            touch.add_method_name (touch.length, method_names [method_indices [i]]);
+        if i == 0 || methods [i - 1] != methods [i] {
+            touch.add_method_name (touch.length, name);
         }
 
         touch.append_iterator (&method.plain_lead.iter ().transfigure (lead_head_accumulator.total ()));
 
-        if call_indices [i] == 0 {
-            lead_head_accumulator.accumulate (method.lead_head ());
-        } else {
-            let call = calls [call_indices [i] - 1];
-
+        if let Some (call) = calls [i] {
             touch.add_call (touch.length - 1, call.notation);
 
             lead_head_accumulator.accumulate_iterator (
@@ -155,6 +139,8 @@ fn one_part_spliced_touch_from_indices (
                     &call
                 )
             );
+        } else {
+            lead_head_accumulator.accumulate (method.lead_head ());
         }
     }
 
