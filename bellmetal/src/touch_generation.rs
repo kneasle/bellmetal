@@ -179,7 +179,7 @@ mod tests {
         let lessness = Method::from_str (
             "Lessness Surprise Major", "-38-14-56-16-12-58-14-58,12", Stage::MAJOR);
 
-        let bob = Call::from_place_notation_string ('-', "14", Stage::MAJOR);
+        let bob = Call::lead_end_call_from_place_notation_string ('-', "14", Stage::MAJOR);
 
         let methods = [
             ("B", &bristol),

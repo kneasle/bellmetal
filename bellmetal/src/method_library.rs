@@ -13,7 +13,7 @@ struct StoredMethod {
 
 impl StoredMethod {
     pub fn to_method (&self) -> Method {
-        Method::new (self.name.clone (), self.place_notation.clone ())
+        Method::new_with_lead_end_location (self.name.clone (), self.place_notation.clone ())
     }
 }
 

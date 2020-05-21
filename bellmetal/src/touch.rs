@@ -279,8 +279,45 @@ impl Touch {
         BasicTouchIterator::new (self)
     }
 
+    pub fn append_bell_iterator<'a> (&mut self, iter : impl Iterator<Item = Bell>) {
+        self.bells.extend (iter);
+
+        // Copy the last change inserted into the leftover change
+        let mut_slice = self.leftover_change.mut_slice ();
+
+        for i in (0..self.stage.as_usize ()).rev () {
+            mut_slice [i] = self.bells.pop ().unwrap ();
+        }
+
+        // Update length
+        self.length = self.bells.len () / self.stage.as_usize ();
+    }
+
+    pub fn fragment_bell_iterator<'a> (&'a self, start : usize, end : usize) -> Box<dyn Iterator<Item = &'a Bell> + 'a> {
+        let stage = self.stage.as_usize ();
+
+        if end == self.length + 1 {
+            Box::new (
+                self.bells [start * stage..].iter ()
+                    .chain (
+                        self.leftover_change.slice ()
+                            .iter ()
+                )
+            )
+        } else {
+            Box::new (self.bells [start * stage..end * stage].iter ())
+        }
+    }
+
     pub fn add_call (&mut self, index : usize, call_char : char) {
         self.calls.insert (index, call_char);
+    }
+
+    pub fn add_ruleoff (&mut self, index : usize) {
+        match self.ruleoffs.binary_search (&index) {
+            Ok (_) => {} // element already in vector @ `pos` 
+            Err (pos) => self.ruleoffs.insert (pos, index),
+        }
     }
 
     pub fn add_method_name (&mut self, index : usize, method_name : &str) {
@@ -300,6 +337,20 @@ impl Touch {
         self.leftover_change.overwrite_from_iterator (&mut iterator.leftover_change_iter ());
 
         self.length += iterator.length ();
+    }
+
+    pub fn extend_with_place_notation<'a> (&mut self, pns : impl IntoIterator<Item = &'a PlaceNotation>) {
+        let mut temp_change = Change::rounds (self.stage);
+
+        for p in pns {
+            self.bells.extend (self.leftover_change.iter ());
+
+            self.leftover_change.multiply_iterator_into (p.iter (), &mut temp_change);
+
+            temp_change.copy_into (&mut self.leftover_change);
+        }
+
+        self.length = self.bells.len () / self.stage.as_usize ();
     }
 
     pub fn row_at (&self, index : usize) -> Row {
@@ -1047,7 +1098,7 @@ mod tests {
         let lessness = Method::from_str (
             "Lessness Surprise Major", "-38-14-56-16-12-58-14-58,12", Stage::MAJOR);
 
-        let bob = Call::from_place_notation_string ('-', "14", Stage::MAJOR);
+        let bob = Call::lead_end_call_from_place_notation_string ('-', "14", Stage::MAJOR);
 
         let methods = [
             ("B", &bristol),

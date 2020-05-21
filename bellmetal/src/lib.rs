@@ -22,7 +22,7 @@ pub use coursing_order::{
     CoursingOrder, CoursingOrderIterator, BasicCoursingOrderIterator,
     LeadheadCoursingOrderIterator, PlainCoursingOrderIterator, first_plain_bob_lead_head
 };
-pub use method::{ Method, Call };
+pub use method::{ Method, Call, LEAD_END_LOCATION, HALF_LEAD_LOCATION };
 pub use method_library::{ MethodLibrary, serialise_method, deserialise_method };
 pub use music_scoring::{ MusicScoring, DefaultScoring };
 pub use place_notation::PlaceNotation;

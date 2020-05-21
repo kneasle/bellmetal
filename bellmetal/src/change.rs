@@ -46,6 +46,10 @@ impl Change {
         Change { seq : new_seq }
     }
 
+    pub fn transfigure_iterator<'a, I : Iterator<Item = Bell> + 'a> (&'a self, rhs : I) -> impl Iterator<Item = Bell> + 'a {
+        rhs.map (move |b| self.seq [b.as_usize ()])
+    }
+
     pub fn pre_multiply_into (&self, lhs : &impl Transposition, into : &mut Change) {
         if self.stage () != lhs.stage () {
             panic! ("Can't use transpositions of different stages!");
