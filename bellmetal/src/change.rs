@@ -135,16 +135,6 @@ impl Change {
         self.overwrite_from_slice (other.slice ());
     }
 
-    pub fn inverse (&self) -> Change {
-        let mut new_seq : Vec<Bell> = vec![Bell::from (0 as Number); self.stage ().as_usize ()];
-
-        for i in 0..self.stage ().as_usize () {
-            new_seq [self.seq [i as usize].as_usize ()] = Bell::from (i);
-        }
-
-        Change { seq : new_seq }
-    }
-
     pub fn pow (&self, exponent : i32) -> Change {
         if exponent == 0 {
             return Change::rounds (self.stage ());

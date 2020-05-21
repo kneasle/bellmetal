@@ -46,6 +46,18 @@ pub trait Transposition {
         );
     }
 
+    fn inverse (&self) -> Change {
+        let mut new_seq : Vec<Bell> = vec![Bell::from (0 as Number); self.stage ().as_usize ()];
+
+        let slice = self.slice ();
+
+        for i in 0..slice.len () {
+            new_seq [slice [i as usize].as_usize ()] = Bell::from (i);
+        }
+
+        Change::new (new_seq)
+    }
+
     fn parity (&self) -> Parity {
         let bells = self.slice ();
         let stage = bells.len ();
