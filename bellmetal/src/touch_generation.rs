@@ -2,8 +2,10 @@ use crate::{
     Touch,
     Method,
     Call,
+    Change,
     ChangeAccumulator,
-    TouchIterator
+    TouchIterator,
+    Transposition
 };
 
 use std::collections::{ HashMap, HashSet };
@@ -35,7 +37,7 @@ pub fn one_part_spliced_touch (
 
     // Parse the string
     let mut methods : Vec<(String, &Method)> = Vec::with_capacity (string.len ());
-    let mut calls : Vec<Option<&Call>> = Vec::with_capacity (string.len ());
+    let mut calls : Vec<Vec<&Call>> = Vec::with_capacity (string.len ());
 
     {
         let mut partial_method_name = String::with_capacity (max_method_length);
@@ -46,7 +48,7 @@ pub fn one_part_spliced_touch (
                 match call_hashmap.get (&c) {
                     Some (call) => {
                         if !has_consumed_call {
-                            calls.push (Some (call));
+                            calls.push (vec! [call]);
 
                             has_consumed_call = true;
 
@@ -60,7 +62,7 @@ pub fn one_part_spliced_touch (
                         }
 
                         if !has_consumed_call {
-                            calls.push (None);
+                            calls.push (vec! []);
                         }
                     }
                 }
@@ -81,7 +83,7 @@ pub fn one_part_spliced_touch (
         }
 
         if !has_consumed_call {
-            calls.push (None);
+            calls.push (vec! []);
         }
 
         assert_eq! (partial_method_name.len (), 0);
@@ -92,7 +94,7 @@ pub fn one_part_spliced_touch (
 }
 
 fn one_part_spliced_touch_from_indices (
-    methods : &[(String, &Method)], calls : &[Option<&Call>],
+    methods : &[(String, &Method)], calls : &[Vec<&Call>],
 ) -> Touch {
     // There should be at least one method otherwise the behaviour is undefined
     assert! (methods.len () > 0);
@@ -113,13 +115,13 @@ fn one_part_spliced_touch_from_indices (
     }
 
     // Find the number of calls used
-    let num_calls = calls.iter ().filter (|i| i.is_none ()).count ();
+    let num_calls = calls.iter ().filter (|i| i.len () == 0).count ();
     let num_method_splices = methods.windows (2)
         .filter (|pair| pair [0] != pair [1])
         .count ();
 
     // Generate the touch
-    let mut lead_head_accumulator = ChangeAccumulator::new (stage);
+    let mut current_lead_head = Change::rounds (stage);
     let mut touch = Touch::with_capacity (stage, length, methods.len (), num_calls, num_method_splices);
 
     for i in 0..methods.len () {
@@ -129,19 +131,14 @@ fn one_part_spliced_touch_from_indices (
             touch.add_method_name (touch.length, name);
         }
 
-        touch.append_iterator (&method.plain_lead.iter ().transfigure (lead_head_accumulator.total ()));
+        touch.append_iterator (
+            &method.get_lead_fragment_with_calls (
+                0, method.lead_length (),
+                calls [i].iter ().map (|x| *x)
+            ).iter ().transfigure (&current_lead_head)
+        );
 
-        if let Some (call) = calls [i] {
-            touch.add_call (touch.length - 1, call.notation);
-
-            lead_head_accumulator.accumulate_iterator (
-                method.lead_head_after_call_iterator (
-                    &call
-                )
-            );
-        } else {
-            lead_head_accumulator.accumulate (method.lead_head ());
-        }
+        touch.leftover_change.copy_into (&mut current_lead_head);
     }
 
     touch
