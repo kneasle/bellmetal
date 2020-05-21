@@ -275,7 +275,7 @@ impl Touch {
         RowIterator::new (self)
     }
 
-    pub fn iter<'a> (&'a self) -> BasicTouchIterator<'a> {
+    pub fn iter<'a> (&'a self) -> impl TouchIterator<'a> {
         BasicTouchIterator::new (self)
     }
 
