@@ -857,7 +857,7 @@ impl Touch {
         change_capacity : usize,
         ruleoff_capacity : usize,
         call_capacity : usize,
-        method_name_capacity : usize,
+        method_name_capacity : usize
     ) -> Touch {
         Touch {
             stage : stage,
