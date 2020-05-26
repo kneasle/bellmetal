@@ -147,7 +147,7 @@ fn one_part_spliced_touch_from_indices (
 
 #[cfg(test)]
 mod tests {
-    use crate::{ Method, Call, Stage, TouchIterator, one_part_spliced_touch, DefaultScoring };
+    use crate::{ Method, Call, Change, Stage, TouchIterator, one_part_spliced_touch, DefaultScoring };
 
     #[test]
     fn one_part_spliced () {
@@ -189,5 +189,21 @@ mod tests {
             // Assuming that it can't screw up and produce exactly the right summary string
             assert_eq! (touch.summary_string::<DefaultScoring> (), *summary);
         }
+    }
+
+    #[test]
+    fn leftover_change_at_call () {
+        let bristol = Method::from_str (
+            "Bristol Surprise Major", "-58-14.58-58.36.14-14.58-14-18,18", Stage::MAJOR);
+
+        let bob = Call::lead_end_call_from_place_notation_string ('-', "14", Stage::MAJOR);
+
+        let methods = [("B", &bristol)];
+
+        let calls = [('-', bob)];
+
+        let touch = one_part_spliced_touch (&methods, &calls, "B-B-B-");
+
+        assert_eq! (touch.leftover_change, Change::rounds (Stage::MAJOR));
     }
 }
