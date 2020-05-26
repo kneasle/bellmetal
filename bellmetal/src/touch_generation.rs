@@ -3,7 +3,6 @@ use crate::{
     Method,
     Call,
     Change,
-    ChangeAccumulator,
     TouchIterator,
     Transposition
 };
@@ -11,6 +10,14 @@ use crate::{
 use std::collections::{ HashMap, HashSet };
 use itertools::Itertools;
 use std::iter::repeat;
+
+pub fn single_method_touch (
+    method : &Method,
+    mnemonic : &str,
+    calls : &[Vec<&Call>]
+) -> Touch {
+    one_part_spliced_touch_from_indices (repeat ((mnemonic, method)).take (calls.len ()), calls)
+}
 
 pub fn one_part_spliced_touch (
     methods : &[(&str, &Method)], calls : &[(char, Call)],
