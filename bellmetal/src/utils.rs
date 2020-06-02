@@ -227,7 +227,7 @@ mod tests {
     #[test]
     fn change_closure () {
         assert_eq! (
-            closure (Change::from ("13425678")),
+            closure (&Change::from ("13425678")),
             vec! [
                 Change::from ("12345678"),
                 Change::from ("13425678"),
@@ -236,7 +236,7 @@ mod tests {
         );
 
         assert_eq! (
-            closure (Change::from ("87654321")),
+            closure (&Change::from ("87654321")),
             vec! [
                 Change::from ("12345678"),
                 Change::from ("87654321")
@@ -244,21 +244,21 @@ mod tests {
         );
 
         assert_eq! (
-            closure (Change::from ("1")),
+            closure (&Change::from ("1")),
             vec! [
                 Change::from ("1"),
             ]
         );
 
         assert_eq! (
-            closure (Change::from ("123456789")),
+            closure (&Change::from ("123456789")),
             vec! [
                 Change::from ("123456789"),
             ]
         );
 
         assert_eq! (
-            closure (Change::from ("4321675")),
+            closure (&Change::from ("4321675")),
             vec! [
                 Change::from ("1234567"),
                 Change::from ("4321675"),
@@ -270,7 +270,7 @@ mod tests {
         );
 
         assert_eq! (
-            closure (Change::from ("")),
+            closure (&Change::from ("")),
             vec! [
                 Change::from (""),
             ]
