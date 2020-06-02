@@ -34,5 +34,5 @@ pub use touch::{ Row, Touch, BasicTouchIterator };
 pub use touch_iterator::{ TouchIterator, TransfiguredTouchIterator, MultiChainTouchIterator };
 pub use transposition::{ Transposition, MultiplicationIterator };
 pub use types::{ Stroke, Bell, Place, Parity, Stage, Number, Mask, MaskMethods };
-pub use touch_generation::{ one_part_spliced_touch };
+pub use touch_generation::{ one_part_spliced_touch, single_method_touch };
 pub use utils::{ extent, closure };
