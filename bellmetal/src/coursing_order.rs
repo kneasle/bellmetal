@@ -36,7 +36,7 @@ impl PartialOrd for RunSection {
 
 
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Hash)]
 pub struct CoursingOrder {
     order : Vec<Bell> // order will always start with the heaviest bell in the coursing order
 }
