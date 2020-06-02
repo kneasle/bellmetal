@@ -1,7 +1,7 @@
 use crate::{ Change, Stage, Bell };
 use std::iter::{ Fuse, Peekable };
 
-pub fn closure (change : Change) -> Vec<Change> {
+pub fn closure (change : &Change) -> Vec<Change> {
     let mut vec : Vec<Change> = Vec::with_capacity (change.stage ().as_usize ());
 
     let rounds = Change::rounds (change.stage ());
