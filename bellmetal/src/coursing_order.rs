@@ -68,7 +68,7 @@ impl CoursingOrder {
         }
     }
 
-    pub fn overwrite_from_leadhead (&mut self, lh : &Change) {
+    pub fn overwrite_from_leadhead<T : Transposition> (&mut self, lh : &T) {
         self.overwrite_from_iterator (&mut LeadheadCoursingOrderIterator::new (lh));
     }
 
@@ -449,13 +449,13 @@ impl<'a> CoursingOrderIterator for BasicCoursingOrderIterator<'a> {
 
 
 
-pub struct LeadheadCoursingOrderIterator<'a> {
-    leadhead : &'a Change,
+pub struct LeadheadCoursingOrderIterator<'a, T : Transposition> {
+    leadhead : &'a T,
     iterator : PlainCoursingOrderIterator
 }
 
-impl LeadheadCoursingOrderIterator<'_> {
-    pub fn new<'a> (leadhead : &'a Change) -> LeadheadCoursingOrderIterator<'a> {
+impl<T : Transposition> LeadheadCoursingOrderIterator<'_, T> {
+    pub fn new<'a> (leadhead : &'a T) -> LeadheadCoursingOrderIterator<'a, T> {
         LeadheadCoursingOrderIterator {
             leadhead : leadhead,
             iterator : PlainCoursingOrderIterator::new (leadhead.stage ())
@@ -463,7 +463,7 @@ impl LeadheadCoursingOrderIterator<'_> {
     }
 }
 
-impl<'a> CoursingOrderIterator for LeadheadCoursingOrderIterator<'a> {
+impl<'a, T : Transposition> CoursingOrderIterator for LeadheadCoursingOrderIterator<'a, T> {
     fn next (&mut self) -> Bell {
         self.leadhead.bell_at (Place::from (self.iterator.next ().as_usize ()))
     }
