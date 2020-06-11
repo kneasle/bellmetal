@@ -14,3 +14,8 @@ This library is designed mainly with my own use in mind.  It has been pivotal in
 - An iterator system to allow touch generation and proving without generating the entire composition on the heap.
 
 ## Example screenshots
+![Cyclic Double Royal](https://raw.githubusercontent.com/Kneasle/bellmetal/master/screenshots/cyclic-double-royal.png)
+A pretty-printing of 1/36th of the Cylic Rotational Peal mentioned above.
+
+![Very False](https://raw.githubusercontent.com/Kneasle/bellmetal/master/screenshots/very-false-8-part.png)
+A pretty-printing of a short touch of spliced Surprise Major, with the proving done as though it was the start of each part of a cyclic 8-part.  Demonstrates the false row grouping.
