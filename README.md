@@ -21,3 +21,6 @@ A pretty-printing of 1/36th of the Cylic Rotational Peal mentioned above.
 ![Very False](https://raw.githubusercontent.com/Kneasle/bellmetal/master/screenshots/very-false-8-part.png)
 
 A pretty-printing of a short touch of spliced Surprise Major, with the proving done as though it was the start of each part of a cyclic 8-part.  Demonstrates the false row grouping.
+
+![Snow Tiger Delight Maximus](https://raw.githubusercontent.com/Kneasle/bellmetal/master/screenshots/snow-tiger.png)
+An example of the course of Maximus with Coursing order 685324, which has 3 different sets of 4-bell runs.  Used in this composition: [5136 Snow Tiger Delight Maximus by Ben White-Horne](https://complib.org/composition/63424).
