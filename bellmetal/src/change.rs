@@ -4,8 +4,6 @@ use core::ops::{ Mul, Not };
 use std::convert::{ From };
 use std::fmt;
 
-use std::iter::repeat;
-
 // Imports used purely to prevent lots of boiler plate code in the documentation.  These won't be
 // registered by the compiler, but we can suppress errors on just these imports so that we don't
 // lose crate-wide compiler warnings.
@@ -244,8 +242,13 @@ impl Change {
 
         let stage = self.stage ().as_usize ();
 
-        into.seq.clear ();
-        into.seq.extend (repeat (Bell::from (0)).take (stage));
+        while into.stage ().as_usize () < stage {
+            into.seq.push (Bell::from (0));
+        }
+
+        if into.stage ().as_usize () > stage {
+            into.seq.truncate (stage);
+        }
 
         for i in 0..stage {
             into.seq [rhs.bell_at (Place::from (i)).as_usize ()] = self.seq [i];
