@@ -139,7 +139,7 @@ impl Change {
         self.overwrite_from_slice (other.slice ());
     }
 
-    pub fn pow (&self, exponent : i32) -> Change {
+    pub fn pow (&self, exponent : isize) -> Change {
         if exponent == 0 {
             return Change::rounds (self.stage ());
         }
@@ -618,7 +618,7 @@ mod tests {
 
     #[test]
     fn exponentiation () {
-        assert_eq! (Change::from ("18765432").pow (2i32), Change::rounds (Stage::from (8)));
+        assert_eq! (Change::from ("18765432").pow (2), Change::rounds (Stage::from (8)));
         assert_eq! (Change::from ("81275643").pow (0), Change::rounds (Stage::from (8)));
         assert_eq! (Change::from ("912345678").pow (-4), Change::from ("567891234"));
         assert_eq! (Change::from ("134265").pow (2), Change::from ("142356"));
