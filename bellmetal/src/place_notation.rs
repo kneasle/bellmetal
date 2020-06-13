@@ -465,7 +465,11 @@ impl <'a> Iterator for PlaceNotationIterator<'a> {
             if self.should_hunt_up {
                 output = self.index - 1;
             } else {
-                output = self.index + 1;
+                if self.place_notation.places.get ((self.index + 1) as Number) {
+                    output = self.index;
+                } else {
+                    output = self.index + 1;
+                }
             }
 
             self.should_hunt_up = !self.should_hunt_up;
