@@ -304,6 +304,10 @@ pub fn first_plain_bob_lead_head (stage : Stage) -> Change {
     merge_iterators_to_lead_head (&mut bell_iterator, &mut place_iterator, stage)
 }
 
+pub fn plain_bob_lead_head (stage : Stage, power : isize) -> Change {
+    first_plain_bob_lead_head (stage).pow (power)
+}
+
 
 
 
