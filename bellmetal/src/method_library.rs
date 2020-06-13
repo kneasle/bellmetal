@@ -156,7 +156,7 @@ pub fn serialise_method (method : &Method, string : &mut String) {
 
 
 #[cfg(test)]
-mod lib_tests {
+mod tests {
     use crate::{
         Method, MethodLibrary,
         Stage, PlaceNotation,

@@ -857,7 +857,7 @@ mod tests {
 }
 
 #[cfg(test)]
-mod change_accum_tests {
+mod accum_tests {
     use crate::{ Stage, Change, ChangeAccumulator };
 
     #[test]
@@ -907,7 +907,7 @@ mod change_accum_tests {
 }
 
 #[cfg(test)]
-mod change_collection_tests {
+mod collection_tests {
     use crate::{ Stage, Change, ChangeCollectIter, Transposition };
 
     #[test]
