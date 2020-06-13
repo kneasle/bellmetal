@@ -212,21 +212,7 @@ impl Change {
     }
 
     pub fn multiply_iterator_into (&self, rhs : impl Iterator<Item = Bell>, into : &mut Change) {
-        if self.stage () != into.stage () {
-            panic! ("Can't multiply into a change of the wrong stage");
-        }
-
-        into.seq.clear ();
-
-        let mut i = 0;
-
-        for b in rhs {
-            into.seq.push (self.seq [b.as_usize ()]);
-
-            i += 1;
-        }
-
-        assert_eq! (i, into.stage ().as_usize ());
+        into.overwrite_from_iterator (self.transfigure_iterator (rhs));
     }
 
     pub fn multiply_into (&self, rhs : &impl Transposition, into : &mut Change) {
