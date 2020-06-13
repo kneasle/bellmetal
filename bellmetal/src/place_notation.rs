@@ -79,24 +79,7 @@ impl PlaceNotation {
     }
 
     pub fn transposition (&self) -> Change {
-        let stage = self.stage.as_usize ();
-        let mut bell_vec : Vec<Bell> = Vec::with_capacity (stage);
-
-        let mut i = 0;
-
-        while i < stage {
-            if self.places.get (i as Number) || self.places.get (i as Number + 1) {
-                bell_vec.push (Bell::from (i));
-
-                i += 1;
-            } else {
-                bell_vec.push (Bell::from (i + 1));
-                bell_vec.push (Bell::from (i));
-                i += 2;
-            }
-        }
-
-        Change::new (bell_vec)
+        Change::from_iterator (self.iter ())
     }
 
     pub fn into_string_implicit (&self, string : &mut String) {
