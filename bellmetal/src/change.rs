@@ -728,6 +728,7 @@ mod tests {
         for (lhs, rhs, result) in &changes {
             assert_eq! (lhs.clone () * rhs.clone (), *result);
 
+            assert_eq! (lhs.multiply (rhs), *result);
             assert_eq! (lhs.multiply_iterator (rhs.iter ()), *result);
         }
     }
