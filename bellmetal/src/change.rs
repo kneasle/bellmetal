@@ -79,13 +79,7 @@ impl Change {
     }
 
     pub fn multiply_iterator<I> (&self, rhs : I) -> Change where I : Iterator<Item = Bell> {
-        let mut new_seq : Vec<Bell> = Vec::with_capacity (self.stage ().as_usize ());
-
-        for b in rhs {
-            new_seq.push (self.seq [b.as_usize ()]);
-        }
-
-        Change { seq : new_seq }
+        Change { seq : self.transfigure_iterator (rhs).collect () }
     }
 
     pub fn transfigure_iterator<'a, I : Iterator<Item = Bell> + 'a> (&'a self, rhs : I) -> impl Iterator<Item = Bell> + 'a {
