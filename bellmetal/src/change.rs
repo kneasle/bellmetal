@@ -270,12 +270,7 @@ impl Change {
     }
 
     pub fn overwrite_from_slice (&mut self, slice : &[Bell]) {
-        self.seq.clear ();
-        self.seq.reserve (slice.len ());
-
-        for b in slice.iter () {
-            self.seq.push (*b);
-        }
+        self.overwrite_from_iterator (slice.iter ().cloned ());
     }
 
     pub fn overwrite_from (&mut self, other : &impl Transposition) {
