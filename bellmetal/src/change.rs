@@ -62,10 +62,46 @@ impl Change {
         Stage::from (self.seq.len ())
     }
 
+    /// Returns a mutable slice from the underlying representation of a given `Change`.  This is
+    /// designed mainly for internal use - if you really want to modify `Change`s then
+    /// [set_bell](Change::set_bell) is a safer (but marginally slower) way to do so.  However,
+    /// sometimes you just want as much speed as possible and know exactly what you're doing in
+    /// which case you should use this.
+    ///
+    /// # Examples
+    /// ```
+    /// use bellmetal::{ Bell, Change };
+    ///
+    /// let mut c = Change::from ("12345678");
+    ///
+    /// let mut slice = c.mut_slice ();
+    /// slice [0] = Bell::from ('2');
+    /// slice [1] = Bell::from ('1');
+    ///
+    /// assert_eq! (c, Change::from ("21345678"));
+    /// ```
     pub fn mut_slice (&mut self) -> &mut [Bell] {
         &mut self.seq
     }
 
+    /// Multiplies this `Change` by another [Transposition].  This is the same as using the `*`
+    /// operator except that this can borrow its arguments and so doesn't require `Clone`ing
+    /// changes.
+    ///
+    /// This is coded such that `a * b` or `a.multiply (b)` will mean "Suppose I have a touch that 
+    /// takes me from rounds to `a` and then after ring that I ring a touch that takes me from 
+    /// rounds to `b`.  The overall effect of the combination of these touches is `a * b`.  Note that 
+    /// this is opposite to how permutation multiplication works when represented as matrices.
+    ///
+    /// # Examples
+    /// ```
+    /// use bellmetal::Change;
+    ///
+    /// let cyclic_part_head = Change::from ("17823456");
+    /// let some_change = Change::from ("43215678");
+    ///
+    /// assert_eq! (cyclic_part_head.multiply (&some_change), Change::from ("28713456"));
+    /// ```
     pub fn multiply (&self, rhs : &impl Transposition) -> Change {
         let mut c = Change::empty ();
 
@@ -74,18 +110,95 @@ impl Change {
         c
     }
 
+    /// Overwrites a [Bell] in a given [Place] in a given `Change`.
+    ///
+    /// # Examples
+    /// ```
+    /// use bellmetal::{ Bell, Place, Change };
+    ///
+    /// let mut c = Change::from ("12345678");
+    /// 
+    /// c.set_bell (Place::from (0), Bell::from ('2'));
+    /// c.set_bell (Place::from (1), Bell::from ('1'));
+    ///
+    /// assert_eq! (c, Change::from ("21345678"));
+    /// ```
     pub fn set_bell (&mut self, place : Place, bell : Bell) {
         self.seq [place.as_usize ()] = bell;
     }
 
+    /// Multiplies a given change with an iterator of bells (see [Change::multiply] for more
+    /// details about how multiplication of permutations works).  This is the same as
+    /// [multiply_iterator](Change::transfigure_iterator), except that this will return a `Change`
+    /// rather than another iterator.
+    ///
+    /// Conceptually, this is treating the [Bell]s of the iterator as the place in this `Change`
+    /// where the output [Bell] should come from.  Therefore, this has no requirement that the
+    /// iterator represents a permutation - it could well contain duplicate [Bell]s, in which case
+    /// the output will also contain duplicate [Bell]s in the same locations.
+    ///
+    /// # Examples
+    /// ```
+    /// use bellmetal::{ Change, Transposition };
+    ///
+    /// let part_head = Change::from ("56781234");
+    /// 
+    /// assert_eq! (
+    ///     part_head.multiply_iterator (Change::from ("321321").iter ()),
+    ///     Change::from ("765765")
+    /// );
+    /// ```
     pub fn multiply_iterator (&self, rhs : impl Iterator<Item = Bell>) -> Change {
         Change { seq : self.transfigure_iterator (rhs).collect () }
     }
 
+    /// Multiplies a given `Change` with an iterator of bells (see [Change::multiply] for more
+    /// details about how multiplication of permutations works).  This is the same as
+    /// [multiply_iterator](Change::multiply_iterator), except that this will return another
+    /// iterator, rather than a `Change`.
+    ///
+    /// Conceptually, this is treating the [Bell]s of the iterator as the place in this `Change`
+    /// where the output [Bell] should come from.  Therefore, this has no requirement that the
+    /// iterator represents a permutation - it could well contain duplicate [Bell]s, in which case
+    /// the output will also contain duplicate [Bell]s in the same locations.
+    ///
+    /// # Examples
+    /// ```
+    /// use bellmetal::{ Bell, Change, Transposition };
+    ///
+    /// let c = Change::from ("321");
+    /// let part_head = Change::from ("56781234");
+    /// 
+    /// let mut new_iterator = part_head.transfigure_iterator (c.iter ());
+    ///
+    /// assert_eq! (new_iterator.next (), Some (Bell::from ('7')));
+    /// assert_eq! (new_iterator.next (), Some (Bell::from ('6')));
+    /// assert_eq! (new_iterator.next (), Some (Bell::from ('5')));
+    /// assert_eq! (new_iterator.next (), None);
+    /// ```
     pub fn transfigure_iterator<'a> (&'a self, rhs : impl Iterator<Item = Bell> + 'a) -> impl Iterator<Item = Bell> + 'a {
         rhs.map (move |b| self.seq [b.as_usize ()])
     }
 
+    /// Multiplies this `Change` on to the end of the argument, and copies the result into another
+    /// `Change` to avoid heap allocations.  Note that the argument is used on the **left** hand side
+    /// of the multiplication.
+    ///
+    /// # Panics
+    /// Panics if `lhs` is doesn't have the same [Stage] as this change.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::Change;
+    ///
+    /// let part_head = Change::from ("34567812");
+    /// let example_change = Change::from ("43215786");
+    /// let mut output_change = Change::empty ();
+    ///
+    /// example_change.pre_multiply_into (&part_head, &mut output_change);
+    ///
+    /// assert_eq! (output_change, Change::from ("65437128"));
+    /// ```
     pub fn pre_multiply_into (&self, lhs : &impl Transposition, into : &mut Change) {
         if self.stage () != lhs.stage () {
             panic! ("Can't use transpositions of different stages!");
