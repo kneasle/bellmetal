@@ -45,6 +45,10 @@ impl PlaceNotation {
         PlaceNotationIterator::new (self)
     }
 
+    pub fn places_made<'a> (&'a self) -> impl Iterator<Item = Place> + 'a {
+        (0..self.stage.as_usize ()).filter (move |x| self.places.get (*x as Number)).map (|x| Place::from (x))
+    }
+
     // Returns the place notation that represents 'self' but with the places reversed
     // (for example 14 -> 58 in Major, 1 -> 7 in Triples, etc)
     pub fn reversed (&self) -> PlaceNotation {
