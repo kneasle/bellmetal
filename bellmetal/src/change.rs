@@ -211,10 +211,45 @@ impl Change {
         }
     }
 
+    /// Multiplies this `Change` by an iterator, and copies the result into another `Change` to 
+    /// avoid heap allocations.  Same as [multiply_iterator](Change::multiply_iterator), except
+    /// that it will avoid allocating a new `Change` on the heap if an old one can be reused.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Bell, Change };
+    ///
+    /// let part_head = Change::from ("34567812");
+    /// let bells = [Bell::from ('1'), Bell::from ('3'), Bell::from ('2')];
+    /// let mut output_change = Change::empty ();
+    ///
+    /// part_head.multiply_iterator_into (bells.iter ().cloned (), &mut output_change);
+    ///
+    /// assert_eq! (output_change, Change::from ("354"));
+    /// ```
     pub fn multiply_iterator_into (&self, rhs : impl Iterator<Item = Bell>, into : &mut Change) {
         into.overwrite_from_iterator (self.transfigure_iterator (rhs));
     }
 
+    /// Multiplies this `Change` by a [Transposition], and copies the result into another `Change` to 
+    /// avoid heap allocations.  Same as [multiply](Change::multiply), except that it will avoid 
+    /// allocating a new `Change` on the heap if an old one can be reused.
+    /// 
+    /// # Panics
+    /// Panics if `rhs` doesn't have the same [Stage] as this `Change`.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Bell, Change };
+    ///
+    /// let part_head = Change::from ("34567812");
+    /// let some_change = Change::from ("23456187");
+    /// let mut output_change = Change::empty ();
+    ///
+    /// part_head.multiply_into (&some_change, &mut output_change);
+    ///
+    /// assert_eq! (output_change, Change::from ("45678321"));
+    /// ```
     pub fn multiply_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
@@ -227,6 +262,24 @@ impl Change {
         }
     }
 
+    /// Multiplies this `Change` by the inversion of a [Transposition], without creating an
+    /// intermediate `Change`.
+    /// 
+    /// # Panics
+    /// Panics if `rhs` doesn't have the same [Stage] as this `Change`.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Bell, Change };
+    ///
+    /// let part_head = Change::from ("34567812");
+    /// let some_change = Change::from ("23456187");
+    ///
+    /// assert_eq! (
+    ///     part_head.multiply_inverse (&some_change),
+    ///     Change::from ("83456721")
+    /// );
+    /// ```
     pub fn multiply_inverse (&self, rhs : &impl Transposition) -> Change {
         let mut change = Change::rounds (self.stage ());
 
@@ -235,6 +288,25 @@ impl Change {
         change
     }
 
+    /// Multiplies this `Change` by the inversion of a [Transposition], and copies the result into 
+    /// another `Change` to without any heap allocations.  Same as [multiply](Change::multiply), except 
+    /// that it will avoid allocating a new `Change` on the heap if an old one can be reused.
+    /// 
+    /// # Panics
+    /// Panics if `rhs` doesn't have the same [Stage] as this `Change`.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Bell, Change };
+    ///
+    /// let part_head = Change::from ("34567812");
+    /// let some_change = Change::from ("23456187");
+    /// let mut output_change = Change::empty ();
+    ///
+    /// part_head.multiply_inverse_into (&some_change, &mut output_change);
+    ///
+    /// assert_eq! (output_change, Change::from ("83456721"));
+    /// ```
     pub fn multiply_inverse_into (&self, rhs : &impl Transposition, into : &mut Change) {
         if self.stage () != rhs.stage () {
             panic! ("Can't use transpositions of different stages!");
@@ -255,6 +327,29 @@ impl Change {
         }
     }
 
+    /// Replaces the contents of this `Change` with the permutation represented by `string`.  Doesn't
+    /// enforce that `string` represents a permutation of the same [Stage] as `self`, so this can be 
+    /// used on any `Change` (even empty ones).
+    ///
+    /// # Panics
+    /// Panics if `string` contains any characters that don't represent [Bell]s.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Stage, Change };
+    ///
+    /// let mut c = Change::rounds (Stage::ROYAL);
+    ///
+    /// c.overwrite_from_string ("1357924680");
+    ///
+    /// assert_eq! (c, Change::from ("1357924680"));
+    ///
+    /// c.overwrite_from_string ("123456");
+    ///
+    /// assert_eq! (c.stage (), Stage::MINOR);
+    ///
+    /// assert_eq! (c, Change::rounds (Stage::MINOR));
+    /// ```
     pub fn overwrite_from_string (&mut self, string : &str) {
         self.seq.clear ();
         self.seq.reserve (string.len ());
@@ -264,19 +359,85 @@ impl Change {
         }
     }
 
+    /// Replaces the contents of this `Change` with the contents of `iter`.  As with
+    /// [overwrite_from_string](Change::overwrite_from_string), this doesn't enforce that the
+    /// stages are the same.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Bell, Stage, Change };
+    ///
+    /// let mut c = Change::rounds (Stage::ROYAL);
+    ///
+    /// c.overwrite_from_iterator (
+    ///     [Bell::from ('1'), Bell::from ('2'), Bell::from ('4'), Bell::from ('3')].iter ().cloned ()
+    /// );
+    ///
+    /// assert_eq! (c.stage (), Stage::MINIMUS);
+    ///
+    /// assert_eq! (c, Change::from ("1243"));
+    /// ```
     pub fn overwrite_from_iterator (&mut self, iter : impl Iterator<Item = Bell>) {
         self.seq.clear ();
         self.seq.extend (iter);
     }
 
+    /// Replaces the contents of this `Change` with the contents of `slice`.  As with
+    /// [overwrite_from_string](Change::overwrite_from_string), this doesn't enforce that the
+    /// stages are the same.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Bell, Stage, Change };
+    ///
+    /// let mut c = Change::rounds (Stage::ROYAL);
+    ///
+    /// c.overwrite_from_slice (
+    ///     &[Bell::from ('1'), Bell::from ('2'), Bell::from ('4'), Bell::from ('3')]
+    /// );
+    ///
+    /// assert_eq! (c.stage (), Stage::MINIMUS);
+    ///
+    /// assert_eq! (c, Change::from ("1243"));
+    /// ```
     pub fn overwrite_from_slice (&mut self, slice : &[Bell]) {
         self.overwrite_from_iterator (slice.iter ().cloned ());
     }
 
+    /// Replaces the contents of this `Change` with the contents of the given [Transposition].  As with
+    /// [overwrite_from_string](Change::overwrite_from_string), this doesn't enforce that the
+    /// stages are the same.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Bell, Stage, Change };
+    ///
+    /// let mut c = Change::rounds (Stage::ROYAL);
+    ///
+    /// c.overwrite_from (&Change::from ("145623"));
+    ///
+    /// assert_eq! (c.stage (), Stage::MINOR);
+    ///
+    /// assert_eq! (c, Change::from ("145623"));
+    /// ```
     pub fn overwrite_from (&mut self, other : &impl Transposition) {
         self.overwrite_from_slice (other.slice ());
     }
 
+    /// Raises the contents of this `Change` to a given exponent.  This uses an `O(|n|)` algorithm
+    /// of repeatedly multiplying the `Change` with itself, which is faster than the (otherwise better) 
+    /// `O(log|n|)` method of repeated squaring for small values of the exponent.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{ Stage, Change };
+    ///
+    /// let cyclic_part_end = Change::from ("81234567");
+    ///
+    /// assert_eq! (cyclic_part_end.pow (-3), Change::from ("45678123"));
+    /// assert_eq! (cyclic_part_end.pow (2), Change::from ("78123456"));
+    /// assert_eq! (cyclic_part_end.pow (0), Change::rounds (Stage::MAJOR));
+    /// ```
     pub fn pow (&self, exponent : isize) -> Change {
         if exponent == 0 {
             return Change::rounds (self.stage ());
@@ -297,6 +458,27 @@ impl Change {
         accumulator.total ().clone ()
     }
 
+    /// Inverts this `Change`, so that it represents the same `Change` but starting from the change
+    /// like `18765432`.  This as the same effect as as premultiplying by `18765432` (or the equivalent 
+    /// on the correct [Stage]), or swapping the `2` with the tenor, the `3` with the `n - 1`, 
+    /// etc.  Same as [in_place_inverse](Change::in_place_inverse), except that the treble is always left 
+    /// unaffected by the transformation.
+    ///
+    /// This is useful in making canonicalisation functions for proving palendromic multiparts, where 
+    /// the symmetry point is exactly half way between rounds and the "Before" lead end.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::Change;
+    ///
+    /// let mut c1 = Change::from ("13287654");
+    /// c1.in_place_fixed_treble_inverse ();
+    /// assert_eq! (c1, Change::from ("17823456"));
+    ///
+    /// let mut c2 = Change::from ("3456127890");
+    /// c2.in_place_fixed_treble_inverse ();
+    /// assert_eq! (c2, Change::from ("9876105432"));
+    /// ```
     pub fn in_place_fixed_treble_inverse (&mut self) {
         let stage = self.seq.len ();
 
@@ -307,6 +489,25 @@ impl Change {
         }
     }
 
+    /// Inverts this `Change`, so that it represents the same `Change` but starting from
+    /// backrounds.  This is the same as swapping the treble with the tenor, the `2` with the `n - 1`, 
+    /// etc.
+    ///
+    /// This is useful in making canonicalisation functions for proving palendromic multiparts, where 
+    /// the symmetry point is exactly half way between rounds and the "Before" lead end.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::Change;
+    ///
+    /// let mut c1 = Change::from ("13287654");
+    /// c1.in_place_inverse ();
+    /// assert_eq! (c1, Change::from ("86712345"));
+    ///
+    /// let mut c2 = Change::from ("3456127890");
+    /// c2.in_place_inverse ();
+    /// assert_eq! (c2, Change::from ("8765094321"));
+    /// ```
     pub fn in_place_inverse (&mut self) {
         let stage = self.seq.len ();
 
@@ -315,6 +516,19 @@ impl Change {
         }
     }
 
+    /// Rotates this `Change` cyclically by `amount` steps, with the treble affected.
+    ///
+    /// For example, if `amount` is `2` and the [Stage] is major then `3` will become `3 + 2 = 5 (mod 8)`, 
+    /// and `7` will become `7 + 2 = 9 = 1 (mod 8)`.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::Change;
+    ///
+    /// let mut c1 = Change::from ("1654327890");
+    /// c1.in_place_full_cyclic_rotate (4);
+    /// assert_eq! (c1, Change::from ("5098761234"));
+    /// ```
     pub fn in_place_full_cyclic_rotate (&mut self, amount : usize) {
         let stage = self.seq.len ();
 
@@ -323,6 +537,21 @@ impl Change {
         }
     }
 
+    /// Rotates this `Change` cyclically by `amount` steps, while leaving the treble unaffected.
+    /// Same as (in_place_full_cyclic_rotate)[Change::in_place_full_cyclic_rotate], except that
+    /// this leaves the treble where it is, and only rotates the remaining bells.
+    ///
+    /// For example, if `amount` is `2` and the [Stage] is major then `3` will become `5`, 
+    /// and `7` will become `2`.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::Change;
+    ///
+    /// let mut c1 = Change::from ("1654327890");
+    /// c1.in_place_full_cyclic_rotate (4);
+    /// assert_eq! (c1, Change::from ("5098761234"));
+    /// ```
     pub fn in_place_fixed_treble_cyclic_rotate (&mut self, amount : usize) {
         let stage = self.seq.len ();
 
@@ -339,6 +568,16 @@ impl Change {
         }
     }
 
+    /// Reverses the `Change` front-to-back.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::Change;
+    ///
+    /// let mut c1 = Change::from ("3456127890");
+    /// c1.in_place_reverse ();
+    /// assert_eq! (c1, Change::from ("0987216543"));
+    /// ```
     pub fn in_place_reverse (&mut self) {
         let stage = self.seq.len ();
 
@@ -349,6 +588,19 @@ impl Change {
         }
     }
 
+    /// Hashes the change into the range `0..(stage)!`, but in the process it will destroy the
+    /// contents of `Change`.  Useful for creating bitmasks for every possible change in proof
+    /// checking.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::Change;
+    /// 
+    /// let mut c = Change::from ("14723865");
+    ///
+    /// assert_eq! (c.destructive_hash (), 26939);
+    /// assert! (c != Change::from ("14723865"));
+    /// ```
     pub fn destructive_hash (&mut self) -> usize {
         let stage = self.seq.len ();
 
