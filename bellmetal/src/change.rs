@@ -857,7 +857,7 @@ mod tests {
 }
 
 #[cfg(test)]
-mod accum_tests {
+mod accumulator_tests {
     use crate::{ Stage, Change, ChangeAccumulator };
 
     #[test]
