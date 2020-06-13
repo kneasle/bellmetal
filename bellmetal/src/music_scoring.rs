@@ -1,5 +1,11 @@
 use crate::{ Bell, Number, Touch, Transposition, Mask, MaskMethods };
 
+pub enum WrapType {
+    NoWrap,
+    FullCyclic,
+    FixedTrebleCyclic
+}
+
 pub fn run_length_from_iter (i : impl Iterator<Item = Bell>) -> usize {
     let mut iter = i.peekable ();
 
@@ -37,6 +43,17 @@ fn run_length_of_slice_back (slice : &[Bell]) -> usize {
     run_length_from_iter (slice.iter ().copied ().rev ())
 }
 
+fn run_length_to_score (length : usize) -> usize {
+    if length < 4 {
+        return 0;
+    }
+
+    let x = length - 3;
+
+    // Triangular numbers = n * (n + 1) / 2
+    (x * (x + 1)) >> 1
+}
+
 
 
 
@@ -58,17 +75,6 @@ pub trait MusicScoring {
 
 
 pub struct DefaultScoring { }
-
-fn run_length_to_score (length : usize) -> usize {
-    if length < 4 {
-        return 0;
-    }
-
-    let x = length - 3;
-
-    // Triangular numbers = n * (n + 1) / 2
-    (x * (x + 1)) >> 1
-}
 
 impl MusicScoring for DefaultScoring {
     fn score_transposition (t: &impl Transposition) -> usize {
@@ -102,6 +108,107 @@ impl MusicScoring for DefaultScoring {
         mask
     }
 }
+
+
+
+
+
+
+
+
+pub fn cyclic_run_length_from_iter (i : impl Iterator<Item = Bell>, stage : i32) -> usize {
+    // Get the first two items in the iterator, and return the right length if the iterator is
+    // empty
+    let mut iter = i.peekable ();
+
+    if iter.peek () == None {
+        return 0;
+    }
+
+    let first = iter.next ().unwrap ().as_i32 ();
+
+    if iter.peek () == None {
+        return 1;
+    }
+
+    let second = iter.next ().unwrap ().as_i32 ();
+
+    // Calculate the difference between the first two bells, and therefore what direction the run
+    // is going in (ie is it descending or ascending?)
+    let diff = if first == stage - 1 && second == 0 {
+        1
+    } else if first == 0 && second == stage - 1 {
+        -1
+    } else { second - first };
+
+    // If this isn't 1, then there can't be a run
+    if diff != -1 && diff != 1 {
+        return 1;
+    }
+
+    // Continue reading values until a run stops and then return
+    let mut length : usize = 2;
+
+    loop {
+        if let Some (x) = iter.next () {
+            if x.as_i32 () != (((first + length as i32 * diff) % stage) + stage) % stage {
+                break;
+            }
+        } else {
+            break;
+        }
+
+        length += 1;
+    }
+
+    length
+}
+
+fn cyclic_run_length_of_slice_front (slice : &[Bell], stage : i32) -> usize {
+    cyclic_run_length_from_iter (slice.iter ().copied (), stage)
+}
+
+fn cyclic_run_length_of_slice_back (slice : &[Bell], stage : i32) -> usize {
+    cyclic_run_length_from_iter (slice.iter ().copied ().rev (), stage)
+}
+
+
+pub struct FullCyclicScoring { }
+
+impl MusicScoring for FullCyclicScoring {
+    fn score_transposition (t: &impl Transposition) -> usize {
+        let slice = t.slice ();
+        let stage = slice.len () as i32;
+
+        run_length_to_score (cyclic_run_length_of_slice_front (slice, stage))
+            + run_length_to_score (cyclic_run_length_of_slice_back (slice, stage))
+    }
+
+    fn highlight_transposition (t : &impl Transposition) -> Mask {
+        let slice = t.slice ();
+        let stage = slice.len ();
+
+        let run_length_front = cyclic_run_length_of_slice_front (slice, stage as i32);
+        let run_length_back = cyclic_run_length_of_slice_back (slice, stage as i32);
+
+        let mut mask = Mask::empty ();
+
+        if run_length_front >= 4 {
+            for i in 0..run_length_front {
+                mask.add (i as Number);
+            }
+        }
+
+        if run_length_back >= 4 {
+            for i in 0..run_length_back {
+                mask.add ((stage - 1 - i) as Number);
+            }
+        }
+
+        mask
+    }
+}
+
 
 
 
