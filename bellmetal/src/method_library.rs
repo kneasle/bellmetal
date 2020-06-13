@@ -5,6 +5,7 @@ use std::fs;
 
 const DELIMITER : char = '|';
 
+#[derive(Debug)]
 struct StoredMethod {
     name : String,
     place_notation : Vec<PlaceNotation>,
@@ -32,6 +33,7 @@ impl StoredMethod {
 
 
 
+#[derive(Debug)]
 pub struct MethodLibrary {
     stored_methods : Vec<StoredMethod>
 }
