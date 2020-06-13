@@ -86,7 +86,7 @@ impl Change {
 
     /// Multiplies this `Change` by another [Transposition].  This is the same as using the `*`
     /// operator except that this can borrow its arguments and so doesn't require `Clone`ing
-    /// changes.
+    /// `Change`s.
     ///
     /// This is coded such that `a * b` or `a.multiply (b)` will mean "Suppose I have a touch that 
     /// takes me from rounds to `a` and then after ring that I ring a touch that takes me from 
@@ -127,7 +127,7 @@ impl Change {
         self.seq [place.as_usize ()] = bell;
     }
 
-    /// Multiplies a given change with an iterator of bells (see [Change::multiply] for more
+    /// Multiplies a given `Change` with an iterator of bells (see [Change::multiply] for more
     /// details about how multiplication of permutations works).  This is the same as
     /// [multiply_iterator](Change::transfigure_iterator), except that this will return a `Change`
     /// rather than another iterator.
@@ -185,7 +185,7 @@ impl Change {
     /// of the multiplication.
     ///
     /// # Panics
-    /// Panics if `lhs` is doesn't have the same [Stage] as this change.
+    /// Panics if `lhs` is doesn't have the same [Stage] as this `Change`.
     ///
     /// # Example
     /// ```
