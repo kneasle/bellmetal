@@ -78,11 +78,11 @@ impl Change {
         self.seq [place.as_usize ()] = bell;
     }
 
-    pub fn multiply_iterator<I> (&self, rhs : I) -> Change where I : Iterator<Item = Bell> {
+    pub fn multiply_iterator (&self, rhs : impl Iterator<Item = Bell>) -> Change {
         Change { seq : self.transfigure_iterator (rhs).collect () }
     }
 
-    pub fn transfigure_iterator<'a, I : Iterator<Item = Bell> + 'a> (&'a self, rhs : I) -> impl Iterator<Item = Bell> + 'a {
+    pub fn transfigure_iterator<'a> (&'a self, rhs : impl Iterator<Item = Bell> + 'a) -> impl Iterator<Item = Bell> + 'a {
         rhs.map (move |b| self.seq [b.as_usize ()])
     }
 
@@ -98,7 +98,7 @@ impl Change {
         }
     }
 
-    pub fn multiply_iterator_into<I> (&self, rhs : I, into : &mut Change) where I : Iterator<Item = Bell> {
+    pub fn multiply_iterator_into (&self, rhs : impl Iterator<Item = Bell>, into : &mut Change) {
         if self.stage () != into.stage () {
             panic! ("Can't multiply into a change of the wrong stage");
         }
@@ -155,9 +155,7 @@ impl Change {
         }
     }
 
-    pub fn overwrite_from_iterator<T> (&mut self, iter : T)
-        where T : Iterator<Item = Bell>, T : Sized
-    {
+    pub fn overwrite_from_iterator (&mut self, iter : impl Iterator<Item = Bell>) {
         self.seq.clear ();
         self.seq.extend (iter);
     }
@@ -299,9 +297,7 @@ impl Change {
         Change { seq : bell_vec }
     }
 
-    pub fn from_iterator<T> (iter : T) -> Change
-        where T : Iterator<Item = Bell>, T : Sized
-    {
+    pub fn from_iterator (iter : impl Iterator<Item = Bell>) -> Change {
         let mut c = Change::empty ();
 
         c.overwrite_from_iterator (iter);
