@@ -102,7 +102,7 @@ pub fn one_part_spliced_touch (
     one_part_spliced_touch_from_indices (methods.iter ().cloned (), &calls [..])
 }
 
-fn one_part_spliced_touch_from_indices<'a> (
+pub fn one_part_spliced_touch_from_indices<'a> (
     methods : impl Iterator<Item = (&'a str, &'a Method)> + Clone, calls : &[Vec<&Call>],
 ) -> Touch {
     // Find the stage and length of the touch (and make sure that methods is non-empty)
