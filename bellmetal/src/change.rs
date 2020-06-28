@@ -713,6 +713,14 @@ pub struct ChangeAccumulator {
 }
 
 impl ChangeAccumulator {
+    pub fn last (&self) -> &Change {
+        if self.using_second_change {
+            &(self.change_1)
+        } else {
+            &(self.change_2)
+        }
+    }
+
     pub fn total (&self) -> &Change {
         if self.using_second_change {
             &(self.change_2)
