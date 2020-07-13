@@ -1,86 +1,77 @@
-use crate::{ Bell, Place, Stage, Stroke, Change, Transposition };
+use crate::{Bell, Change, Place, Stage, Stroke, Transposition};
 
-use std::fmt;
-use std::ops::Index;
 use std::cmp;
 use std::cmp::Ordering;
-
-
-
-
-
+use std::fmt;
+use std::ops::Index;
 
 #[derive(PartialEq, Eq)]
 pub struct RunSection {
-    start : isize,
-    centre : isize,
-    end : isize,
-    bell_start : Bell,
-    bell_end : Bell,
-    stroke : Stroke
+    start: isize,
+    centre: isize,
+    end: isize,
+    bell_start: Bell,
+    bell_end: Bell,
+    stroke: Stroke,
 }
 
 impl Ord for RunSection {
-    fn cmp (&self, other : &Self) -> Ordering {
-        self.bell_end.cmp (&other.bell_end)
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.bell_end.cmp(&other.bell_end)
     }
 }
 
 impl PartialOrd for RunSection {
-    fn partial_cmp (&self, other : &Self) -> Option<Ordering> {
-        Some (self.cmp (other))
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
-
-
-
-
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct CoursingOrder {
-    order : Vec<Bell> // order will always start with the heaviest bell in the coursing order
+    order: Vec<Bell>, // order will always start with the heaviest bell in the coursing order
 }
 
 impl CoursingOrder {
-    pub fn overwrite_from_string (&mut self, string : &str) {
-        self.order.clear ();
-        self.order.reserve (string.len ());
+    pub fn overwrite_from_string(&mut self, string: &str) {
+        self.order.clear();
+        self.order.reserve(string.len());
 
-        for c in string.chars () {
-            self.order.push (Bell::from (c));
+        for c in string.chars() {
+            self.order.push(Bell::from(c));
         }
     }
 
-    pub fn overwrite_from_iterator (&mut self, iterator : &mut impl CoursingOrderIterator) {
-        let heaviest_bell = iterator.seek_heaviest_bell ();
+    pub fn overwrite_from_iterator(&mut self, iterator: &mut impl CoursingOrderIterator) {
+        let heaviest_bell = iterator.seek_heaviest_bell();
 
         // Copy the iterator into the vector
-        let len = iterator.length ();
+        let len = iterator.length();
 
-        self.order.clear ();
-        self.order.reserve (len);
+        self.order.clear();
+        self.order.reserve(len);
 
-        self.order.push (heaviest_bell);
+        self.order.push(heaviest_bell);
         for _ in 0..len - 1 {
-            let x = iterator.next ();
+            let x = iterator.next();
 
-            self.order.push (x);
+            self.order.push(x);
         }
     }
 
-    pub fn overwrite_from_leadhead<T : Transposition> (&mut self, lh : &T) {
-        self.overwrite_from_iterator (&mut LeadheadCoursingOrderIterator::new (lh));
+    pub fn overwrite_from_leadhead<T: Transposition>(&mut self, lh: &T) {
+        self.overwrite_from_iterator(&mut LeadheadCoursingOrderIterator::new(lh));
     }
 
-    fn test_run_segment_up (&self, root : isize, side : isize, vec : &mut Vec<RunSection>) {
+    fn test_run_segment_up(&self, root: isize, side: isize, vec: &mut Vec<RunSection>) {
         let mut len = 0;
         let mut current_index = 0;
         let mut last_index = 0;
 
-        let a = self [root].as_isize ();
+        let a = self[root].as_isize();
 
-        for (l, index) in ZigZagIterator::new (root, side).enumerate () {
-            if self [index].as_isize () != a + l as isize {
+        for (l, index) in ZigZagIterator::new(root, side).enumerate() {
+            if self[index].as_isize() != a + l as isize {
                 len = l;
 
                 break;
@@ -91,28 +82,30 @@ impl CoursingOrder {
         }
 
         if len >= 4 {
-            vec.push (
-                RunSection {
-                    start : cmp::min (current_index, last_index),
-                    centre : root,
-                    end : cmp::max (current_index, last_index),
-                    bell_start : self [current_index],
-                    bell_end : self [root],
-                    stroke : if root < side { Stroke::Back } else { Stroke::Hand }
-                }
-            );
+            vec.push(RunSection {
+                start: cmp::min(current_index, last_index),
+                centre: root,
+                end: cmp::max(current_index, last_index),
+                bell_start: self[current_index],
+                bell_end: self[root],
+                stroke: if root < side {
+                    Stroke::Back
+                } else {
+                    Stroke::Hand
+                },
+            });
         }
     }
 
-    fn test_run_segment_down (&self, root : isize, side : isize, vec : &mut Vec<RunSection>) {
+    fn test_run_segment_down(&self, root: isize, side: isize, vec: &mut Vec<RunSection>) {
         let mut len = 0;
         let mut current_index = 0;
         let mut last_index = 0;
 
-        let a = self [root].as_isize ();
+        let a = self[root].as_isize();
 
-        for (l, index) in ZigZagIterator::new (root, side).enumerate () {
-            if self [index].as_isize () != a - l as isize {
+        for (l, index) in ZigZagIterator::new(root, side).enumerate() {
+            if self[index].as_isize() != a - l as isize {
                 len = l;
 
                 break;
@@ -123,90 +116,92 @@ impl CoursingOrder {
         }
 
         if len >= 4 {
-            vec.push (
-                RunSection {
-                    start : cmp::min (current_index, last_index),
-                    centre : root,
-                    end : cmp::max (current_index, last_index),
-                    bell_start : self [current_index],
-                    bell_end : self [root],
-                    stroke : if root < side { Stroke::Back } else { Stroke::Hand }
-                }
-            );
+            vec.push(RunSection {
+                start: cmp::min(current_index, last_index),
+                centre: root,
+                end: cmp::max(current_index, last_index),
+                bell_start: self[current_index],
+                bell_end: self[root],
+                stroke: if root < side {
+                    Stroke::Back
+                } else {
+                    Stroke::Hand
+                },
+            });
         }
     }
 
-    fn get_run_sections (&self) -> Vec<RunSection> {
-        let mut run_sections : Vec<RunSection> = Vec::with_capacity (10);
+    fn get_run_sections(&self) -> Vec<RunSection> {
+        let mut run_sections: Vec<RunSection> = Vec::with_capacity(10);
 
-        for i in 0..self.order.len () as isize {
-            let a = self [i - 1].as_isize ();
-            let b = self [i].as_isize ();
+        for i in 0..self.order.len() as isize {
+            let a = self[i - 1].as_isize();
+            let b = self[i].as_isize();
 
             if b - a == 1 {
-                self.test_run_segment_up (i - 1, i, &mut run_sections);
-                self.test_run_segment_down (i, i - 1, &mut run_sections);
+                self.test_run_segment_up(i - 1, i, &mut run_sections);
+                self.test_run_segment_down(i, i - 1, &mut run_sections);
             }
             if a - b == 1 {
-                self.test_run_segment_up (i, i - 1, &mut run_sections);
-                self.test_run_segment_down (i - 1, i, &mut run_sections);
+                self.test_run_segment_up(i, i - 1, &mut run_sections);
+                self.test_run_segment_down(i - 1, i, &mut run_sections);
             }
         }
 
-        run_sections.sort ();
+        run_sections.sort();
 
         run_sections
     }
 
-    pub fn into_string (&self, string : &mut String) {
-        string.reserve (self.order.len ());
+    pub fn into_string(&self, string: &mut String) {
+        string.reserve(self.order.len());
 
         for b in &self.order {
-            string.push (b.as_char ());
+            string.push(b.as_char());
         }
     }
 
-    pub fn to_string (&self) -> String {
-        let mut s = String::with_capacity (0);
+    pub fn to_string(&self) -> String {
+        let mut s = String::with_capacity(0);
 
-        self.into_string (&mut s);
+        self.into_string(&mut s);
 
         s
     }
 
-    pub fn to_coursehead (&self) -> Change {
-        BasicCoursingOrderIterator::new (self).to_coursehead ()
+    pub fn to_coursehead(&self) -> Change {
+        BasicCoursingOrderIterator::new(self).to_coursehead()
     }
 
-    pub fn canonical_string (&self) -> String {
-        let mut string = String::with_capacity (100);
+    pub fn canonical_string(&self) -> String {
+        let mut string = String::with_capacity(100);
 
-        string.push_str ("CO: <");
+        string.push_str("CO: <");
 
-        for b in self.order.iter ().skip (1) {
-            string.push (b.as_char ());
+        for b in self.order.iter().skip(1) {
+            string.push(b.as_char());
         }
 
-        string.push_str (">");
+        string.push_str(">");
 
-        for r in self.get_run_sections () {
-            let a = r.bell_start.as_usize ();
-            let b = r.bell_end.as_usize ();
+        for r in self.get_run_sections() {
+            let a = r.bell_start.as_usize();
+            let b = r.bell_end.as_usize();
 
-            string.push_str (" ");
+            string.push_str(" ");
 
             if b > a {
                 for i in a..=b {
-                    string.push (Bell::from (i).as_char ());
+                    string.push(Bell::from(i).as_char());
                 }
             } else {
-                for i in (b..=a).rev () {
-                    string.push (Bell::from (i).as_char ());
+                for i in (b..=a).rev() {
+                    string.push(Bell::from(i).as_char());
                 }
             }
 
             if r.stroke == Stroke::Hand {
-                string.push ('h');
+                string.push('h');
             }
         }
 
@@ -215,30 +210,33 @@ impl CoursingOrder {
 }
 
 impl CoursingOrder {
-    pub fn empty () -> CoursingOrder {
+    pub fn empty() -> CoursingOrder {
         CoursingOrder {
-            order : Vec::with_capacity (0)
+            order: Vec::with_capacity(0),
         }
     }
 
-    pub fn from_slice (slice : &[Bell]) -> CoursingOrder {
+    pub fn from_slice(slice: &[Bell]) -> CoursingOrder {
         CoursingOrder {
-            order : slice.iter ().copied ().collect ()
+            order: slice.iter().copied().collect(),
         }
     }
 
-    pub fn from_leadhead (lh : &Change) -> CoursingOrder {
-        let mut co = CoursingOrder::empty ();
+    pub fn from_leadhead(lh: &Change) -> CoursingOrder {
+        let mut co = CoursingOrder::empty();
 
-        co.overwrite_from_leadhead (lh);
+        co.overwrite_from_leadhead(lh);
 
         co
     }
 
-    pub fn from_iterator<T> (iterator : &mut T) -> CoursingOrder where T : CoursingOrderIterator {
-        let mut co = CoursingOrder::empty ();
+    pub fn from_iterator<T>(iterator: &mut T) -> CoursingOrder
+    where
+        T: CoursingOrderIterator,
+    {
+        let mut co = CoursingOrder::empty();
 
-        co.overwrite_from_iterator (iterator);
+        co.overwrite_from_iterator(iterator);
 
         co
     }
@@ -247,87 +245,67 @@ impl CoursingOrder {
 impl Index<isize> for CoursingOrder {
     type Output = Bell;
 
-    fn index (&self, x : isize) -> &Bell {
-        let l = self.order.len () as isize;
+    fn index(&self, x: isize) -> &Bell {
+        let l = self.order.len() as isize;
 
-        &self.order [(((x % l) + l) % l) as usize]
+        &self.order[(((x % l) + l) % l) as usize]
     }
 }
 
 impl From<&str> for CoursingOrder {
-    fn from (s : &str) -> CoursingOrder {
-        let mut coursing_order = CoursingOrder::empty ();
+    fn from(s: &str) -> CoursingOrder {
+        let mut coursing_order = CoursingOrder::empty();
 
-        coursing_order.overwrite_from_string (s);
+        coursing_order.overwrite_from_string(s);
 
         coursing_order
     }
 }
 
 impl fmt::Debug for CoursingOrder {
-    fn fmt (&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
-        write! (f, "<{}>", self.to_string ())
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<{}>", self.to_string())
     }
 }
 
-
-
-
-
-
-pub fn merge_iterators_to_lead_head<T : CoursingOrderIterator, S : CoursingOrderIterator> (
-    bell_iter : &mut T,
-    place_iter : &mut S,
-    stage : Stage
+pub fn merge_iterators_to_lead_head<T: CoursingOrderIterator, S: CoursingOrderIterator>(
+    bell_iter: &mut T,
+    place_iter: &mut S,
+    stage: Stage,
 ) -> Change {
-    let mut vec : Vec<Bell> = vec![Bell::from (0);stage.as_usize ()];
+    let mut vec: Vec<Bell> = vec![Bell::from(0); stage.as_usize()];
 
-    for _ in 0..bell_iter.length () {
-        vec [place_iter.next ().as_usize ()] = bell_iter.next ();
+    for _ in 0..bell_iter.length() {
+        vec[place_iter.next().as_usize()] = bell_iter.next();
     }
 
-    Change::new (vec)
+    Change::new(vec)
 }
 
+pub fn first_plain_bob_lead_head(stage: Stage) -> Change {
+    let mut bell_iterator = PlainCoursingOrderIterator::new(stage);
+    let mut place_iterator = PlainCoursingOrderIterator::new(stage);
 
+    place_iterator.seek(Bell::from(1)); // Seek to 2nds place
+    bell_iterator.seek(Bell::from(2)); // Seek to the 3
 
-
-
-
-pub fn first_plain_bob_lead_head (stage : Stage) -> Change {
-    let mut bell_iterator = PlainCoursingOrderIterator::new (stage);
-    let mut place_iterator = PlainCoursingOrderIterator::new (stage);
-
-    place_iterator.seek (Bell::from (1)); // Seek to 2nds place
-    bell_iterator.seek (Bell::from (2)); // Seek to the 3
-
-    merge_iterators_to_lead_head (&mut bell_iterator, &mut place_iterator, stage)
+    merge_iterators_to_lead_head(&mut bell_iterator, &mut place_iterator, stage)
 }
 
-pub fn plain_bob_lead_head (stage : Stage, power : isize) -> Change {
-    first_plain_bob_lead_head (stage).pow (power)
+pub fn plain_bob_lead_head(stage: Stage, power: isize) -> Change {
+    first_plain_bob_lead_head(stage).pow(power)
 }
-
-
-
-
-
-
-
-
-
-
 
 struct ZigZagIterator {
-    current_value : isize,
-    next_value : isize
+    current_value: isize,
+    next_value: isize,
 }
 
 impl ZigZagIterator {
-    pub fn new (current_value : isize, next_value : isize) -> ZigZagIterator {
+    pub fn new(current_value: isize, next_value: isize) -> ZigZagIterator {
         ZigZagIterator {
-            current_value : current_value,
-            next_value : next_value
+            current_value: current_value,
+            next_value: next_value,
         }
     }
 }
@@ -335,7 +313,7 @@ impl ZigZagIterator {
 impl Iterator for ZigZagIterator {
     type Item = isize;
 
-    fn next (&mut self) -> Option<isize> {
+    fn next(&mut self) -> Option<isize> {
         let current_value = self.current_value;
 
         self.current_value = self.next_value;
@@ -345,165 +323,149 @@ impl Iterator for ZigZagIterator {
             self.next_value = current_value + 1;
         }
 
-        Some (current_value)
+        Some(current_value)
     }
 }
 
-
-
-
-
-
 pub trait CoursingOrderIterator {
-    fn next (&mut self) -> Bell;
-    fn length (&self) -> usize;
+    fn next(&mut self) -> Bell;
+    fn length(&self) -> usize;
 
-    fn collect (&mut self) -> CoursingOrder where Self : std::marker::Sized {
-        CoursingOrder::from_iterator (self)
+    fn collect(&mut self) -> CoursingOrder
+    where
+        Self: std::marker::Sized,
+    {
+        CoursingOrder::from_iterator(self)
     }
 
-    fn seek (&mut self, bell : Bell) {
+    fn seek(&mut self, bell: Bell) {
         // Seek to the required bell with a horrendous loop with side effects in the guard
-        while self.next () != bell { }
+        while self.next() != bell {}
     }
 
     // Same as seek, but is can't get stuck in an infinite loop at the cost of speed
-    fn seek_safe (&mut self, bell : Bell) {
-        let start_bell = self.next ();
+    fn seek_safe(&mut self, bell: Bell) {
+        let start_bell = self.next();
         let mut next_bell = start_bell;
 
         while next_bell != bell {
-            next_bell = self.next ();
+            next_bell = self.next();
 
             if next_bell == start_bell {
-                panic! ("Bell not found in coursing order");
+                panic!("Bell not found in coursing order");
             }
         }
     }
 
-    fn seek_heaviest_bell (&mut self) -> Bell {
+    fn seek_heaviest_bell(&mut self) -> Bell {
         let heaviest_bell = {
             let mut h = 0;
 
             // Find what the heaviest bell is
-            for _ in 0..self.length () {
-                let b = self.next ().as_usize ();
+            for _ in 0..self.length() {
+                let b = self.next().as_usize();
 
                 if b > h {
                     h = b;
                 }
             }
 
-            Bell::from (h)
+            Bell::from(h)
         };
 
-        self.seek (heaviest_bell);
+        self.seek(heaviest_bell);
 
         heaviest_bell
     }
 
-    fn to_coursehead (&mut self) -> Change where Self : Sized {
-        let stage = self.length () + 1;
+    fn to_coursehead(&mut self) -> Change
+    where
+        Self: Sized,
+    {
+        let stage = self.length() + 1;
 
-        let mut iter = PlainCoursingOrderIterator::new (Stage::from (stage));
+        let mut iter = PlainCoursingOrderIterator::new(Stage::from(stage));
 
-        iter.seek_heaviest_bell ();
-        self.seek_heaviest_bell ();
+        iter.seek_heaviest_bell();
+        self.seek_heaviest_bell();
 
-        merge_iterators_to_lead_head (self, &mut iter, Stage::from (stage))
+        merge_iterators_to_lead_head(self, &mut iter, Stage::from(stage))
     }
 }
 
-
-
-
-
-
 pub struct BasicCoursingOrderIterator<'a> {
-    coursing_order : &'a CoursingOrder,
-    index : usize
+    coursing_order: &'a CoursingOrder,
+    index: usize,
 }
 
 impl BasicCoursingOrderIterator<'_> {
-    pub fn new<'a> (coursing_order : &'a CoursingOrder) -> BasicCoursingOrderIterator<'a> {
+    pub fn new<'a>(coursing_order: &'a CoursingOrder) -> BasicCoursingOrderIterator<'a> {
         BasicCoursingOrderIterator {
-            coursing_order : coursing_order,
-            index : 0
+            coursing_order: coursing_order,
+            index: 0,
         }
     }
 }
 
 impl<'a> CoursingOrderIterator for BasicCoursingOrderIterator<'a> {
-    fn next (&mut self) -> Bell {
-        let b = self.coursing_order [self.index as isize];
+    fn next(&mut self) -> Bell {
+        let b = self.coursing_order[self.index as isize];
 
         self.index += 1;
 
         b
     }
 
-    fn length (&self) -> usize {
-        self.coursing_order.order.len ()
+    fn length(&self) -> usize {
+        self.coursing_order.order.len()
     }
 }
 
-
-
-
-
-
-
-pub struct LeadheadCoursingOrderIterator<'a, T : Transposition> {
-    leadhead : &'a T,
-    iterator : PlainCoursingOrderIterator
+pub struct LeadheadCoursingOrderIterator<'a, T: Transposition> {
+    leadhead: &'a T,
+    iterator: PlainCoursingOrderIterator,
 }
 
-impl<T : Transposition> LeadheadCoursingOrderIterator<'_, T> {
-    pub fn new<'a> (leadhead : &'a T) -> LeadheadCoursingOrderIterator<'a, T> {
+impl<T: Transposition> LeadheadCoursingOrderIterator<'_, T> {
+    pub fn new<'a>(leadhead: &'a T) -> LeadheadCoursingOrderIterator<'a, T> {
         LeadheadCoursingOrderIterator {
-            leadhead : leadhead,
-            iterator : PlainCoursingOrderIterator::new (leadhead.stage ())
+            leadhead: leadhead,
+            iterator: PlainCoursingOrderIterator::new(leadhead.stage()),
         }
     }
 }
 
-impl<'a, T : Transposition> CoursingOrderIterator for LeadheadCoursingOrderIterator<'a, T> {
-    fn next (&mut self) -> Bell {
-        self.leadhead.bell_at (Place::from (self.iterator.next ().as_usize ()))
+impl<'a, T: Transposition> CoursingOrderIterator for LeadheadCoursingOrderIterator<'a, T> {
+    fn next(&mut self) -> Bell {
+        self.leadhead
+            .bell_at(Place::from(self.iterator.next().as_usize()))
     }
 
-    fn length (&self) -> usize {
-        self.iterator.length ()
+    fn length(&self) -> usize {
+        self.iterator.length()
     }
 }
 
-
-
-
-
-
-
-
 pub struct PlainCoursingOrderIterator {
-    stage : Stage,
-    current_bell : usize,
-    is_going_down : bool
+    stage: Stage,
+    current_bell: usize,
+    is_going_down: bool,
 }
 
 impl PlainCoursingOrderIterator {
-    pub fn new (stage : Stage) -> PlainCoursingOrderIterator {
+    pub fn new(stage: Stage) -> PlainCoursingOrderIterator {
         PlainCoursingOrderIterator {
-            stage : stage,
-            current_bell : (stage.as_usize () + 1 & !1) - 2,
-            is_going_down : true
+            stage: stage,
+            current_bell: (stage.as_usize() + 1 & !1) - 2,
+            is_going_down: true,
         }
     }
 }
 
 impl CoursingOrderIterator for PlainCoursingOrderIterator {
-    fn next (&mut self) -> Bell {
+    fn next(&mut self) -> Bell {
         if self.stage == Stage::TWO {
-            return Bell::from (1);
+            return Bell::from(1);
         }
 
         let current_bell = self.current_bell;
@@ -518,103 +480,88 @@ impl CoursingOrderIterator for PlainCoursingOrderIterator {
         } else {
             self.current_bell += 2;
 
-            if self.current_bell >= self.stage.as_usize () {
+            if self.current_bell >= self.stage.as_usize() {
                 self.is_going_down = true;
-                self.current_bell = (self.stage.as_usize () + 1 & !1) - 2;
+                self.current_bell = (self.stage.as_usize() + 1 & !1) - 2;
             }
         }
 
-        Bell::from (current_bell)
+        Bell::from(current_bell)
     }
 
-    fn length (&self) -> usize {
-        self.stage.as_usize () - 1
+    fn length(&self) -> usize {
+        self.stage.as_usize() - 1
     }
 }
-
-
-
-
-
-
-
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        Stage, Change, Bell,
-        CoursingOrder,
-        CoursingOrderIterator,
-        BasicCoursingOrderIterator, PlainCoursingOrderIterator,
-        LeadheadCoursingOrderIterator,
+        first_plain_bob_lead_head, BasicCoursingOrderIterator, Bell, Change, CoursingOrder,
+        CoursingOrderIterator, LeadheadCoursingOrderIterator, PlainCoursingOrderIterator, Stage,
         Transposition,
-        first_plain_bob_lead_head
     };
 
     use crate::coursing_order::ZigZagIterator;
 
     #[test]
-    fn zig_zag_iterator () {
+    fn zig_zag_iterator() {
         for s in -20..20 {
             // Test upwards
-            let mut iter = ZigZagIterator::new (s, s + 1);
+            let mut iter = ZigZagIterator::new(s, s + 1);
 
-            assert_eq! (iter.next (), Some (s));
+            assert_eq!(iter.next(), Some(s));
 
             for i in 1..100 {
-                assert_eq! (iter.next (), Some (s + i));
-                assert_eq! (iter.next (), Some (s - i));
+                assert_eq!(iter.next(), Some(s + i));
+                assert_eq!(iter.next(), Some(s - i));
             }
 
             // Test downwards
-            let mut iter = ZigZagIterator::new (s, s - 1);
+            let mut iter = ZigZagIterator::new(s, s - 1);
 
-            assert_eq! (iter.next (), Some (s));
+            assert_eq!(iter.next(), Some(s));
 
             for i in 1..100 {
-                assert_eq! (iter.next (), Some (s - i));
-                assert_eq! (iter.next (), Some (s + i));
+                assert_eq!(iter.next(), Some(s - i));
+                assert_eq!(iter.next(), Some(s + i));
             }
         }
     }
 
     #[test]
     #[should_panic]
-    fn seek_safe_panic () {
-        let co = &CoursingOrder::from_slice (Change::from ("7654823").slice ());
+    fn seek_safe_panic() {
+        let co = &CoursingOrder::from_slice(Change::from("7654823").slice());
 
-        let mut iter = BasicCoursingOrderIterator::new (&co);
+        let mut iter = BasicCoursingOrderIterator::new(&co);
 
-        iter.seek_safe (Bell::from ('0'));
+        iter.seek_safe(Bell::from('0'));
     }
 
     #[test]
-    fn seek_safe () {
-        for string in &[
-            "2453687",
-            "680972345",
-            "5432876"
-        ] {
-            let co = &CoursingOrder::from_slice (Change::from (*string).slice ());
+    fn seek_safe() {
+        for string in &["2453687", "680972345", "5432876"] {
+            let co = &CoursingOrder::from_slice(Change::from(*string).slice());
 
-            let mut iter = BasicCoursingOrderIterator::new (&co);
+            let mut iter = BasicCoursingOrderIterator::new(&co);
 
-            let mut chars = string.chars ();
+            let mut chars = string.chars();
 
-            chars.next ();
-            iter.next ();
+            chars.next();
+            iter.next();
 
-            chars.next ();
-            iter.next ();
+            chars.next();
+            iter.next();
 
-            iter.seek_safe (Bell::from (chars.next ().unwrap ()));
+            iter.seek_safe(Bell::from(chars.next().unwrap()));
 
-            assert_eq! (iter.next (), Bell::from (chars.next ().unwrap ()));
+            assert_eq!(iter.next(), Bell::from(chars.next().unwrap()));
         }
     }
 
     #[test]
-    fn plain_bob_lead_head () {
+    fn plain_bob_lead_head() {
         for lh in &[
             "1342",
             "13524",
@@ -624,19 +571,16 @@ mod tests {
             "135274968",
             "1352749608",
             "13527496E80",
-            "13527496E8T0"
+            "13527496E8T0",
         ] {
-            let lh_change = Change::from (*lh);
+            let lh_change = Change::from(*lh);
 
-            assert_eq! (
-                first_plain_bob_lead_head (lh_change.stage ()),
-                lh_change
-            );
+            assert_eq!(first_plain_bob_lead_head(lh_change.stage()), lh_change);
         }
     }
 
     #[test]
-    fn plain_iterator () {
+    fn plain_iterator() {
         for order in &[
             "324",
             "5324",
@@ -644,81 +588,64 @@ mod tests {
             "753246",
             "7532468",
             "97532468",
-            "975324680"
+            "975324680",
         ] {
-            let stage = Stage::from (order.chars ().count () + 1);
+            let stage = Stage::from(order.chars().count() + 1);
 
-            let mut a = PlainCoursingOrderIterator::new (stage);
-            let mut b = order.chars ().cycle ();
+            let mut a = PlainCoursingOrderIterator::new(stage);
+            let mut b = order.chars().cycle();
 
             for _ in 0..100 {
-                let l = a.next ().as_char ();
-                let r = b.next ().unwrap ();
+                let l = a.next().as_char();
+                let r = b.next().unwrap();
 
-                assert_eq! (l, r);
+                assert_eq!(l, r);
             }
 
-            assert_eq! (a.length (), stage.as_usize () - 1);
+            assert_eq!(a.length(), stage.as_usize() - 1);
         }
     }
 
     #[test]
-    fn debug_print () {
-        for order in &[
-            "8753462",
-            "98762453",
-            "5324",
-            "65342",
-            "8657234",
-            "2"
-        ] {
-            assert_eq! (
-                format! ("{:?}", CoursingOrder::from (*order)),
-                format! ("<{}>", order)
+    fn debug_print() {
+        for order in &["8753462", "98762453", "5324", "65342", "8657234", "2"] {
+            assert_eq!(
+                format!("{:?}", CoursingOrder::from(*order)),
+                format!("<{}>", order)
             );
         }
     }
 
-
     #[test]
-    fn basic_iterator () {
-        for order in &[
-            "8753462",
-            "98762453",
-            "5324",
-            "65342",
-            "8657234",
-            "2"
-        ] {
-            let co = CoursingOrder::from (*order);
+    fn basic_iterator() {
+        for order in &["8753462", "98762453", "5324", "65342", "8657234", "2"] {
+            let co = CoursingOrder::from(*order);
 
-            assert_eq! (BasicCoursingOrderIterator::new (&co).collect (), co);
+            assert_eq!(BasicCoursingOrderIterator::new(&co).collect(), co);
         }
     }
 
     #[test]
-    fn courseheads () {
+    fn courseheads() {
         for s in 2..20 {
-            let stage = Stage::from (s);
+            let stage = Stage::from(s);
 
-            assert_eq! (PlainCoursingOrderIterator::new (stage).to_coursehead (), Change::rounds (stage));
+            assert_eq!(
+                PlainCoursingOrderIterator::new(stage).to_coursehead(),
+                Change::rounds(stage)
+            );
         }
 
-        for coursehead in &[
-            "12",
-            "132456",
-            "17364528",
-            "17654328"
-        ] {
-            let ch = Change::from (*coursehead);
+        for coursehead in &["12", "132456", "17364528", "17654328"] {
+            let ch = Change::from(*coursehead);
 
-            assert_eq! (CoursingOrder::from_leadhead (&ch).to_coursehead (), ch);
-            assert_eq! (LeadheadCoursingOrderIterator::new (&ch).to_coursehead (), ch);
+            assert_eq!(CoursingOrder::from_leadhead(&ch).to_coursehead(), ch);
+            assert_eq!(LeadheadCoursingOrderIterator::new(&ch).to_coursehead(), ch);
         }
     }
 
     #[test]
-    fn leadhead_iterator () {
+    fn leadhead_iterator() {
         for (lh, order) in &[
             ("12", "2"),
             ("12345", "5324"),
@@ -727,23 +654,23 @@ mod tests {
             ("12348765", "8324756"),
             ("1209876543", "029753468"),
         ] {
-            assert_eq! (
-                LeadheadCoursingOrderIterator::new (&Change::from (*lh)).collect (),
-                CoursingOrder::from (*order)
+            assert_eq!(
+                LeadheadCoursingOrderIterator::new(&Change::from(*lh)).collect(),
+                CoursingOrder::from(*order)
             );
         }
     }
 
     #[test]
-    fn canonical_strings () {
+    fn canonical_strings() {
         for (order, canon) in &[
             ("087953246", "CO: <87953246> 65432h 0987h"),
             ("097246538", "CO: <97246538> 23456 7890"),
             ("TE976824530", "CO: <E976824530> 2345h 9876h 90ET"),
             ("029753468", "CO: <29753468> 09876543"),
-            ("8753462", "CO: <753462> 76543")
+            ("8753462", "CO: <753462> 76543"),
         ] {
-            assert_eq! (CoursingOrder::from (*order).canonical_string (), *canon);
+            assert_eq!(CoursingOrder::from(*order).canonical_string(), *canon);
         }
     }
 }
