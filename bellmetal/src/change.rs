@@ -433,7 +433,8 @@ impl Change {
 
     /// Raises the contents of this `Change` to a given exponent.  This uses an `O(|n|)` algorithm
     /// of repeatedly multiplying the `Change` with itself, which is faster than the (otherwise better)
-    /// `O(log|n|)` method of repeated squaring for small values of the exponent.
+    /// `O(log|n|)` method of repeated squaring for small values of the exponent.  Also allocates
+    /// on the heap in order to store the intermediate values.
     ///
     /// # Example
     /// ```
@@ -446,10 +447,12 @@ impl Change {
     /// assert_eq! (cyclic_part_end.pow (0), Change::rounds (Stage::MAJOR));
     /// ```
     pub fn pow(&self, exponent: isize) -> Change {
+        // Return rounds if the exponent is 0
         if exponent == 0 {
             return Change::rounds(self.stage());
         }
 
+        // Create an accumulator to repeatedly multiply this change into
         let mut accumulator = ChangeAccumulator::new(self.stage());
 
         if exponent > 0 {
@@ -462,6 +465,7 @@ impl Change {
             }
         }
 
+        // Return the total value stored by the accumulator (cloned to stop the value being freed)
         accumulator.total().clone()
     }
 
@@ -563,6 +567,7 @@ impl Change {
         let stage = self.seq.len();
 
         for i in 0..stage {
+            // Only rotate the bells if not the treble
             if self.seq[i] != Bell::from(0) {
                 let new_bell = self.seq[i].as_usize() + amount;
 
