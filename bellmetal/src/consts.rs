@@ -1,8 +1,12 @@
 use crate::Number;
 
+/// The maximum stage allowed before the masking code causes undefined behaviour.
 pub const MAX_STAGE: usize = 64;
+
+/// A string containing all the bell names in order.
 pub static BELL_NAMES: &str = "1234567890ETABCDFGHJKLMNPRSUVWYZ";
 
+/// An array of char ASCII values to their index in [BELL_NAMES].
 static BELL_NAME_LOOKUP_TABLE: [i8; 91] = [
     -1, -1, -1, -1, -1, // 0..5
     -1, -1, -1, -1, -1, // 5..10
@@ -25,6 +29,8 @@ static BELL_NAME_LOOKUP_TABLE: [i8; 91] = [
     27, 28, 29, -1, 30, 31, // 85..91 = 'U'-'Z'
 ];
 
+/// Given a [char], returns [true] if it is a valid bell name (but without searching through the
+/// entirity of [BELL_NAMES] every time.
 pub fn is_bell_name(c: char) -> bool {
     ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z'))
         && c != 'I'
@@ -33,14 +39,20 @@ pub fn is_bell_name(c: char) -> bool {
         && c != 'X'
 }
 
+/// Converts a [char] into either a valid bell number or `-1`, even if the [char] points to outside
+/// the range of [BELL_NAME_LOOKUP_TABLE].
 fn get_number(name: char) -> i8 {
+    // Return `-1` if outside the range of [BELL_NAME_LOOKUP_TABLE]
     if name as usize >= BELL_NAME_LOOKUP_TABLE.len() {
         return -1;
     }
 
+    // Since the index is guarunteed to be inside (by the first if statement, we can skip the
+    // bounds check
     BELL_NAME_LOOKUP_TABLE[name as usize]
 }
 
+/// Convert a [char] representing a [Bell] into the [Number] it represents.
 pub fn name_to_number(name: char) -> Number {
     let n = get_number(name);
 
