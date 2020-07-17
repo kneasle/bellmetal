@@ -1,5 +1,9 @@
 use crate::Number;
 
+// Imports used only for the documentation
+#[allow(unused_imports)]
+use crate::Bell;
+
 /// The maximum stage allowed before the masking code causes undefined behaviour.
 pub const MAX_STAGE: usize = 64;
 
@@ -29,7 +33,7 @@ static BELL_NAME_LOOKUP_TABLE: [i8; 91] = [
     27, 28, 29, -1, 30, 31, // 85..91 = 'U'-'Z'
 ];
 
-/// Given a [char], returns [true] if it is a valid bell name (but without searching through the
+/// Given a [char], returns `true` if it is a valid bell name (but without searching through the
 /// entirity of [BELL_NAMES] every time.
 pub fn is_bell_name(c: char) -> bool {
     ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z'))
