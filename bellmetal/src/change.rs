@@ -569,13 +569,14 @@ impl Change {
         for i in 0..stage {
             // Only rotate the bells if not the treble
             if self.seq[i] != Bell::from(0) {
-                let new_bell = self.seq[i].as_usize() + amount;
+                let mut new_bell = self.seq[i].as_usize() + amount;
 
-                if new_bell >= stage {
-                    self.seq[i] = Bell::from(new_bell + 1 - stage);
-                } else {
-                    self.seq[i] = Bell::from(new_bell);
+                // Repeatedly wrap until we get a bell in the correct range
+                while new_bell >= stage {
+                    new_bell = new_bell + 1 - stage;
                 }
+
+                self.seq[i] = Bell::from(new_bell);
             }
         }
     }
@@ -1163,6 +1164,7 @@ mod tests {
             ("12345", 3, "15234"),
             ("43215678", 6, "32814567"),
             ("1425367890", 5, "1970823456"),
+            ("1425367890", 14, "1970823456"),
         ] {
             let mut change = Change::from(*from);
 
