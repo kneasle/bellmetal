@@ -791,7 +791,6 @@ impl From<&str> for Change {
 ///
 /// let a_group_lead_head = plain_bob_lead_head(Stage::MAJOR, 1);
 /// let b_group_lead_head = plain_bob_lead_head(Stage::MAJOR, 2);
-/// let f_group_lead_head = plain_bob_lead_head(Stage::MAJOR, -1);
 ///
 /// let mut accum = ChangeAccumulator::new(Stage::MAJOR);
 ///
@@ -822,6 +821,26 @@ pub struct ChangeAccumulator {
 }
 
 impl ChangeAccumulator {
+    /// Creates a new `ChangeAccumulator` with rounds as the total.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage};
+    ///
+    /// let accum = ChangeAccumulator::new(Stage::CINQUES);
+    ///
+    /// assert_eq!(accum.total(), &Change::rounds(Stage::CINQUES));
+    /// assert_eq!(accum.last(), &Change::rounds(Stage::CINQUES));
+    /// ```
+    pub fn new(stage: Stage) -> ChangeAccumulator {
+        ChangeAccumulator {
+            change_1: Change::rounds(stage),
+            change_2: Change::rounds(stage),
+            stage: stage,
+            using_second_change: false,
+        }
+    }
+
     /// Returns the last value to be stored in the `ChangeAccumulator`, or rounds if one or fewer
     /// changes have been accumulated.
     ///
@@ -831,14 +850,12 @@ impl ChangeAccumulator {
     ///
     /// let mut accum = ChangeAccumulator::new(Stage::ROYAL);
     ///
-    /// accum.accumulate(&Change::from("5678901234"));
-    ///
     /// // After one accumulate, the last value is still rounds
+    /// accum.accumulate(&Change::from("5678901234"));
     /// assert_eq!(accum.last(), &Change::rounds(Stage::ROYAL));
     ///
-    /// accum.accumulate(&Change::from("0987123456"));
-    ///
     /// // After the second accumulate, the last value is the first change
+    /// accum.accumulate(&Change::from("0987123456"));
     /// assert_eq!(accum.last(), &Change::from("5678901234"));
     ///
     /// accum.reset();
@@ -867,7 +884,7 @@ impl ChangeAccumulator {
     /// // No changes have been accumulated, so the total is the identity permutation, or rounds
     /// assert_eq!(accum.total(), &Change::rounds(Stage::MAJOR));
     ///
-    /// // Accumulate some leads(like in Pipe-style cyclic spliced)
+    /// // Accumulate some leads (like in Pipe-style cyclic spliced)
     /// accum.accumulate(&plain_bob_lead_head(Stage::MAJOR, 1));
     /// accum.accumulate(&plain_bob_lead_head(Stage::MAJOR, -2));
     /// accum.accumulate(&plain_bob_lead_head(Stage::MAJOR, 3));
@@ -891,9 +908,23 @@ impl ChangeAccumulator {
         }
     }
 
-    /// Accumulate an iterator representing a permutation onto the accumulator.
+    /// Accumulate an [Iterator] representing a permutation onto the accumulator.
     ///
     /// # Example
+    /// ```
+    /// use bellmetal::{Bell, Change, ChangeAccumulator, Stage};
+    ///
+    /// // An array of Bells representing the change '1342'
+    /// let bells = [Bell::from('1'), Bell::from('3'), Bell::from('4'), Bell::from('2')];
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::MINIMUS);
+    ///
+    /// accum.accumulate_iterator(bells.iter().map(|x| Bell::from(*x)));
+    /// accum.accumulate_iterator(bells.iter().map(|x| Bell::from(*x)));
+    ///
+    /// // '1342' applied twice makes '1423'
+    /// assert_eq!(accum.total(), &Change::from("1423"));
+    /// ```
     pub fn accumulate_iterator(&mut self, iterator: impl Iterator<Item = Bell>) {
         // We can't inline this if statement, because doing so would require us to clone the
         // Change or anger the borrow checker.
@@ -909,7 +940,26 @@ impl ChangeAccumulator {
         self.using_second_change = !self.using_second_change;
     }
 
+    /// Accumulate a [Transposition] into the accumulator.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage};
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::MAXIMUS);
+    ///
+    /// // First let's accumulate a cyclic part head
+    /// accum.accumulate(&Change::from("567890ET1234"));
+    ///
+    /// // And now let's accumulate a change that we might find in that part
+    /// accum.accumulate(&Change::from("5432167890ET"));
+    ///
+    /// // And the total is a cyclically rotated version of the 5432167890ET:
+    /// assert_eq!(accum.total(), &Change::from("987650ET1234"));
+    /// ```
     pub fn accumulate(&mut self, transposition: &impl Transposition) {
+        // We can't inline this if statement, because doing so would require us to clone the
+        // Change or anger the borrow checker.
         if self.using_second_change {
             self.change_2
                 .multiply_into(transposition, &mut self.change_1);
@@ -918,10 +968,30 @@ impl ChangeAccumulator {
                 .multiply_into(transposition, &mut self.change_2);
         }
 
+        // Swap the buffers so that the result is in the 'front' buffer
         self.using_second_change = !self.using_second_change;
     }
 
+    /// Accumulate the inverse of a [Transposition] into the accumulator, without storing that
+    /// inverse in memory.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage};
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::MAJOR);
+    ///
+    /// let arbitrary_change = Change::from("65812437");
+    ///
+    /// // Accumulate an arbitrary_change and its inverse, ...
+    /// accum.accumulate(&arbitrary_change);
+    /// accum.accumulate_inverse(&arbitrary_change);
+    ///
+    /// // ... and the result should be rounds, since the effect of the two changes cancel out
+    /// assert_eq!(accum.total(), &Change::rounds(Stage::MAJOR));
     pub fn accumulate_inverse(&mut self, transposition: &impl Transposition) {
+        // We can't inline this if statement, because doing so would require us to clone the
+        // Change or anger the borrow checker.
         if self.using_second_change {
             self.change_2
                 .multiply_inverse_into(transposition, &mut self.change_1);
@@ -930,52 +1000,115 @@ impl ChangeAccumulator {
                 .multiply_inverse_into(transposition, &mut self.change_2);
         }
 
+        // Swap the buffers so that the result is in the 'front' buffer
         self.using_second_change = !self.using_second_change;
     }
 
-    pub fn pre_accumulate(&mut self, iter: &impl Transposition) {
+    /// Accumulate a [Transposition] into the accumulator, but premultiply it instead of
+    /// postmultiplying like you usually would.  In ringing terms, this has the effect of the
+    /// [Transposition] being rung **before** all the other [Transposition]s already accumulated.
+    /// Useful for tasks like adding a part-head to a [Change] you've already calculated.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage};
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::ROYAL);
+    ///
+    /// // Accumulate a change that we might find in the plain course of a musical method
+    /// accum.accumulate(&Change::from("5124367890"));
+    ///
+    /// // Pre-accumulate a cyclic part head to find out what that change would be in that
+    /// // particular part
+    /// accum.pre_accumulate(&Change::from("1678902345"));
+    ///
+    /// assert_eq!(accum.total(), &Change::from("9168702345"));
+    /// ```
+    pub fn pre_accumulate(&mut self, transposition: &impl Transposition) {
+        // We can't inline this if statement, because doing so would require us to clone the
+        // Change or anger the borrow checker.
         if self.using_second_change {
-            self.change_2.pre_multiply_into(iter, &mut self.change_1);
+            self.change_2.pre_multiply_into(transposition, &mut self.change_1);
         } else {
-            self.change_1.pre_multiply_into(iter, &mut self.change_2);
+            self.change_1.pre_multiply_into(transposition, &mut self.change_2);
         }
 
+        // Swap the buffers so that the result is in the 'front' buffer
         self.using_second_change = !self.using_second_change;
     }
 
-    pub fn set(&mut self, change: &Change) {
-        if self.stage != change.stage() {
+    /// The accumulator total to a specific [Transposition].  Note that this leaves the
+    /// [last](ChangeAccumulator::last) value untouched.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage};
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::MAJOR);
+    ///
+    /// let arbitrary_change = Change::from("71526348");
+    /// let queens = Change::from("13572468");
+    ///
+    /// // Accumulate a load of changes to the accumulator
+    /// accum.accumulate(&arbitrary_change);
+    /// accum.accumulate(&arbitrary_change);
+    /// accum.accumulate(&arbitrary_change);
+    /// 
+    /// assert_eq!(accum.total(), &arbitrary_change.pow(3));
+    ///
+    /// // Set a specific change (in this case Queens)
+    /// accum.set(&queens);
+    ///
+    /// assert_eq!(accum.total(), &queens);
+    /// assert_ne!(accum.total(), &arbitrary_change.pow(3));
+    /// ```
+    pub fn set(&mut self, transposition: &impl Transposition) {
+        if self.stage != transposition.stage() {
             panic!("Can't write a change of the wrong stage into accumulator");
         }
 
+        let slice = transposition.slice();
+
         if self.using_second_change {
             for i in 0..self.stage.as_usize() {
-                self.change_2.seq[i] = change.seq[i];
+                self.change_2.seq[i] = slice[i];
             }
         } else {
             for i in 0..self.stage.as_usize() {
-                self.change_1.seq[i] = change.seq[i];
+                self.change_1.seq[i] = slice[i];
             }
         }
     }
 
+    /// Reset both buffers in the [ChangeAccumulator] to rounds.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage};
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::MAJOR);
+    ///
+    /// let arbitrary_change = Change::from("56817423");
+    ///
+    /// // Accumulate a load of changes to the accumulator
+    /// accum.accumulate(&arbitrary_change);
+    /// accum.accumulate(&arbitrary_change);
+    /// accum.accumulate(&arbitrary_change);
+    ///
+    /// // Demonstrate that the total is something other than rounds
+    /// assert_ne!(accum.total(), &Change::rounds(Stage::MAJOR));
+    ///
+    /// // Reset the accumulator, and assert that the total is now rounds.
+    /// accum.reset();
+    ///
+    /// assert_eq!(accum.total(), &Change::rounds(Stage::MAJOR));
+    /// ```
     pub fn reset(&mut self) {
         for i in 0..self.stage.as_usize() {
             self.change_1.seq[i] = Bell::from(i);
             self.change_2.seq[i] = Bell::from(i);
 
             self.using_second_change = false;
-        }
-    }
-}
-
-impl ChangeAccumulator {
-    pub fn new(stage: Stage) -> ChangeAccumulator {
-        ChangeAccumulator {
-            change_1: Change::rounds(stage),
-            change_2: Change::rounds(stage),
-            stage: stage,
-            using_second_change: false,
         }
     }
 }
