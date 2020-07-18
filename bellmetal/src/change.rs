@@ -716,6 +716,43 @@ impl From<&str> for Change {
     }
 }
 
+/// A `ChangeAccumulator` is a struct that can be used to repeatedly accumulate [Change]s, without
+/// allocating any memory on the heap every multiplication.  However, since the stage of the
+/// changes aren't known at compile time, there will be two heap allocations when the
+/// `ChangeAccumulator` is instantiated.
+///
+/// `ChangeAccumulator` is used heavily in this library for tasks that need
+/// a lot of repeated permutating, for example storing lead heads whilst generating touches.
+///
+/// # Example
+/// ```
+/// use bellmetal::{Change, ChangeAccumulator, Stage, plain_bob_lead_head};
+///
+/// let a_group_lead_head = plain_bob_lead_head(Stage::MAJOR, 1);
+/// let b_group_lead_head = plain_bob_lead_head(Stage::MAJOR, 2);
+/// let f_group_lead_head = plain_bob_lead_head(Stage::MAJOR, -1);
+///
+/// let mut accum = ChangeAccumulator::new(Stage::MAJOR);
+///
+/// assert_eq!(accum.total(), &Change::rounds(Stage::MAJOR));
+/// assert_eq!(accum.last(), &Change::rounds(Stage::MAJOR));
+///
+/// accum.accumulate(&a_group_lead_head);
+/// accum.accumulate(&a_group_lead_head);
+///
+/// // Two leads of an a-group method = one lead of a b-group method
+/// assert_eq!(accum.total(), &b_group_lead_head);
+/// assert_eq!(accum.last(), &a_group_lead_head);
+///
+/// // Undo a change's effect
+/// accum.accumulate_inverse(&a_group_lead_head);
+///
+/// assert_eq!(accum.total(), &a_group_lead_head);
+///
+/// accum.reset();
+///
+/// assert_eq!(accum.total(), &Change::rounds(Stage::MAJOR));
+/// ```
 pub struct ChangeAccumulator {
     change_1: Change,
     change_2: Change,
@@ -724,7 +761,32 @@ pub struct ChangeAccumulator {
 }
 
 impl ChangeAccumulator {
+    /// Returns the last value to be stored in the `ChangeAccumulator`, or rounds if one or fewer
+    /// changes have been accumulated.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage};
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::ROYAL);
+    ///
+    /// accum.accumulate(&Change::from("5678901234"));
+    ///
+    /// // After one accumulate, the last value is still rounds
+    /// assert_eq!(accum.last(), &Change::rounds(Stage::ROYAL));
+    ///
+    /// accum.accumulate(&Change::from("0987123456"));
+    ///
+    /// // After the second accumulate, the last value is the first change
+    /// assert_eq!(accum.last(), &Change::from("5678901234"));
+    ///
+    /// accum.reset();
+    ///
+    /// // After resetting, the last value is set back to rounds
+    /// assert_eq!(accum.last(), &Change::rounds(Stage::ROYAL));
+    /// ```
     pub fn last(&self) -> &Change {
+        // Return the 'back' buffered change - i.e. the one that isn't the total
         if self.using_second_change {
             &(self.change_1)
         } else {
@@ -732,7 +794,35 @@ impl ChangeAccumulator {
         }
     }
 
+    /// Returns the current value of the accumulator, representing the 'total' of all the `Change`s
+    /// accumulated so far.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, ChangeAccumulator, Stage, plain_bob_lead_head};
+    ///
+    /// let mut accum = ChangeAccumulator::new(Stage::MAJOR);
+    ///
+    /// // No changes have been accumulated, so the total is the identity permutation, or rounds
+    /// assert_eq!(accum.total(), &Change::rounds(Stage::MAJOR));
+    ///
+    /// // Accumulate some leads(like in Pipe-style cyclic spliced)
+    /// accum.accumulate(&plain_bob_lead_head(Stage::MAJOR, 1));
+    /// accum.accumulate(&plain_bob_lead_head(Stage::MAJOR, -2));
+    /// accum.accumulate(&plain_bob_lead_head(Stage::MAJOR, 3));
+    ///
+    /// // The total should be 2nd lead head of plain bob
+    /// assert_eq!(accum.total(), &plain_bob_lead_head(Stage::MAJOR, 2));
+    ///
+    /// // Now, let's pre-accumulate a cyclic part head.  This will be as though that part head
+    /// // took effect before all the other changes.
+    /// accum.pre_accumulate(&Change::from("45678123"));
+    ///
+    /// // The change has been rotated so that the 4 is the hunt bell
+    /// assert_eq!(accum.total(), &Change::from("48263517"));
+    /// ```
     pub fn total(&self) -> &Change {
+        // Return the 'front' buffered change
         if self.using_second_change {
             &(self.change_2)
         } else {
@@ -740,7 +830,12 @@ impl ChangeAccumulator {
         }
     }
 
+    /// Accumulate an iterator representing a permutation onto the accumulator.
+    ///
+    /// # Example
     pub fn accumulate_iterator(&mut self, iterator: impl Iterator<Item = Bell>) {
+        // We can't inline this if statement, because doing so would require us to clone the
+        // Change or anger the borrow checker.
         if self.using_second_change {
             self.change_2
                 .multiply_iterator_into(iterator, &mut self.change_1);
@@ -749,6 +844,7 @@ impl ChangeAccumulator {
                 .multiply_iterator_into(iterator, &mut self.change_2);
         }
 
+        // Swap the buffers so that the result is in the 'front' buffer
         self.using_second_change = !self.using_second_change;
     }
 
