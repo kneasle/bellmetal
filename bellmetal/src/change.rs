@@ -190,7 +190,7 @@ impl Change {
         self.seq[place.as_usize()] = bell;
     }
 
-    /// Multiplies a given `Change` with an iterator of bells (see [Change::multiply] for more
+    /// Multiplies a given `Change` with an iterator of [Bell]s (see [Change::multiply] for more
     /// details about how multiplication of permutations works).  This is the same as
     /// [multiply_iterator](Change::transfigure_iterator), except that this will return a `Change`
     /// rather than another iterator.
@@ -217,7 +217,7 @@ impl Change {
         }
     }
 
-    /// Multiplies a given `Change` with an iterator of bells (see [Change::multiply] for more
+    /// Multiplies a given `Change` with an iterator of [Bell]s (see [Change::multiply] for more
     /// details about how multiplication of permutations works).  This is the same as
     /// [multiply_iterator](Change::multiply_iterator), except that this will return another
     /// iterator, rather than a `Change`.
@@ -616,7 +616,7 @@ impl Change {
 
     /// Rotates this `Change` cyclically by `amount` steps, while leaving the treble unaffected.
     /// Same as (in_place_full_cyclic_rotate)[Change::in_place_full_cyclic_rotate], except that
-    /// this leaves the treble where it is, and only rotates the remaining bells.
+    /// this leaves the treble where it is, and only rotates the remaining [Bell]s.
     ///
     /// For example, if `amount` is `2` and the [Stage] is (Major)[Stage::MAJOR] then `3` will become `5`,
     /// and `7` will become `2`.
