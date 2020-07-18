@@ -1115,12 +1115,36 @@ impl ChangeAccumulator {
     }
 }
 
+/// An iterator adapter that converts an [Iterator] of [Bell]s into an [Iterator] of [Change]s.  If
+/// the [Iterator] stops half way through a [Change], that final [Change] is disregarded, and the
+/// [ChangeCollectIter] stops too.
+///
+/// # Example
+/// ```
+/// use bellmetal::{Change, ChangeCollectIter};
+///
+/// // Make a bell iterator that contains the first half of Plain Hunt Minimus, plus some leftover
+/// // bells
+/// let bell_iter = Change::from("12342143241342314321666").slice().iter().copied();
+///
+/// let collected_iter = ChangeCollectIter::new(bell_iter);
+///
+/// assert_eq!(collected_iter.next(), Some(Change::from("1234")));
+/// assert_eq!(collected_iter.next(), Some(Change::from("2143")));
+/// assert_eq!(collected_iter.next(), Some(Change::from("2413")));
+/// assert_eq!(collected_iter.next(), Some(Change::from("4231")));
+/// assert_eq!(collected_iter.next(), Some(Change::from("4321")));
+/// assert_eq!(collected_iter.next(), None);
+/// ```
 pub struct ChangeCollectIter<T: Iterator<Item = Bell>> {
     bell_iter: T,
     stage: Stage,
 }
 
 impl<T: Iterator<Item = Bell>> ChangeCollectIter<T> {
+    /// Creates a new `ChangeCollectIter` from any [Iterator] of [Bell]s.
+    ///
+    /// See the example for the [ChangeCollectIter] class.
     pub fn new(bell_iter: T, stage: Stage) -> ChangeCollectIter<T> {
         ChangeCollectIter {
             bell_iter: bell_iter,
