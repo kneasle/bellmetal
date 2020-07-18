@@ -1028,9 +1028,11 @@ impl ChangeAccumulator {
         // We can't inline this if statement, because doing so would require us to clone the
         // Change or anger the borrow checker.
         if self.using_second_change {
-            self.change_2.pre_multiply_into(transposition, &mut self.change_1);
+            self.change_2
+                .pre_multiply_into(transposition, &mut self.change_1);
         } else {
-            self.change_1.pre_multiply_into(transposition, &mut self.change_2);
+            self.change_1
+                .pre_multiply_into(transposition, &mut self.change_2);
         }
 
         // Swap the buffers so that the result is in the 'front' buffer
@@ -1053,7 +1055,7 @@ impl ChangeAccumulator {
     /// accum.accumulate(&arbitrary_change);
     /// accum.accumulate(&arbitrary_change);
     /// accum.accumulate(&arbitrary_change);
-    /// 
+    ///
     /// assert_eq!(accum.total(), &arbitrary_change.pow(3));
     ///
     /// // Set a specific change (in this case Queens)
