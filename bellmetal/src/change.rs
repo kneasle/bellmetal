@@ -51,13 +51,7 @@ impl Change {
     }
 
     pub fn rounds(stage: Stage) -> Change {
-        let mut seq: Vec<Bell> = Vec::with_capacity(stage.as_usize());
-
-        for i in 0..stage.as_usize() {
-            seq.push(Bell::from(i));
-        }
-
-        Change { seq: seq }
+        Change::from_iterator((0..stage.as_usize()).map(|x| Bell::from(x)))
     }
 
     pub fn new(bell_vec: Vec<Bell>) -> Change {
