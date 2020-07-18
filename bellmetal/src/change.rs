@@ -43,13 +43,35 @@ pub struct Change {
     seq: Vec<Bell>,
 }
 
-impl Transposition for Change {
-    fn slice(&self) -> &[Bell] {
-        &self.seq
-    }
-}
-
 impl Change {
+    pub fn empty() -> Change {
+        Change {
+            seq: Vec::with_capacity(0),
+        }
+    }
+
+    pub fn rounds(stage: Stage) -> Change {
+        let mut seq: Vec<Bell> = Vec::with_capacity(stage.as_usize());
+
+        for i in 0..stage.as_usize() {
+            seq.push(Bell::from(i));
+        }
+
+        Change { seq: seq }
+    }
+
+    pub fn new(bell_vec: Vec<Bell>) -> Change {
+        Change { seq: bell_vec }
+    }
+
+    pub fn from_iterator(iter: impl Iterator<Item = Bell>) -> Change {
+        let mut c = Change::empty();
+
+        c.overwrite_from_iterator(iter);
+
+        c
+    }
+
     /// Gets the [Stage] a given `Change`.
     ///
     /// # Examples
@@ -648,33 +670,9 @@ impl Change {
     }
 }
 
-impl Change {
-    pub fn empty() -> Change {
-        Change {
-            seq: Vec::with_capacity(0),
-        }
-    }
-
-    pub fn rounds(stage: Stage) -> Change {
-        let mut seq: Vec<Bell> = Vec::with_capacity(stage.as_usize());
-
-        for i in 0..stage.as_usize() {
-            seq.push(Bell::from(i));
-        }
-
-        Change { seq: seq }
-    }
-
-    pub fn new(bell_vec: Vec<Bell>) -> Change {
-        Change { seq: bell_vec }
-    }
-
-    pub fn from_iterator(iter: impl Iterator<Item = Bell>) -> Change {
-        let mut c = Change::empty();
-
-        c.overwrite_from_iterator(iter);
-
-        c
+impl Transposition for Change {
+    fn slice(&self) -> &[Bell] {
+        &self.seq
     }
 }
 
