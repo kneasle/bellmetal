@@ -33,10 +33,10 @@ use crate::{Row, Touch};
 /// ```
 /// use bellmetal::Change;
 ///
-/// let cyclic_part_head = Change::from ("17823456");
-/// let some_change = Change::from ("43215678");
+/// let cyclic_part_head = Change::from("17823456");
+/// let some_change = Change::from("43215678");
 ///
-/// assert_eq! (cyclic_part_head * some_change, Change::from ("28713456"));
+/// assert_eq!(cyclic_part_head * some_change, Change::from("28713456"));
 /// ```
 #[derive(Hash, PartialOrd, Ord, Eq, PartialEq, Clone)]
 pub struct Change {
@@ -54,9 +54,9 @@ impl Change {
     ///
     /// # Examples
     /// ```
-    /// use bellmetal::{ Change, Stage };
+    /// use bellmetal::{Change, Stage};
     ///
-    /// assert_eq! (Change::from ("14867253").stage (), Stage::MAJOR);
+    /// assert_eq!(Change::from("14867253").stage(), Stage::MAJOR);
     /// ```
     pub fn stage(&self) -> Stage {
         Stage::from(self.seq.len())
@@ -70,15 +70,15 @@ impl Change {
     ///
     /// # Examples
     /// ```
-    /// use bellmetal::{ Bell, Change };
+    /// use bellmetal::{Bell, Change};
     ///
-    /// let mut c = Change::from ("12345678");
+    /// let mut c = Change::from("12345678");
     ///
-    /// let mut slice = c.mut_slice ();
-    /// slice [0] = Bell::from ('2');
-    /// slice [1] = Bell::from ('1');
+    /// let mut slice = c.mut_slice();
+    /// slice[0] = Bell::from('2');
+    /// slice[1] = Bell::from('1');
     ///
-    /// assert_eq! (c, Change::from ("21345678"));
+    /// assert_eq!(c, Change::from("21345678"));
     /// ```
     pub fn mut_slice(&mut self) -> &mut [Bell] {
         &mut self.seq
@@ -88,7 +88,7 @@ impl Change {
     /// operator except that this can borrow its arguments and so doesn't require `Clone`ing
     /// `Change`s.
     ///
-    /// This is coded such that `a * b` or `a.multiply (b)` will mean "Suppose I have a touch that
+    /// This is coded such that `a * b` or `a.multiply(b)` will mean "Suppose I have a touch that
     /// takes me from rounds to `a` and then after ring that I ring a touch that takes me from
     /// rounds to `b`.  The overall effect of the combination of these touches is `a * b`.  Note that
     /// this is opposite to how permutation multiplication works when represented as matrices.
@@ -97,10 +97,10 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let cyclic_part_head = Change::from ("17823456");
-    /// let some_change = Change::from ("43215678");
+    /// let cyclic_part_head = Change::from("17823456");
+    /// let some_change = Change::from("43215678");
     ///
-    /// assert_eq! (cyclic_part_head.multiply (&some_change), Change::from ("28713456"));
+    /// assert_eq!(cyclic_part_head.multiply(&some_change), Change::from("28713456"));
     /// ```
     pub fn multiply(&self, rhs: &impl Transposition) -> Change {
         let mut c = Change::empty();
@@ -114,14 +114,14 @@ impl Change {
     ///
     /// # Examples
     /// ```
-    /// use bellmetal::{ Bell, Place, Change };
+    /// use bellmetal::{Bell, Place, Change};
     ///
-    /// let mut c = Change::from ("12345678");
+    /// let mut c = Change::from("12345678");
     ///
-    /// c.set_bell (Place::from (0), Bell::from ('2'));
-    /// c.set_bell (Place::from (1), Bell::from ('1'));
+    /// c.set_bell(Place::from(0), Bell::from('2'));
+    /// c.set_bell(Place::from(1), Bell::from('1'));
     ///
-    /// assert_eq! (c, Change::from ("21345678"));
+    /// assert_eq!(c, Change::from("21345678"));
     /// ```
     pub fn set_bell(&mut self, place: Place, bell: Bell) {
         self.seq[place.as_usize()] = bell;
@@ -139,13 +139,13 @@ impl Change {
     ///
     /// # Examples
     /// ```
-    /// use bellmetal::{ Change, Transposition };
+    /// use bellmetal::{Change, Transposition};
     ///
-    /// let part_head = Change::from ("56781234");
+    /// let part_head = Change::from("56781234");
     ///
-    /// assert_eq! (
-    ///     part_head.multiply_iterator (Change::from ("321321").iter ()),
-    ///     Change::from ("765765")
+    /// assert_eq!(
+    ///     part_head.multiply_iterator(Change::from("321321").iter()),
+    ///     Change::from("765765")
     /// );
     /// ```
     pub fn multiply_iterator(&self, rhs: impl Iterator<Item = Bell>) -> Change {
@@ -166,17 +166,17 @@ impl Change {
     ///
     /// # Examples
     /// ```
-    /// use bellmetal::{ Bell, Change, Transposition };
+    /// use bellmetal::{Bell, Change, Transposition};
     ///
-    /// let c = Change::from ("321");
-    /// let part_head = Change::from ("56781234");
+    /// let c = Change::from("321");
+    /// let part_head = Change::from("56781234");
     ///
-    /// let mut new_iterator = part_head.transfigure_iterator (c.iter ());
+    /// let mut new_iterator = part_head.transfigure_iterator(c.iter());
     ///
-    /// assert_eq! (new_iterator.next (), Some (Bell::from ('7')));
-    /// assert_eq! (new_iterator.next (), Some (Bell::from ('6')));
-    /// assert_eq! (new_iterator.next (), Some (Bell::from ('5')));
-    /// assert_eq! (new_iterator.next (), None);
+    /// assert_eq!(new_iterator.next(), Some(Bell::from('7')));
+    /// assert_eq!(new_iterator.next(), Some(Bell::from('6')));
+    /// assert_eq!(new_iterator.next(), Some(Bell::from('5')));
+    /// assert_eq!(new_iterator.next(), None);
     /// ```
     pub fn transfigure_iterator<'a>(
         &'a self,
@@ -196,13 +196,13 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let part_head = Change::from ("34567812");
-    /// let example_change = Change::from ("43215786");
-    /// let mut output_change = Change::empty ();
+    /// let part_head = Change::from("34567812");
+    /// let example_change = Change::from("43215786");
+    /// let mut output_change = Change::empty();
     ///
-    /// example_change.pre_multiply_into (&part_head, &mut output_change);
+    /// example_change.pre_multiply_into(&part_head, &mut output_change);
     ///
-    /// assert_eq! (output_change, Change::from ("65437128"));
+    /// assert_eq!(output_change, Change::from("65437128"));
     /// ```
     pub fn pre_multiply_into(&self, lhs: &impl Transposition, into: &mut Change) {
         if self.stage() != lhs.stage() {
@@ -223,15 +223,15 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Bell, Change };
+    /// use bellmetal::{Bell, Change};
     ///
-    /// let part_head = Change::from ("34567812");
-    /// let bells = [Bell::from ('1'), Bell::from ('3'), Bell::from ('2')];
-    /// let mut output_change = Change::empty ();
+    /// let part_head = Change::from("34567812");
+    /// let bells = [Bell::from('1'), Bell::from('3'), Bell::from('2')];
+    /// let mut output_change = Change::empty();
     ///
-    /// part_head.multiply_iterator_into (bells.iter ().cloned (), &mut output_change);
+    /// part_head.multiply_iterator_into(bells.iter().cloned(), &mut output_change);
     ///
-    /// assert_eq! (output_change, Change::from ("354"));
+    /// assert_eq!(output_change, Change::from("354"));
     /// ```
     pub fn multiply_iterator_into(&self, rhs: impl Iterator<Item = Bell>, into: &mut Change) {
         into.overwrite_from_iterator(self.transfigure_iterator(rhs));
@@ -246,15 +246,15 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Bell, Change };
+    /// use bellmetal::{Bell, Change};
     ///
-    /// let part_head = Change::from ("34567812");
-    /// let some_change = Change::from ("23456187");
-    /// let mut output_change = Change::empty ();
+    /// let part_head = Change::from("34567812");
+    /// let some_change = Change::from("23456187");
+    /// let mut output_change = Change::empty();
     ///
-    /// part_head.multiply_into (&some_change, &mut output_change);
+    /// part_head.multiply_into(&some_change, &mut output_change);
     ///
-    /// assert_eq! (output_change, Change::from ("45678321"));
+    /// assert_eq!(output_change, Change::from("45678321"));
     /// ```
     pub fn multiply_into(&self, rhs: &impl Transposition, into: &mut Change) {
         if self.stage() != rhs.stage() {
@@ -277,14 +277,14 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Bell, Change };
+    /// use bellmetal::{Bell, Change};
     ///
-    /// let part_head = Change::from ("34567812");
-    /// let some_change = Change::from ("23456187");
+    /// let part_head = Change::from("34567812");
+    /// let some_change = Change::from("23456187");
     ///
-    /// assert_eq! (
-    ///     part_head.multiply_inverse (&some_change),
-    ///     Change::from ("83456721")
+    /// assert_eq!(
+    ///     part_head.multiply_inverse(&some_change),
+    ///     Change::from("83456721")
     /// );
     /// ```
     pub fn multiply_inverse(&self, rhs: &impl Transposition) -> Change {
@@ -304,15 +304,15 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Bell, Change };
+    /// use bellmetal::{Bell, Change};
     ///
-    /// let part_head = Change::from ("34567812");
-    /// let some_change = Change::from ("23456187");
-    /// let mut output_change = Change::empty ();
+    /// let part_head = Change::from("34567812");
+    /// let some_change = Change::from("23456187");
+    /// let mut output_change = Change::empty();
     ///
-    /// part_head.multiply_inverse_into (&some_change, &mut output_change);
+    /// part_head.multiply_inverse_into(&some_change, &mut output_change);
     ///
-    /// assert_eq! (output_change, Change::from ("83456721"));
+    /// assert_eq!(output_change, Change::from("83456721"));
     /// ```
     pub fn multiply_inverse_into(&self, rhs: &impl Transposition, into: &mut Change) {
         if self.stage() != rhs.stage() {
@@ -343,19 +343,19 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Stage, Change };
+    /// use bellmetal::{Stage, Change};
     ///
-    /// let mut c = Change::rounds (Stage::ROYAL);
+    /// let mut c = Change::rounds(Stage::ROYAL);
     ///
-    /// c.overwrite_from_string ("1357924680");
+    /// c.overwrite_from_string("1357924680");
     ///
-    /// assert_eq! (c, Change::from ("1357924680"));
+    /// assert_eq!(c, Change::from("1357924680"));
     ///
-    /// c.overwrite_from_string ("123456");
+    /// c.overwrite_from_string("123456");
     ///
-    /// assert_eq! (c.stage (), Stage::MINOR);
+    /// assert_eq!(c.stage(), Stage::MINOR);
     ///
-    /// assert_eq! (c, Change::rounds (Stage::MINOR));
+    /// assert_eq!(c, Change::rounds(Stage::MINOR));
     /// ```
     pub fn overwrite_from_string(&mut self, string: &str) {
         self.seq.clear();
@@ -372,17 +372,19 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Bell, Stage, Change };
+    /// use bellmetal::{Bell, Stage, Change};
     ///
-    /// let mut c = Change::rounds (Stage::ROYAL);
+    /// let mut c = Change::rounds(Stage::ROYAL);
     ///
-    /// c.overwrite_from_iterator (
-    ///     [Bell::from ('1'), Bell::from ('2'), Bell::from ('4'), Bell::from ('3')].iter ().cloned ()
+    /// c.overwrite_from_iterator(
+    ///     [Bell::from('1'), Bell::from('2'), Bell::from('4'), Bell::from('3')]
+    ///         .iter()
+    ///         .cloned()
     /// );
     ///
-    /// assert_eq! (c.stage (), Stage::MINIMUS);
+    /// assert_eq!(c.stage(), Stage::MINIMUS);
     ///
-    /// assert_eq! (c, Change::from ("1243"));
+    /// assert_eq!(c, Change::from("1243"));
     /// ```
     pub fn overwrite_from_iterator(&mut self, iter: impl Iterator<Item = Bell>) {
         self.seq.clear();
@@ -395,17 +397,17 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Bell, Stage, Change };
+    /// use bellmetal::{Bell, Stage, Change};
     ///
-    /// let mut c = Change::rounds (Stage::ROYAL);
+    /// let mut c = Change::rounds(Stage::ROYAL);
     ///
-    /// c.overwrite_from_slice (
-    ///     &[Bell::from ('1'), Bell::from ('2'), Bell::from ('4'), Bell::from ('3')]
+    /// c.overwrite_from_slice(
+    ///     &[Bell::from('1'), Bell::from('2'), Bell::from('4'), Bell::from('3')]
     /// );
     ///
-    /// assert_eq! (c.stage (), Stage::MINIMUS);
+    /// assert_eq!(c.stage(), Stage::MINIMUS);
     ///
-    /// assert_eq! (c, Change::from ("1243"));
+    /// assert_eq!(c, Change::from("1243"));
     /// ```
     pub fn overwrite_from_slice(&mut self, slice: &[Bell]) {
         self.overwrite_from_iterator(slice.iter().cloned());
@@ -417,15 +419,15 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Bell, Stage, Change };
+    /// use bellmetal::{Bell, Stage, Change};
     ///
-    /// let mut c = Change::rounds (Stage::ROYAL);
+    /// let mut c = Change::rounds(Stage::ROYAL);
     ///
-    /// c.overwrite_from (&Change::from ("145623"));
+    /// c.overwrite_from(&Change::from("145623"));
     ///
-    /// assert_eq! (c.stage (), Stage::MINOR);
+    /// assert_eq!(c.stage(), Stage::MINOR);
     ///
-    /// assert_eq! (c, Change::from ("145623"));
+    /// assert_eq!(c, Change::from("145623"));
     /// ```
     pub fn overwrite_from(&mut self, other: &impl Transposition) {
         self.overwrite_from_slice(other.slice());
@@ -438,13 +440,13 @@ impl Change {
     ///
     /// # Example
     /// ```
-    /// use bellmetal::{ Stage, Change };
+    /// use bellmetal::{Stage, Change};
     ///
-    /// let cyclic_part_end = Change::from ("81234567");
+    /// let cyclic_part_end = Change::from("81234567");
     ///
-    /// assert_eq! (cyclic_part_end.pow (-3), Change::from ("45678123"));
-    /// assert_eq! (cyclic_part_end.pow (2), Change::from ("78123456"));
-    /// assert_eq! (cyclic_part_end.pow (0), Change::rounds (Stage::MAJOR));
+    /// assert_eq!(cyclic_part_end.pow(-3), Change::from("45678123"));
+    /// assert_eq!(cyclic_part_end.pow(2), Change::from("78123456"));
+    /// assert_eq!(cyclic_part_end.pow(0), Change::rounds(Stage::MAJOR));
     /// ```
     pub fn pow(&self, exponent: isize) -> Change {
         // Return rounds if the exponent is 0
@@ -482,13 +484,13 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let mut c1 = Change::from ("13287654");
-    /// c1.in_place_fixed_treble_inverse ();
-    /// assert_eq! (c1, Change::from ("17823456"));
+    /// let mut c1 = Change::from("13287654");
+    /// c1.in_place_fixed_treble_inverse();
+    /// assert_eq!(c1, Change::from("17823456"));
     ///
-    /// let mut c2 = Change::from ("3456127890");
-    /// c2.in_place_fixed_treble_inverse ();
-    /// assert_eq! (c2, Change::from ("9876105432"));
+    /// let mut c2 = Change::from("3456127890");
+    /// c2.in_place_fixed_treble_inverse();
+    /// assert_eq!(c2, Change::from("9876105432"));
     /// ```
     pub fn in_place_fixed_treble_inverse(&mut self) {
         let stage = self.seq.len();
@@ -511,13 +513,13 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let mut c1 = Change::from ("13287654");
-    /// c1.in_place_inverse ();
-    /// assert_eq! (c1, Change::from ("86712345"));
+    /// let mut c1 = Change::from("13287654");
+    /// c1.in_place_inverse();
+    /// assert_eq!(c1, Change::from("86712345"));
     ///
-    /// let mut c2 = Change::from ("3456127890");
-    /// c2.in_place_inverse ();
-    /// assert_eq! (c2, Change::from ("8765094321"));
+    /// let mut c2 = Change::from("3456127890");
+    /// c2.in_place_inverse();
+    /// assert_eq!(c2, Change::from("8765094321"));
     /// ```
     pub fn in_place_inverse(&mut self) {
         let stage = self.seq.len();
@@ -536,9 +538,9 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let mut c1 = Change::from ("1654327890");
-    /// c1.in_place_full_cyclic_rotate (4);
-    /// assert_eq! (c1, Change::from ("5098761234"));
+    /// let mut c1 = Change::from("1654327890");
+    /// c1.in_place_full_cyclic_rotate(4);
+    /// assert_eq!(c1, Change::from("5098761234"));
     /// ```
     pub fn in_place_full_cyclic_rotate(&mut self, amount: usize) {
         let stage = self.seq.len();
@@ -559,9 +561,9 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let mut c1 = Change::from ("1654327890");
-    /// c1.in_place_full_cyclic_rotate (4);
-    /// assert_eq! (c1, Change::from ("5098761234"));
+    /// let mut c1 = Change::from("1654327890");
+    /// c1.in_place_full_cyclic_rotate(4);
+    /// assert_eq!(c1, Change::from("5098761234"));
     /// ```
     pub fn in_place_fixed_treble_cyclic_rotate(&mut self, amount: usize) {
         let stage = self.seq.len();
@@ -587,9 +589,9 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let mut c1 = Change::from ("3456127890");
-    /// c1.in_place_reverse ();
-    /// assert_eq! (c1, Change::from ("0987216543"));
+    /// let mut c1 = Change::from("3456127890");
+    /// c1.in_place_reverse();
+    /// assert_eq!(c1, Change::from("0987216543"));
     /// ```
     pub fn in_place_reverse(&mut self) {
         let stage = self.seq.len();
@@ -609,10 +611,10 @@ impl Change {
     /// ```
     /// use bellmetal::Change;
     ///
-    /// let mut c = Change::from ("14723865");
+    /// let mut c = Change::from("14723865");
     ///
-    /// assert_eq! (c.destructive_hash (), 26939);
-    /// assert! (c != Change::from ("14723865"));
+    /// assert_eq!(c.destructive_hash(), 26939);
+    /// assert!(c != Change::from("14723865"));
     /// ```
     pub fn destructive_hash(&mut self) -> usize {
         let stage = self.seq.len();
