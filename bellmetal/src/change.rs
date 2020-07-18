@@ -367,8 +367,9 @@ impl Change {
     }
 
     /// Replaces the contents of this `Change` with the contents of `iter`.  As with
-    /// [overwrite_from_string](Change::overwrite_from_string), this doesn't enforce that the
-    /// stages are the same.
+    /// [overwrite_from_string](Change::overwrite_from_string), it will change the [Stage] of this
+    /// `Change` to be the same as the length of the iterator.  This will hang forever if the
+    /// iterator is infinite.
     ///
     /// # Example
     /// ```
@@ -554,7 +555,7 @@ impl Change {
     /// Same as (in_place_full_cyclic_rotate)[Change::in_place_full_cyclic_rotate], except that
     /// this leaves the treble where it is, and only rotates the remaining bells.
     ///
-    /// For example, if `amount` is `2` and the [Stage] is major then `3` will become `5`,
+    /// For example, if `amount` is `2` and the [Stage] is (Major)[Stage::MAJOR] then `3` will become `5`,
     /// and `7` will become `2`.
     ///
     /// # Example
