@@ -33,6 +33,34 @@ pub struct CoursingOrder {
 }
 
 impl CoursingOrder {
+    pub fn empty() -> CoursingOrder {
+        CoursingOrder {
+            order: Vec::with_capacity(0),
+        }
+    }
+
+    pub fn from_slice(slice: &[Bell]) -> CoursingOrder {
+        CoursingOrder {
+            order: slice.iter().copied().collect(),
+        }
+    }
+
+    pub fn from_leadhead(lh: &Change) -> CoursingOrder {
+        let mut co = CoursingOrder::empty();
+
+        co.overwrite_from_leadhead(lh);
+
+        co
+    }
+
+    pub fn from_iterator<T: CoursingOrderIterator>(iterator: &mut T) -> CoursingOrder {
+        let mut co = CoursingOrder::empty();
+
+        co.overwrite_from_iterator(iterator);
+
+        co
+    }
+
     pub fn overwrite_from_string(&mut self, string: &str) {
         self.order.clear();
         self.order.reserve(string.len());
@@ -206,39 +234,6 @@ impl CoursingOrder {
         }
 
         string
-    }
-}
-
-impl CoursingOrder {
-    pub fn empty() -> CoursingOrder {
-        CoursingOrder {
-            order: Vec::with_capacity(0),
-        }
-    }
-
-    pub fn from_slice(slice: &[Bell]) -> CoursingOrder {
-        CoursingOrder {
-            order: slice.iter().copied().collect(),
-        }
-    }
-
-    pub fn from_leadhead(lh: &Change) -> CoursingOrder {
-        let mut co = CoursingOrder::empty();
-
-        co.overwrite_from_leadhead(lh);
-
-        co
-    }
-
-    pub fn from_iterator<T>(iterator: &mut T) -> CoursingOrder
-    where
-        T: CoursingOrderIterator,
-    {
-        let mut co = CoursingOrder::empty();
-
-        co.overwrite_from_iterator(iterator);
-
-        co
     }
 }
 
