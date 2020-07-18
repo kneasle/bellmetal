@@ -560,7 +560,9 @@ impl Change {
         let stage = self.seq.len();
 
         for i in 0..stage {
+            // Check if the bell is not the treble
             if self.seq[i] != Bell::from(0) {
+                // Calculate the new bell
                 self.seq[i] = Bell::from(stage - self.seq[i].as_usize());
             }
         }
@@ -660,6 +662,7 @@ impl Change {
     pub fn in_place_reverse(&mut self) {
         let stage = self.seq.len();
 
+        // Repeatedly swap pairs of values, missing out the middle value if the stage is odd
         for i in 0..stage / 2 {
             let tmp = self.seq[i];
             self.seq[i] = self.seq[stage - 1 - i];
@@ -668,8 +671,12 @@ impl Change {
     }
 
     /// Hashes the change into the range `0..(stage)!`, but in the process it will destroy the
-    /// contents of `Change`.  Useful for creating bitmasks for every possible change in proof
-    /// checking.
+    /// contents of `Change`.  In fact, it cannot be guarunteed that this function leaves this
+    /// `Change` representing a valid permutation.
+    ///
+    /// Useful when proof checking on lower numbers, by creating a blank
+    /// table with a space for every possible change and then iterating over every row, filling in
+    /// the corresponding slot on the table.
     ///
     /// # Example
     /// ```
@@ -678,35 +685,49 @@ impl Change {
     /// let mut c = Change::from("14723865");
     ///
     /// assert_eq!(c.destructive_hash(), 26939);
-    /// assert!(c != Change::from("14723865"));
+    /// assert_ne!(c, Change::from("14723865"));
     /// ```
     pub fn destructive_hash(&mut self) -> usize {
         let stage = self.seq.len();
 
-        let mut hash = 0;
+        // Initialise multiplier to (stage - 1)!
         let mut multiplier = 1;
-
         for i in 1..stage {
             multiplier *= i;
         }
 
         let mut i = stage - 1;
+        let mut hash = 0;
 
+        // Invariant:
+        //   1) self.seq[..i] is a valid permutation
+        //   2) multiplier = i!
+        //   3) destructive_hash(self.seq[..i]) + hash = x
+        //           where x is the output of the function
         while i > 0 {
+            // Iterate to find the index of the bell represented by `i`
             for j in 0..stage {
+                // Check if we've found the right bell
                 if self.seq[j] == Bell::from(i) {
+                    // Add the bell's index into our hash
                     hash += j * multiplier;
 
+                    // Here, we could (and should for clarity) swap `self.seq[j]` and
+                    // `self.seq[i]`, but since `seq[i]` will never be read, it is a waste of time
+                    // setting it to any particular value.
                     self.seq[j] = self.seq[i];
 
+                    // Break the loop, since the inner loop has done its work already
                     break;
                 }
             }
 
+            // Update both `i` and `multiplier` to preserve Invariant #2
             multiplier /= i;
             i -= 1;
         }
 
+        // Return the accumulated hash value
         hash
     }
 }
@@ -746,6 +767,7 @@ impl Not for Change {
 }
 
 impl From<&str> for Change {
+    /// Converts a string of valid `Bell` names into the `Change` represented by it.
     fn from(s: &str) -> Change {
         let mut change = Change::empty();
 
@@ -1357,15 +1379,16 @@ mod tests {
 
     #[test]
     fn destructive_hash() {
-        for s in 1..9 {
+        for s in 1..=8 {
             let mut hashes: Vec<usize> = ExtentIterator::new(Stage::from(s))
                 .map(|mut x| x.destructive_hash())
                 .collect();
 
             hashes.sort();
 
+            // Assert that the sorted hashes are precisely the numbers from 0 to (stage! - 1)
             for s in 0..hashes.len() {
-                assert_eq!(s, hashes[s]);
+                assert_eq!(hashes[s], s);
             }
         }
     }
