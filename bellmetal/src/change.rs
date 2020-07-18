@@ -1121,13 +1121,14 @@ impl ChangeAccumulator {
 ///
 /// # Example
 /// ```
-/// use bellmetal::{Change, ChangeCollectIter};
+/// use bellmetal::{Change, ChangeCollectIter, Stage, Transposition};
 ///
 /// // Make a bell iterator that contains the first half of Plain Hunt Minimus, plus some leftover
 /// // bells
-/// let bell_iter = Change::from("12342143241342314321666").slice().iter().copied();
+/// let list_of_bells = Change::from("12342143241342314321666");
+/// let bell_iter = list_of_bells.slice().iter().copied();
 ///
-/// let collected_iter = ChangeCollectIter::new(bell_iter);
+/// let mut collected_iter = ChangeCollectIter::new(bell_iter, Stage::MINIMUS);
 ///
 /// assert_eq!(collected_iter.next(), Some(Change::from("1234")));
 /// assert_eq!(collected_iter.next(), Some(Change::from("2143")));
