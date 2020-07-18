@@ -737,10 +737,7 @@ impl ChangeAccumulator {
         }
     }
 
-    pub fn accumulate_iterator<I>(&mut self, iterator: I)
-    where
-        I: Iterator<Item = Bell>,
-    {
+    pub fn accumulate_iterator(&mut self, iterator: impl Iterator<Item = Bell>) {
         if self.using_second_change {
             self.change_2
                 .multiply_iterator_into(iterator, &mut self.change_1);
