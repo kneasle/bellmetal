@@ -5,6 +5,11 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Index;
 
+/// Records a section of a [CoursingOrder] where the [Bell]s would form a run in Plain Bob (and
+/// many other common methods.
+/// For example, the coursing order `975346280` has two run segments (the `75346` generating
+/// backstroke 76543s, and the wrapped `80 97` generating backstroke 7890s).  Note that the 7th is
+/// contained in both run segements.
 #[derive(PartialEq, Eq)]
 pub struct RunSection {
     start: isize,
