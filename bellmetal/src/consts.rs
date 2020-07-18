@@ -34,7 +34,18 @@ static BELL_NAME_LOOKUP_TABLE: [i8; 91] = [
 ];
 
 /// Given a [char], returns `true` if it is a valid bell name (but without searching through the
-/// entirity of [BELL_NAMES] every time.
+/// entirety of [BELL_NAMES] every time).
+///
+/// # Example
+/// ```
+/// use bellmetal::is_bell_name;
+///
+/// assert!(is_bell_name('4'));
+/// assert!(is_bell_name('0'));
+/// assert!(is_bell_name('E'));
+/// assert!(!is_bell_name('I'));
+/// assert!(!is_bell_name(' '));
+/// ```
 pub fn is_bell_name(c: char) -> bool {
     ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z'))
         && c != 'I'
@@ -56,7 +67,18 @@ fn get_number(name: char) -> i8 {
     BELL_NAME_LOOKUP_TABLE[name as usize]
 }
 
-/// Convert a [char] representing a [Bell] into the [Number] it represents.
+/// Convert a [char] representing a [Bell] into the [Number] that represents it (where `0`
+/// represents the treble).
+///
+/// # Example
+/// ```
+/// use bellmetal::name_to_number;
+///
+/// assert_eq!(name_to_number('1'), 0);
+/// assert_eq!(name_to_number('4'), 3);
+/// assert_eq!(name_to_number('T'), 11);
+/// assert_eq!(name_to_number('0'), 9);
+/// ```
 pub fn name_to_number(name: char) -> Number {
     let n = get_number(name);
 
