@@ -44,20 +44,67 @@ pub struct Change {
 }
 
 impl Change {
+    /// Produces an empty `Change` (a `Change` with no [Bell]s).  This is used when a function will
+    /// overwrite the contents of a `Change`, but you don't want to populate the `Change` with
+    /// something that will be trashed by that function.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, Stage};
+    ///
+    /// let mut change = Change::empty();
+    ///
+    /// assert_eq!(change.stage(), Stage::from(0));
+    ///
+    /// Change::from("45678123").multiply_into(&Change::from("87651234"), &mut change);
+    ///
+    /// assert_eq!(change, Change::from("32184567"));
+    /// ```
     pub fn empty() -> Change {
         Change {
             seq: Vec::with_capacity(0),
         }
     }
 
+    /// Returns a `Change` representing rounds on a given [Stage].
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, Stage};
+    ///
+    /// assert_eq!(Change::rounds(Stage::MINOR), Change::from("123456"));
+    /// assert_eq!(Change::rounds(Stage::MAJOR), Change::from("12345678"));
+    /// assert_eq!(Change::rounds(Stage::CATERS), Change::from("123456789"));
+    /// ```
     pub fn rounds(stage: Stage) -> Change {
         Change::from_iterator((0..stage.as_usize()).map(|x| Bell::from(x)))
     }
 
+    /// Creates a new `Change`, given a vector of [Bell]s that it should contain.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, Bell};
+    ///
+    /// let bell_vec = vec![Bell::from('1'), Bell::from('2'), Bell::from('4'), Bell::from('3')];
+    ///
+    /// assert_eq!(Change::new(bell_vec), Change::from("1243"));
+    /// ```
     pub fn new(bell_vec: Vec<Bell>) -> Change {
         Change { seq: bell_vec }
     }
 
+    /// Creates a `Change` from an [Iterator] of [Bell]s.  The iterator must terminate, otherwise
+    /// this will copy all the [Bell]s into memory and never terminate.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, Bell};
+    ///
+    /// let bell_vec = vec![Bell::from('1'), Bell::from('2'), Bell::from('4'), Bell::from('3')];
+    ///
+    /// assert_eq!(Change::from_iterator(bell_vec.iter().copied()), Change::from("1243"));
+    /// ```
     pub fn from_iterator(iter: impl Iterator<Item = Bell>) -> Change {
         let mut c = Change::empty();
 
