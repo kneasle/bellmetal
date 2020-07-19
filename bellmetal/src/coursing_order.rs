@@ -58,7 +58,7 @@ impl CoursingOrder {
         co
     }
 
-    pub fn from_iterator<T: CoursingOrderIterator>(iterator: &mut T) -> CoursingOrder {
+    pub fn from_iterator(iterator: &mut impl CoursingOrderIterator) -> CoursingOrder {
         let mut co = CoursingOrder::empty();
 
         co.overwrite_from_iterator(iterator);
