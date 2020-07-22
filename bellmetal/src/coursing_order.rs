@@ -1039,10 +1039,13 @@ mod tests {
         for (order, canon) in &[
             ("087953246", "CO: <87953246> runs: 65432s(H) 0987s(H)"),
             ("097246538", "CO: <97246538> runs: 23456s(B) 7890s(B)"),
-            ("TE976824530", "CO: <E976824530> runs: 2345s(H) 9876s(H) 90ETs(B)"),
+            (
+                "TE976824530",
+                "CO: <E976824530> runs: 2345s(H) 9876s(H) 90ETs(B)",
+            ),
             ("029753468", "CO: <29753468> runs: 09876543s(B)"),
             ("8753462", "CO: <753462> runs: 76543s(B)"),
-            ("8645327", "CO: <645327> no runs. 87s")
+            ("8645327", "CO: <645327> no runs. 87s"),
         ] {
             assert_eq!(CoursingOrder::from(*order).canonical_string(), *canon);
         }
