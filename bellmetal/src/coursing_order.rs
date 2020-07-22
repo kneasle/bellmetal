@@ -520,7 +520,10 @@ impl fmt::Debug for CoursingOrder {
     }
 }
 
-pub fn merge_iterators_to_lead_head<T: CoursingOrderIterator, S: CoursingOrderIterator>(
+/// Combine two [CoursingOrderIterator]s together (one generating the [Place]s and the other
+/// generating the [Bell]s) into one lead head, filling all the other [Place]s with the bells from
+/// rounds.  Used internally to generate the lead heads from [CoursingOrder]s.
+fn merge_iterators_to_lead_head<T: CoursingOrderIterator, S: CoursingOrderIterator>(
     bell_iter: &mut T,
     place_iter: &mut S,
     stage: Stage,
@@ -534,6 +537,16 @@ pub fn merge_iterators_to_lead_head<T: CoursingOrderIterator, S: CoursingOrderIt
     Change::new(vec)
 }
 
+/// Returns a [Change] the first lead head of plain bob on a given [Stage].
+///
+/// # Example
+/// ```
+/// use bellmetal::{first_plain_bob_lead_head, Change, Stage};
+///
+/// assert_eq!(first_plain_bob_lead_head(Stage::DOUBLES), Change::from("13524"));
+/// assert_eq!(first_plain_bob_lead_head(Stage::MINOR), Change::from("135264"));
+/// assert_eq!(first_plain_bob_lead_head(Stage::ROYAL), Change::from("1352749608"));
+/// ```
 pub fn first_plain_bob_lead_head(stage: Stage) -> Change {
     let mut bell_iterator = PlainCoursingOrderIterator::new(stage);
     let mut place_iterator = PlainCoursingOrderIterator::new(stage);
@@ -544,6 +557,19 @@ pub fn first_plain_bob_lead_head(stage: Stage) -> Change {
     merge_iterators_to_lead_head(&mut bell_iterator, &mut place_iterator, stage)
 }
 
+/// Returns an arbitrary Plain Bob lead head, given its [Stage] and how many leads of Plain Bob it
+/// corresponds to.
+///
+/// # Example
+/// ```
+/// use bellmetal::{plain_bob_lead_head, Change, Stage};
+///
+/// // f-group Minor method
+/// assert_eq!(plain_bob_lead_head(Stage::MINOR, -1), Change::from("142635"));
+///
+/// // c-group Major method
+/// assert_eq!(plain_bob_lead_head(Stage::MAJOR, 3), Change::from("17856342"));
+/// ```
 pub fn plain_bob_lead_head(stage: Stage, power: isize) -> Change {
     first_plain_bob_lead_head(stage).pow(power)
 }
