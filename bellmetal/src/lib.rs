@@ -20,7 +20,7 @@ pub use change::{Change, ChangeAccumulator, ChangeCollectIter};
 pub use consts::{is_bell_name, name_to_number, BELL_NAMES, MAX_STAGE};
 pub use coursing_order::{
     first_plain_bob_lead_head, plain_bob_lead_head, BasicCoursingOrderIterator, CoursingOrder,
-    CoursingOrderIterator, LeadheadCoursingOrderIterator, PlainCoursingOrderIterator,
+    CoursingOrderIterator, LeadheadCoursingOrderIterator, PlainCoursingOrderIterator, RunSection,
 };
 pub use method::{Call, Method, HALF_LEAD_LOCATION, LEAD_END_LOCATION};
 pub use method_library::{deserialise_method, serialise_method, MethodLibrary};

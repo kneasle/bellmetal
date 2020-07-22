@@ -1,5 +1,10 @@
 use crate::{Bell, Change, Place, Stage, Stroke, Transposition};
 
+// Imports used in the documentation - rustc won't see these used, so it's OK to suppress the
+// warnings
+#[allow(unused_imports)]
+use crate::Method;
+
 use std::cmp;
 use std::cmp::Ordering;
 use std::fmt;
@@ -10,14 +15,14 @@ use std::ops::Index;
 /// For example, the coursing order `975346280` has two run segments (the `75346` generating
 /// backstroke 76543s, and the wrapped `80 97` generating backstroke 7890s).  Note that the 7th is
 /// contained in both run segements.
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RunSection {
-    start: isize,
-    centre: isize,
-    end: isize,
-    bell_start: Bell,
-    bell_end: Bell,
-    stroke: Stroke,
+    pub start: isize,
+    pub centre: isize,
+    pub end: isize,
+    pub bell_start: Bell,
+    pub bell_end: Bell,
+    pub stroke: Stroke,
 }
 
 impl Ord for RunSection {
@@ -32,25 +37,57 @@ impl PartialOrd for RunSection {
     }
 }
 
+/// A struct to store the representation of a coursing order.  Since coursing orders repeat
+/// forever, this implementation stores the repeating subsequence of this infinite sequence which
+/// starts with the heaviest bell in the order.
+/// This implementation also does not assume Plain Bob lead heads, although many of the methods
+/// (such as [from_leadhead](CoursingOrder::from_leadhead),
+/// [to_coursehead](CoursingOrder::to_coursehead)) do assume this for simplicity.
 #[derive(PartialEq, Eq, Hash)]
 pub struct CoursingOrder {
     order: Vec<Bell>, // order will always start with the heaviest bell in the coursing order
 }
 
 impl CoursingOrder {
+    /// Creates an empty `CoursingOrder`, i.e. one that contains no bells.  Like
+    /// [`Vec::with_capacity(0)`](Vec::with_capacity), this will not allocate memory.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::CoursingOrder;
+    ///
+    /// let empty_coursing_order = CoursingOrder::empty();
+    ///
+    /// assert_eq!(empty_coursing_order.to_string(), "");
+    /// ```
     pub fn empty() -> CoursingOrder {
         CoursingOrder {
             order: Vec::with_capacity(0),
         }
     }
 
-    pub fn from_slice(slice: &[Bell]) -> CoursingOrder {
+    /// Creates a coursing order from a [slice](std::slice) of [Bell]s.  This slice must start with
+    /// the heaviest bell in the order.
+    fn from_slice(slice: &[Bell]) -> CoursingOrder {
         CoursingOrder {
             order: slice.iter().copied().collect(),
         }
     }
 
-    pub fn from_leadhead(lh: &Change) -> CoursingOrder {
+    /// Creates a coursing order from a [Transposition] representing a lead head.  This assumes
+    /// that the method who's coursing order this is has Plain Bob lead heads, but nearly all
+    /// methods do.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, CoursingOrder, Stage};
+    ///
+    /// assert_eq!(
+    ///     CoursingOrder::from_leadhead(&Change::rounds(Stage::MINOR)).to_string(),
+    ///     "65324"
+    /// );
+    /// ```
+    pub fn from_leadhead(lh: &impl Transposition) -> CoursingOrder {
         let mut co = CoursingOrder::empty();
 
         co.overwrite_from_leadhead(lh);
@@ -58,6 +95,24 @@ impl CoursingOrder {
         co
     }
 
+    /// Converts a [CoursingOrderIterator] into a `CoursingOrder`, regardless of how much of the
+    /// iterator has already been consumed.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{PlainCoursingOrderIterator, CoursingOrderIterator, CoursingOrder, Stage};
+    ///
+    /// let mut plain_course_iterator = PlainCoursingOrderIterator::new(Stage::MAJOR);
+    ///
+    /// // Consume some of the iterator
+    /// for i in 0..10 {
+    ///     plain_course_iterator.next();
+    /// }
+    ///
+    /// let coursing_order = CoursingOrder::from_iterator(&mut plain_course_iterator);
+    ///
+    /// assert_eq!(coursing_order.to_string(), "8753246");
+    /// ```
     pub fn from_iterator(iterator: &mut impl CoursingOrderIterator) -> CoursingOrder {
         let mut co = CoursingOrder::empty();
 
@@ -66,6 +121,24 @@ impl CoursingOrder {
         co
     }
 
+    /// Overwrites an existing `CoursingOrder` from a string slice representing a coursing order.
+    /// The length of the existing `CoursingOrder` does not necessarily need to match the length of
+    /// the `CoursingOrder` after overwriting.  In order to produce a valid `CoursingOrder`, the
+    /// heaviest bell in the string must appear first.
+    ///
+    /// # Panics
+    /// Panics if the string contains characters that aren't valid bell names.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{CoursingOrder};
+    ///
+    /// let mut coursing_order = CoursingOrder::empty();
+    ///
+    /// coursing_order.overwrite_from_string("8764235");
+    ///
+    /// assert_eq!(coursing_order.to_string(), "8764235");
+    /// ```
     pub fn overwrite_from_string(&mut self, string: &str) {
         self.order.clear();
         self.order.reserve(string.len());
@@ -75,6 +148,22 @@ impl CoursingOrder {
         }
     }
 
+    /// Overwrites an existing `CoursingOrder` with the contents of a [CoursingOrderIterator].
+    /// This will automatically ensure that the heaviest bell is at the front of the coursing
+    /// order.  This is used (along with [CoursingOrder::empty]) in [CoursingOrder::from_iterator]
+    /// to populate a blank `CoursingOrder` with the contents of an iterator.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, CoursingOrder, Stage};
+    ///
+    /// let mut plain_course = CoursingOrder::from_leadhead(&Change::rounds(Stage::MAJOR));
+    /// let mut mega_tittums = CoursingOrder::from("8765432");
+    ///
+    /// plain_course.overwrite_from_iterator(&mut mega_tittums.iter());
+    ///
+    /// assert_eq!(plain_course.to_string(), "8765432");
+    /// ```
     pub fn overwrite_from_iterator(&mut self, iterator: &mut impl CoursingOrderIterator) {
         let heaviest_bell = iterator.seek_heaviest_bell();
 
@@ -92,10 +181,25 @@ impl CoursingOrder {
         }
     }
 
-    pub fn overwrite_from_leadhead<T: Transposition>(&mut self, lh: &T) {
-        self.overwrite_from_iterator(&mut LeadheadCoursingOrderIterator::new(lh));
+    /// Overwrite a `CoursingOrder` so that it represents the course that contains by a given lead
+    /// head.  This can change the length of the `CoursingOrder`.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, CoursingOrder};
+    ///
+    /// let mut coursing_order = CoursingOrder::empty();
+    ///
+    /// coursing_order.overwrite_from_leadhead(&Change::from("134256"));
+    ///
+    /// assert_eq!(coursing_order.to_string(), "65432");
+    /// ```
+    pub fn overwrite_from_leadhead(&mut self, lead_head: &impl Transposition) {
+        self.overwrite_from_iterator(&mut LeadheadCoursingOrderIterator::new(lead_head));
     }
 
+    /// Tests a run segment that will represent an ascending run.  Used in
+    /// [CoursingOrder::get_run_sections].
     fn test_run_segment_up(&self, root: isize, side: isize, vec: &mut Vec<RunSection>) {
         let mut len = 0;
         let mut current_index = 0;
@@ -103,6 +207,7 @@ impl CoursingOrder {
 
         let a = self[root].as_isize();
 
+        // Zig zag out from the centre until a bell is found that doesn't follow the run.
         for (l, index) in ZigZagIterator::new(root, side).enumerate() {
             if self[index].as_isize() != a + l as isize {
                 len = l;
@@ -114,6 +219,8 @@ impl CoursingOrder {
             current_index = index;
         }
 
+        // If the run is longer than 4 bells, then collect all this information into a RunSection
+        // struct and add it to the vector
         if len >= 4 {
             vec.push(RunSection {
                 start: cmp::min(current_index, last_index),
@@ -130,6 +237,8 @@ impl CoursingOrder {
         }
     }
 
+    /// Tests a run segment that will represent a descending run.  Used in
+    /// [CoursingOrder::get_run_sections].
     fn test_run_segment_down(&self, root: isize, side: isize, vec: &mut Vec<RunSection>) {
         let mut len = 0;
         let mut current_index = 0;
@@ -137,6 +246,7 @@ impl CoursingOrder {
 
         let a = self[root].as_isize();
 
+        // Zig zag out from the centre until a bell is found that doesn't follow the run.
         for (l, index) in ZigZagIterator::new(root, side).enumerate() {
             if self[index].as_isize() != a - l as isize {
                 len = l;
@@ -148,6 +258,8 @@ impl CoursingOrder {
             current_index = index;
         }
 
+        // If the run is longer than 4 bells, then collect all this information into a RunSection
+        // struct and add it to the vector
         if len >= 4 {
             vec.push(RunSection {
                 start: cmp::min(current_index, last_index),
@@ -164,8 +276,53 @@ impl CoursingOrder {
         }
     }
 
-    fn get_run_sections(&self) -> Vec<RunSection> {
+    /// Generate all the [RunSection]s contained in this coursing order that would generate runs of
+    /// 4 bells or longer in Plain Bob (and all other methods which follow Plain Bob's music
+    /// style).  See [RunSection] for more details.  For example, the coursing order `097534628`
+    /// contains two run sections: the `75346` part which generates `76543`s at backstroke and the
+    /// wrapped `8 097` part that generates `7890`s at handstroke too.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Bell, CoursingOrder, RunSection, Stroke};
+    ///
+    /// let coursing_order = CoursingOrder::from("097534628");
+    ///
+    /// assert_eq!(
+    ///     coursing_order.get_run_sections(),
+    ///     vec![
+    ///         // The 76543s section
+    ///         RunSection {
+    ///             // Location of the run segment within the coursing order
+    ///             start: 2,
+    ///             centre: 4,
+    ///             end: 6,
+    ///
+    ///             // Info about what music the run corresponds to
+    ///             bell_start: Bell::from('7'),
+    ///             bell_end: Bell::from('3'),
+    ///             stroke: Stroke::Back
+    ///         },
+    ///         // The 7890s section
+    ///         RunSection {
+    ///             // Location of the run segment within the coursing order
+    ///             // (note how it starts at index -1 showing how it wraps over the tenor)
+    ///             start: -1,
+    ///             centre: 0,
+    ///             end: 2,
+    ///
+    ///             // Info about what music the run corresponds to
+    ///             bell_start: Bell::from('7'),
+    ///             bell_end: Bell::from('0'),
+    ///             stroke: Stroke::Back
+    ///         }
+    ///     ]
+    /// );
+    /// ```
+    pub fn get_run_sections(&self) -> Vec<RunSection> {
         let mut run_sections: Vec<RunSection> = Vec::with_capacity(10);
+
+        // run_sections[0].
 
         for i in 0..self.order.len() as isize {
             let a = self[i - 1].as_isize();
@@ -186,6 +343,18 @@ impl CoursingOrder {
         run_sections
     }
 
+    /// Writes all the [Bell]s in this [CoursingOrder] into a mutable [String], with no formatting.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, CoursingOrder};
+    ///
+    /// let mut s = String::with_capacity(10);
+    ///
+    /// CoursingOrder::from("8753462").into_string(&mut s);
+    ///
+    /// assert_eq!(s, "8753462");
+    /// ```
     pub fn into_string(&self, string: &mut String) {
         string.reserve(self.order.len());
 
@@ -194,6 +363,17 @@ impl CoursingOrder {
         }
     }
 
+    /// Writes all the [Bell]s in this [CoursingOrder] to a [String], with no formatting.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, CoursingOrder};
+    ///
+    /// assert_eq!(
+    ///     CoursingOrder::from("8753462").to_string(),
+    ///     "8753462"
+    /// );
+    /// ```
     pub fn to_string(&self) -> String {
         let mut s = String::with_capacity(0);
 
@@ -202,22 +382,85 @@ impl CoursingOrder {
         s
     }
 
+    /// Returns a [CoursingOrderIterator] that will iterate the bells in this `CoursingOrder`.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Bell, Change, CoursingOrder, CoursingOrderIterator, Stage};
+    ///
+    /// let coursing_order = CoursingOrder::from_leadhead(&Change::rounds(Stage::MAJOR));
+    ///
+    /// let mut coursing_order_iter = coursing_order.iter();
+    ///
+    /// assert_eq!(coursing_order_iter.next(), Bell::from('8'));
+    /// assert_eq!(coursing_order_iter.next(), Bell::from('7'));
+    /// assert_eq!(coursing_order_iter.next(), Bell::from('5'));
+    /// assert_eq!(coursing_order_iter.next(), Bell::from('3'));
+    /// assert_eq!(coursing_order_iter.next(), Bell::from('2'));
+    /// // ....
+    ///
+    /// assert_eq!(coursing_order_iter.length(), 7);
+    /// ```
+    pub fn iter(&self) -> BasicCoursingOrderIterator {
+        BasicCoursingOrderIterator::new(self)
+    }
+
+    /// Returns a [Change] representing the course head of this course, assuming Plain Bob lead end
+    /// methods.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, CoursingOrder};
+    ///
+    /// let coursing_order = CoursingOrder::from("097356428");
+    ///
+    /// assert_eq!(coursing_order.to_coursehead(), Change::from("1654327890"));
+    /// ```
     pub fn to_coursehead(&self) -> Change {
         BasicCoursingOrderIterator::new(self).to_coursehead()
     }
 
+    /// Returns a [String] with a summary of this `CoursingOrder`, containing:
+    /// - the [RunSection]s contained in this course and what stroke those runs are on.
+    /// - 87s or 09s or TEs at backstroke.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{CoursingOrder};
+    ///
+    /// assert_eq!(
+    ///     CoursingOrder::from("097356428").canonical_string(),
+    ///     "CO: <97356428> runs: 23456s(H) 7890s(B)"
+    /// );
+    ///
+    /// assert_eq!(
+    ///     CoursingOrder::from("8542367").canonical_string(),
+    ///     "CO: <542367> no runs. 87s"
+    /// );
+    /// ```
     pub fn canonical_string(&self) -> String {
         let mut string = String::with_capacity(100);
 
+        // Write out the coursing order as a string of bells
         string.push_str("CO: <");
 
         for b in self.order.iter().skip(1) {
             string.push(b.as_char());
         }
 
-        string.push_str(">");
+        string.push_str("> ");
 
-        for r in self.get_run_sections() {
+        let run_sections = self.get_run_sections();
+
+        // Add "no runs." or "runs:" depending on if this will be followed by some run segments
+        if run_sections.len() == 0 {
+            string.push_str("no runs.");
+        } else {
+            string.push_str("runs:");
+        }
+
+        // Add the run sections to the string
+        for r in run_sections {
             let a = r.bell_start.as_usize();
             let b = r.bell_end.as_usize();
 
@@ -233,9 +476,23 @@ impl CoursingOrder {
                 }
             }
 
-            if r.stroke == Stroke::Hand {
-                string.push('h');
-            }
+            string.push('s');
+
+            string.push_str(if r.stroke == Stroke::Hand {
+                "(H)"
+            } else {
+                "(B)"
+            });
+        }
+
+        // Detect if the tenors are hunting the 'wrong' way round, and will generate e.g. 87s
+        let tenor_number = self[0].as_usize();
+
+        if self[self.order.len() as isize - 1].as_usize() == tenor_number - 1 {
+            string.push(' ');
+            string.push(Bell::from(tenor_number).as_char());
+            string.push(Bell::from(tenor_number - 1).as_char());
+            string.push('s');
         }
 
         string
@@ -664,11 +921,12 @@ mod tests {
     #[test]
     fn canonical_strings() {
         for (order, canon) in &[
-            ("087953246", "CO: <87953246> 65432h 0987h"),
-            ("097246538", "CO: <97246538> 23456 7890"),
-            ("TE976824530", "CO: <E976824530> 2345h 9876h 90ET"),
-            ("029753468", "CO: <29753468> 09876543"),
-            ("8753462", "CO: <753462> 76543"),
+            ("087953246", "CO: <87953246> runs: 65432s(H) 0987s(H)"),
+            ("097246538", "CO: <97246538> runs: 23456s(B) 7890s(B)"),
+            ("TE976824530", "CO: <E976824530> runs: 2345s(H) 9876s(H) 90ETs(B)"),
+            ("029753468", "CO: <29753468> runs: 09876543s(B)"),
+            ("8753462", "CO: <753462> runs: 76543s(B)"),
+            ("8645327", "CO: <645327> no runs. 87s")
         ] {
             assert_eq!(CoursingOrder::from(*order).canonical_string(), *canon);
         }
