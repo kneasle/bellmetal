@@ -714,23 +714,19 @@ pub fn canon_full_cyclic_palendromic(slice: &[Bell], change: &mut Change) {
         return;
     }
 
-    change.in_place_full_cyclic_rotate(
-        stage - 1 - change.slice()[stage - 1].as_usize(),
-    );
+    change.in_place_full_cyclic_rotate(stage - 1 - change.slice()[stage - 1].as_usize());
 
     if change.bell_at(Place::from(0)).as_usize() > change.bell_at(Place::from(1)).as_usize() {
         change.in_place_inverse();
     }
 
-    change.in_place_full_cyclic_rotate(
-        stage - 1 - change.slice()[stage - 1].as_usize(),
-    );
+    change.in_place_full_cyclic_rotate(stage - 1 - change.slice()[stage - 1].as_usize());
 }
 
 #[cfg(test)]
 mod tests {
     use crate::proving::*;
-    use crate::{Touch, DefaultScoring};
+    use crate::{DefaultScoring, Touch};
 
     fn full_proof_test_touches() -> Vec<(Touch, Vec<Vec<usize>>)> {
         vec![
