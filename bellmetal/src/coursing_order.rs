@@ -1,10 +1,5 @@
 use crate::{Bell, Change, Place, Stage, Stroke, Transposition};
 
-// Imports used in the documentation - rustc won't see these used, so it's OK to suppress the
-// warnings
-#[allow(unused_imports)]
-use crate::Method;
-
 use std::cmp;
 use std::cmp::Ordering;
 use std::fmt;
