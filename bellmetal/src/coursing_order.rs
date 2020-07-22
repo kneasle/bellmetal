@@ -605,50 +605,131 @@ impl Iterator for ZigZagIterator {
     }
 }
 
+/// A trait similar to [Iterator], with a few differences specific to representing coursing orders:
+/// - The [next](CoursingOrderIterator::next) method returns a [Bell] rather than a `Option<Bell>`
+/// since coursing orders must repeat forever.
+/// - The [length](CoursingOrderIterator::length) method should be a cheap way to determine the
+/// length of one repeating section of the coursing order.
 pub trait CoursingOrderIterator {
+    /// Returns the next [Bell] in the coursing order.
     fn next(&mut self) -> Bell;
+
+    /// Returns the length of one repeating section of the coursing order.
     fn length(&self) -> usize;
 
+    /// Collects this `CoursingOrderIterator` into a [CoursingOrder].
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{CoursingOrderIterator, CoursingOrder, PlainCoursingOrderIterator, Stage};
+    ///
+    /// assert_eq!(
+    ///     PlainCoursingOrderIterator::new(Stage::MAJOR).collect(),
+    ///     CoursingOrder::from("8753246")
+    /// );
+    /// ```
     fn collect(&mut self) -> CoursingOrder
     where
-        Self: std::marker::Sized,
+        Self: Sized,
     {
         CoursingOrder::from_iterator(self)
     }
 
+    /// Move through the iterator until it consumes a given [Bell].  This implementation will hang
+    /// forever if the [Bell] is not in the [CoursingOrderIterator] - wheras
+    /// [seek_safe](CoursingOrderIterator::seek_safe) will not.  After
+    /// [seek](CoursingOrderIterator::seek) is run, the next [Bell] in the [CoursingOrderIterator]
+    /// will be the one **after** the [Bell] seeked.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{
+    ///     Bell, CoursingOrderIterator, CoursingOrder, Stage
+    /// };
+    ///
+    /// let coursing_order = CoursingOrder::from("8724653");
+    /// let mut iter = coursing_order.iter();
+    ///
+    /// iter.seek(Bell::from('4'));
+    ///
+    /// assert_eq!(iter.next(), Bell::from('6'));
+    /// assert_eq!(iter.next(), Bell::from('5'));
+    /// assert_eq!(iter.next(), Bell::from('3'));
+    /// ```
     fn seek(&mut self, bell: Bell) {
         // Seek to the required bell with a horrendous loop with side effects in the guard
         while self.next() != bell {}
     }
 
-    // Same as seek, but is can't get stuck in an infinite loop at the cost of speed
+    /// Move through the iterator until it consumes a given [Bell], panicking if this would cause
+    /// an infinte loop.  After [seek](CoursingOrderIterator::seek) is run, the next [Bell] in the
+    /// [CoursingOrderIterator] will be the one **after** the [Bell] seeked.
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{
+    ///     Bell, CoursingOrderIterator, CoursingOrder, Stage
+    /// };
+    ///
+    /// let coursing_order = CoursingOrder::from("8724653");
+    /// let mut iter = coursing_order.iter();
+    ///
+    /// iter.seek_safe(Bell::from('4'));
+    ///
+    /// assert_eq!(iter.next(), Bell::from('6'));
+    /// assert_eq!(iter.next(), Bell::from('5'));
+    /// assert_eq!(iter.next(), Bell::from('3'));
+    /// ```
     fn seek_safe(&mut self, bell: Bell) {
+        // Keep track of the first bell seen, so that if we see it again we can panic
         let start_bell = self.next();
         let mut next_bell = start_bell;
 
         while next_bell != bell {
             next_bell = self.next();
 
+            // Panic if we see the first again
             if next_bell == start_bell {
                 panic!("Bell not found in coursing order");
             }
         }
     }
 
+    /// Seeks the heaviest (highest numbered) [Bell] in the `CoursingOrderIterator` and returns
+    /// that [Bell], leaving this `CoursingOrderIterator` such that the next [Bell] will be the
+    /// [Bell] after the heaviest [Bell].
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{
+    ///     Bell, CoursingOrderIterator, CoursingOrder, Stage
+    /// };
+    ///
+    /// let coursing_order = CoursingOrder::from("8724653");
+    /// let mut iter = coursing_order.iter();
+    ///
+    /// // Iterate a few times, and assert that the next bell is the 2
+    /// iter.next();
+    /// iter.next();
+    ///
+    /// assert_eq!(iter.next(), Bell::from('2'));
+    ///
+    /// // Seek to the heaviest bell and assert that it is in fact the 8
+    /// assert_eq!(iter.seek_heaviest_bell(), Bell::from('8'));
+    ///
+    /// // We've moved through the iterator, and now the next bell is the 7
+    /// assert_eq!(iter.next(), Bell::from('7'));
+    /// ```
     fn seek_heaviest_bell(&mut self) -> Bell {
         let heaviest_bell = {
-            let mut h = 0;
+            let mut heaviest_bell = 0;
 
             // Find what the heaviest bell is
             for _ in 0..self.length() {
-                let b = self.next().as_usize();
-
-                if b > h {
-                    h = b;
-                }
+                heaviest_bell = std::cmp::max(self.next().as_usize(), heaviest_bell);
             }
 
-            Bell::from(h)
+            Bell::from(heaviest_bell)
         };
 
         self.seek(heaviest_bell);
@@ -656,6 +737,20 @@ pub trait CoursingOrderIterator {
         heaviest_bell
     }
 
+    /// Converts this `CoursingOrderIterator` into a [Change] representing the course head of this
+    /// course, assuming Plain Bob lead ends.  The 'course head' is in this case defined to be the
+    /// lead head where the heaviest working [Bell] is at the back of the [Change].  Used by
+    /// [CoursingOrder::to_coursehead].
+    ///
+    /// # Example
+    /// ```
+    /// use bellmetal::{Change, CoursingOrder, CoursingOrderIterator, Stage};
+    ///
+    /// let coursing_order = CoursingOrder::from("8357642");
+    /// let mut iter = coursing_order.iter();
+    ///
+    /// assert_eq!(iter.to_coursehead(), Change::from("16745238"));
+    /// ```
     fn to_coursehead(&mut self) -> Change
     where
         Self: Sized,
