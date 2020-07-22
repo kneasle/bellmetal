@@ -12,11 +12,20 @@ use std::ops::Index;
 /// contained in both run segements.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RunSection {
+    /// The index of the left-most [Bell] that is part of this `RunSection`
     pub start: isize,
+    /// The index of the [Bell] that is at the centre of the run (and will appear at the back of
+    /// the runs).
     pub centre: isize,
+    /// The index of the right-most [Bell] that is part of this `RunSection`
     pub end: isize,
+    /// The [Bell] that starts the run.  This will be either at [start](RunSection::start) or
+    /// [end](RunSection::end) of the run segment.
     pub bell_start: Bell,
+    /// The [Bell] that ends the run.  This will be at index [RunSection::centre] of the
+    /// [CoursingOrder] that this is a section of.
     pub bell_end: Bell,
+    /// The [Stroke] of the run
     pub stroke: Stroke,
 }
 
