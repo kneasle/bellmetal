@@ -24,7 +24,7 @@ pub trait ProvingContext {
     fn prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        canon: impl FnMut(&[Bell], &mut Change) -> (),
+        canon: impl FnMut(&[Bell], &mut Change),
     ) -> bool;
 
     #[cfg_attr(tarpaulin, skip)]
@@ -49,7 +49,7 @@ pub trait FullProvingContext: ProvingContext {
     fn full_prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        canon: impl FnMut(&[Bell], &mut Change) -> (),
+        canon: impl FnMut(&[Bell], &mut Change)
     ) -> ProofGroups;
 
     #[cfg_attr(tarpaulin, skip)]
@@ -60,7 +60,7 @@ pub trait FullProvingContext: ProvingContext {
     fn full_prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        canon: impl FnMut(&[Bell], &mut Change) -> (),
+        canon: impl FnMut(&[Bell], &mut Change)
     ) -> ProofGroups {
         self.full_prove_canonical(&touch.iter(), canon)
     }
@@ -114,7 +114,7 @@ impl FullProvingContext for NaiveProver {
     fn full_prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change)
     ) -> ProofGroups {
         let mut temporary_change = Change::rounds(iter.stage());
         let mut temp_slice = vec![Bell::from(0); iter.stage().as_usize()];
@@ -128,7 +128,7 @@ impl FullProvingContext for NaiveProver {
             canon(&temp_slice, &mut temporary_change);
 
             indexed_changes.push(IndexedChange {
-                index: index,
+                index,
                 change: temporary_change.clone(),
             });
 
@@ -167,7 +167,7 @@ impl ProvingContext for NaiveProver {
     fn prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change)
     ) -> bool {
         let mut temporary_change = Change::rounds(iter.stage());
 
@@ -384,7 +384,7 @@ impl HashProver {
         assert!(s <= 8);
 
         HashProver {
-            stage: stage,
+            stage,
             bit_map: BitMap::with_capacity(s.pow(s as u32)),
         }
     }
@@ -402,7 +402,7 @@ pub struct CompactHashProver {
 impl CompactHashProver {
     pub fn from_stage(stage: Stage) -> CompactHashProver {
         CompactHashProver {
-            stage: stage,
+            stage,
             falseness_map: vec![-1 as IndexType; stage.as_usize().factorial()],
             temporary_change: Change::rounds(stage),
             temporary_slice: vec![Bell::from(0); stage.as_usize()],
@@ -414,7 +414,7 @@ impl FullProvingContext for CompactHashProver {
     fn full_prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change)
     ) -> ProofGroups {
         let truth = full_proof_from_iterator(
             CompactHashTouchIterator {
@@ -437,7 +437,7 @@ impl FullProvingContext for CompactHashProver {
     fn full_prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change) 
     ) -> ProofGroups {
         let truth = full_proof_from_iterator(
             CompactHashIterator {
@@ -465,7 +465,7 @@ impl ProvingContext for CompactHashProver {
     fn prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change)
     ) -> bool {
         let truth = CompactHashTouchIterator {
             hash_prover: self,
@@ -489,7 +489,7 @@ impl ProvingContext for CompactHashProver {
     fn prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change)
     ) -> bool {
         let truth = CompactHashIterator {
             hash_prover: self,
@@ -512,14 +512,14 @@ impl ProvingContext for CompactHashProver {
     }
 }
 
-pub struct CompactHashIterator<'a, I: Iterator<Item = Bell>, T: FnMut(&[Bell], &mut Change) -> ()> {
+pub struct CompactHashIterator<'a, I: Iterator<Item = Bell>, T: FnMut(&[Bell], &mut Change)> {
     hash_prover: &'a mut CompactHashProver,
     bell_iter: &'a mut I,
     canon_func: &'a mut T,
     index: usize,
 }
 
-impl<'a, I: Iterator<Item = Bell>, T: FnMut(&[Bell], &mut Change) -> ()> Iterator
+impl<'a, I: Iterator<Item = Bell>, T: FnMut(&[Bell], &mut Change)> Iterator
     for CompactHashIterator<'_, I, T>
 {
     type Item = (IndexType, IndexType);
@@ -551,13 +551,13 @@ impl<'a, I: Iterator<Item = Bell>, T: FnMut(&[Bell], &mut Change) -> ()> Iterato
     }
 }
 
-pub struct CompactHashTouchIterator<'a, T: FnMut(&[Bell], &mut Change) -> ()> {
+pub struct CompactHashTouchIterator<'a, T: FnMut(&[Bell], &mut Change)> {
     hash_prover: &'a mut CompactHashProver,
     row_iterator: &'a mut RowIterator<'a>,
     canon_func: &'a mut T,
 }
 
-impl<T: FnMut(&[Bell], &mut Change) -> ()> Iterator for CompactHashTouchIterator<'_, T> {
+impl<T: FnMut(&[Bell], &mut Change)> Iterator for CompactHashTouchIterator<'_, T> {
     type Item = (IndexType, IndexType);
 
     fn next(&mut self) -> Option<Self::Item> {

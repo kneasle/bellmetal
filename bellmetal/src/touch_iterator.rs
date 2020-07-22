@@ -129,8 +129,8 @@ impl<'a, I: TouchIterator<'a>, J: TouchIterator<'a>> ChainedTouchIterator<'a, I,
     pub fn new(first: &'a I, second: &'a J) -> ChainedTouchIterator<'a, I, J> {
         ChainedTouchIterator {
             first_len: first.length(),
-            first: first,
-            second: second,
+            first,
+            second,
         }
     }
 }
@@ -191,7 +191,7 @@ pub struct MultiChainBellIterator<'a, T: TouchIterator<'a>> {
 impl<'a, T: TouchIterator<'a>> MultiChainBellIterator<'a, T> {
     pub fn new(iterators: &'a [T]) -> MultiChainBellIterator<'a, T> {
         MultiChainBellIterator {
-            iterators: iterators,
+            iterators,
             iter_index: 0,
             current_iterator: iterators[0].bell_iter(),
         }
@@ -230,7 +230,7 @@ pub struct MultiChainRuleoffIterator<'a, T: TouchIterator<'a>> {
 impl<'a, T: TouchIterator<'a>> MultiChainRuleoffIterator<'a, T> {
     pub fn new(iterators: &'a [T]) -> MultiChainRuleoffIterator<'a, T> {
         MultiChainRuleoffIterator {
-            iterators: iterators,
+            iterators,
             iter_index: 0,
             current_iterator: iterators[0].ruleoff_iter(),
             length_used: 0,
@@ -276,7 +276,7 @@ pub struct MultiChainCallIterator<'a, T: TouchIterator<'a>> {
 impl<'a, T: TouchIterator<'a>> MultiChainCallIterator<'a, T> {
     pub fn new(iterators: &'a [T]) -> MultiChainCallIterator<'a, T> {
         MultiChainCallIterator {
-            iterators: iterators,
+            iterators,
             iter_index: 0,
             current_iterator: iterators[0].call_iter(),
             length_used: 0,
@@ -322,7 +322,7 @@ pub struct MultiChainMethodNameIterator<'a, T: TouchIterator<'a>> {
 impl<'a, T: TouchIterator<'a>> MultiChainMethodNameIterator<'a, T> {
     pub fn new(iterators: &'a [T]) -> MultiChainMethodNameIterator<'a, T> {
         MultiChainMethodNameIterator {
-            iterators: iterators,
+            iterators,
             iter_index: 0,
             current_iterator: iterators[0].method_name_iter(),
             length_used: 0,
@@ -372,7 +372,7 @@ impl<'a, T: TouchIterator<'a>> MultiChainTouchIterator<'a, T> {
         }
 
         MultiChainTouchIterator {
-            iterators: iterators,
+            iterators,
         }
     }
 }
@@ -421,8 +421,8 @@ pub struct TransfiguredTouchIterator<'a, I: TouchIterator<'a>, T: Transposition>
 impl<'a, I: TouchIterator<'a>, T: Transposition> TransfiguredTouchIterator<'a, I, T> {
     fn new(iterator: I, transposition: &'a T) -> TransfiguredTouchIterator<'a, I, T> {
         TransfiguredTouchIterator {
-            iterator: iterator,
-            transposition: transposition,
+            iterator,
+            transposition,
         }
     }
 }

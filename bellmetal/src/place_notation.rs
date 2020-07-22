@@ -65,7 +65,7 @@ impl PlaceNotation {
         }
 
         PlaceNotation {
-            places: places,
+            places,
             stage: self.stage,
         }
     }
@@ -157,7 +157,7 @@ impl PlaceNotation {
 
         PlaceNotation {
             places: Mask::empty(),
-            stage: stage,
+            stage,
         }
     }
 
@@ -200,8 +200,8 @@ impl PlaceNotation {
         }
 
         PlaceNotation {
-            places: places,
-            stage: stage,
+            places,
+            stage,
         }
     }
 
@@ -432,7 +432,7 @@ pub struct PlaceNotationIterator<'a> {
 impl PlaceNotationIterator<'_> {
     fn new(place_notation: &PlaceNotation) -> PlaceNotationIterator {
         PlaceNotationIterator {
-            place_notation: place_notation,
+            place_notation,
             index: 0,
             should_hunt_up: false,
         }
@@ -457,12 +457,10 @@ impl<'a> Iterator for PlaceNotationIterator<'a> {
         } else {
             if self.should_hunt_up {
                 output = self.index - 1;
+            } else if self.place_notation.places.get((self.index + 1) as Number) {
+                output = self.index;
             } else {
-                if self.place_notation.places.get((self.index + 1) as Number) {
-                    output = self.index;
-                } else {
-                    output = self.index + 1;
-                }
+                output = self.index + 1;
             }
 
             self.should_hunt_up = !self.should_hunt_up;
@@ -470,7 +468,7 @@ impl<'a> Iterator for PlaceNotationIterator<'a> {
 
         self.index += 1;
 
-        return Some(Bell::from(output));
+        Some(Bell::from(output))
     }
 }
 

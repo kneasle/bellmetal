@@ -394,7 +394,7 @@ where
     T: Iterator<Item = Bell>,
 {
     pub fn new<'a>(lhs: &'a [Bell], rhs: T) -> MultiplicationIterator<'a, T> {
-        MultiplicationIterator { lhs: lhs, rhs: rhs }
+        MultiplicationIterator { lhs, rhs }
     }
 }
 

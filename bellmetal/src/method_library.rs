@@ -21,9 +21,9 @@ impl StoredMethod {
 impl StoredMethod {
     pub fn new(name: String, place_notation: Vec<PlaceNotation>, stage: Stage) -> StoredMethod {
         StoredMethod {
-            name: name,
-            place_notation: place_notation,
-            stage: stage,
+            name,
+            place_notation,
+            stage,
         }
     }
 }
@@ -86,7 +86,7 @@ impl MethodLibrary {
         }
 
         MethodLibrary {
-            stored_methods: stored_methods,
+            stored_methods,
         }
     }
 

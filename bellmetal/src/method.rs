@@ -68,10 +68,10 @@ impl Call {
 
         Call {
             transposition: PlaceNotation::overall_transposition(&place_notations),
-            place_notations: place_notations,
-            notation: notation,
+            place_notations,
+            notation,
             location: location.to_string(),
-            stage: stage,
+            stage,
         }
     }
 }
@@ -262,11 +262,11 @@ impl Method {
         assert!(place_notation.len() > 0);
 
         Method {
-            name: name,
+            name,
             stage: place_notation[0].stage,
             plain_lead: Touch::from(&place_notation[..]),
-            place_notation: place_notation,
-            location_map: location_map,
+            place_notation,
+            location_map,
         }
     }
 
@@ -369,7 +369,7 @@ impl Method {
 
         Method {
             name: name.to_string(),
-            stage: stage,
+            stage,
             plain_lead: Touch::from_changes(&changes, lead_head),
             place_notation: Vec::with_capacity(0),
             location_map: hash_map! { LEAD_END_LOCATION.to_string () => changes.len () },

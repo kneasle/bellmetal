@@ -591,8 +591,8 @@ struct ZigZagIterator {
 impl ZigZagIterator {
     pub fn new(current_value: isize, next_value: isize) -> ZigZagIterator {
         ZigZagIterator {
-            current_value: current_value,
-            next_value: next_value,
+            current_value,
+            next_value,
         }
     }
 }
@@ -783,7 +783,7 @@ pub struct BasicCoursingOrderIterator<'a> {
 impl BasicCoursingOrderIterator<'_> {
     pub fn new<'a>(coursing_order: &'a CoursingOrder) -> BasicCoursingOrderIterator<'a> {
         BasicCoursingOrderIterator {
-            coursing_order: coursing_order,
+            coursing_order,
             index: 0,
         }
     }
@@ -811,7 +811,7 @@ pub struct LeadheadCoursingOrderIterator<'a, T: Transposition> {
 impl<T: Transposition> LeadheadCoursingOrderIterator<'_, T> {
     pub fn new<'a>(leadhead: &'a T) -> LeadheadCoursingOrderIterator<'a, T> {
         LeadheadCoursingOrderIterator {
-            leadhead: leadhead,
+            leadhead,
             iterator: PlainCoursingOrderIterator::new(leadhead.stage()),
         }
     }
@@ -837,8 +837,8 @@ pub struct PlainCoursingOrderIterator {
 impl PlainCoursingOrderIterator {
     pub fn new(stage: Stage) -> PlainCoursingOrderIterator {
         PlainCoursingOrderIterator {
-            stage: stage,
-            current_bell: (stage.as_usize() + 1 & !1) - 2,
+            stage,
+            current_bell: ((stage.as_usize() + 1) & !1) - 2,
             is_going_down: true,
         }
     }

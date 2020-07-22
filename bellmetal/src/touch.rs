@@ -127,12 +127,10 @@ fn get_position(table: &HashMap<usize, usize>, index: usize) -> Position {
         } else {
             Position::Top
         }
+    } else if below == None || below != Some(g) {
+        Position::Bottom
     } else {
-        if below == None || below != Some(g) {
-            Position::Bottom
-        } else {
-            Position::Middle
-        }
+        Position::Middle
     }
 }
 
@@ -368,7 +366,7 @@ impl Touch {
 
     pub fn row_at(&self, index: usize) -> Row {
         Row {
-            index: index,
+            index,
             is_ruled_off: match self.ruleoffs.binary_search(&index) {
                 Ok(_) => true,
                 Err(_) => false,
@@ -416,7 +414,7 @@ impl Touch {
         (run_count_front, run_count_back)
     }
 
-    pub fn is_true_canonical(&self, canon: impl FnMut(&[Bell], &mut Change) -> ()) -> bool {
+    pub fn is_true_canonical(&self, canon: impl FnMut(&[Bell], &mut Change)) -> bool {
         NaiveProver {}.prove_touch_canonical(&self, canon)
     }
 
@@ -430,7 +428,7 @@ impl Touch {
 
     pub fn full_truth_canonical(
         &self,
-        canon: impl FnMut(&[Bell], &mut Change) -> (),
+        canon: impl FnMut(&[Bell], &mut Change)
     ) -> ProofGroups {
         NaiveProver {}.full_prove_touch_canonical(&self, canon)
     }
@@ -859,7 +857,7 @@ impl Touch {
 impl Touch {
     pub fn empty(stage: Stage) -> Touch {
         Touch {
-            stage: stage,
+            stage,
             length: 0usize,
 
             bells: Vec::with_capacity(0),
@@ -882,11 +880,11 @@ impl Touch {
             stage: leftover_change.stage(),
             length: changes.len(),
 
-            bells: bells,
+            bells,
             ruleoffs: vec![changes.len() - 1],
             calls: HashMap::with_capacity(0),
             method_names: HashMap::with_capacity(0),
-            leftover_change: leftover_change,
+            leftover_change,
         }
     }
 
@@ -898,7 +896,7 @@ impl Touch {
         method_name_capacity: usize,
     ) -> Touch {
         Touch {
-            stage: stage,
+            stage,
             length: 0usize,
 
             bells: Vec::with_capacity(change_capacity * stage.as_usize()),
@@ -972,7 +970,7 @@ pub struct RowIterator<'a> {
 impl RowIterator<'_> {
     fn new(touch: &Touch) -> RowIterator {
         RowIterator {
-            touch: touch,
+            touch,
             row_index: 0,
             ruleoff_index: 0,
         }
@@ -1049,7 +1047,7 @@ pub struct BasicTouchIterator<'a> {
 
 impl BasicTouchIterator<'_> {
     pub fn new<'a>(touch: &'a Touch) -> BasicTouchIterator<'a> {
-        BasicTouchIterator { touch: touch }
+        BasicTouchIterator { touch }
     }
 }
 

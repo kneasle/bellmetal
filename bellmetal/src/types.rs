@@ -75,8 +75,8 @@ pub trait MaskMethods {
     fn from_bitmask(value: u64) -> Mask;
 
     fn get(&self, value: Number) -> bool;
-    fn del(&mut self, value: Number) -> ();
-    fn add(&mut self, value: Number) -> ();
+    fn del(&mut self, value: Number);
+    fn add(&mut self, value: Number);
 }
 
 impl fmt::Debug for Mask {
@@ -110,11 +110,11 @@ impl MaskMethods for MaskStruct {
         self.mask & ((1 as MaskType) << value) != 0
     }
 
-    fn del(&mut self, value: Number) -> () {
+    fn del(&mut self, value: Number) {
         self.mask &= !(1 as MaskType) << value
     }
 
-    fn add(&mut self, value: Number) -> () {
+    fn add(&mut self, value: Number) {
         self.mask |= (1 as MaskType) << value
     }
 }

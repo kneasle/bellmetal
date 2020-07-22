@@ -836,7 +836,7 @@ impl ChangeAccumulator {
         ChangeAccumulator {
             change_1: Change::rounds(stage),
             change_2: Change::rounds(stage),
-            stage: stage,
+            stage,
             using_second_change: false,
         }
     }
@@ -1148,8 +1148,8 @@ impl<T: Iterator<Item = Bell>> ChangeCollectIter<T> {
     /// See the example for the [ChangeCollectIter] class.
     pub fn new(bell_iter: T, stage: Stage) -> ChangeCollectIter<T> {
         ChangeCollectIter {
-            bell_iter: bell_iter,
-            stage: stage,
+            bell_iter,
+            stage,
         }
     }
 }
