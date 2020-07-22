@@ -703,10 +703,34 @@ pub fn canon_full_cyclic(slice: &[Bell], change: &mut Change) {
     }
 }
 
+pub fn canon_full_cyclic_palendromic(slice: &[Bell], change: &mut Change) {
+    let stage = slice.len();
+
+    change.overwrite_from_slice(slice);
+
+    if stage == 1 {
+        change.set_bell(Place::from(0), Bell::from(0));
+
+        return;
+    }
+
+    change.in_place_full_cyclic_rotate(
+        stage - 1 - change.slice()[stage - 1].as_usize(),
+    );
+
+    if change.bell_at(Place::from(0)).as_usize() > change.bell_at(Place::from(1)).as_usize() {
+        change.in_place_inverse();
+    }
+
+    change.in_place_full_cyclic_rotate(
+        stage - 1 - change.slice()[stage - 1].as_usize(),
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use crate::proving::*;
-    use crate::Touch;
+    use crate::{Touch, DefaultScoring};
 
     fn full_proof_test_touches() -> Vec<(Touch, Vec<Vec<usize>>)> {
         vec![
@@ -801,6 +825,47 @@ mod tests {
             canon_full_cyclic(&Change::from(*orig).slice(), &mut change);
 
             assert_eq!(change, Change::from(*canon));
+        }
+    }
+
+    #[test]
+    fn canon_func_full_cyclic_palendromic() {
+        for (a, b, eq) in &[
+            ("1", "1", true),
+            ("12345", "34512", true),
+            ("12345", "12345", true),
+            ("654321", "654321", true),
+            ("612345", "654321", true),
+            ("165432", "123456", true),
+            ("41325678", "58674321", true),
+            ("1234567890", "6543210987", true),
+            ("12345", "21345", false),
+            ("1234567890", "5634210987", false),
+        ] {
+            let mut a_canon = Change::empty();
+            canon_full_cyclic_palendromic(&Change::from(*a).slice(), &mut a_canon);
+
+            let mut b_canon = Change::empty();
+            canon_full_cyclic_palendromic(&Change::from(*b).slice(), &mut b_canon);
+
+            if *eq && a_canon != b_canon {
+                panic!(
+                    "{} and {} got canonicalised to {} and {}, which are not equal.",
+                    Change::from(*a).pretty_string::<DefaultScoring>(),
+                    Change::from(*b).pretty_string::<DefaultScoring>(),
+                    a_canon.pretty_string::<DefaultScoring>(),
+                    b_canon.pretty_string::<DefaultScoring>(),
+                );
+            }
+
+            if !*eq && a_canon == b_canon {
+                panic!(
+                    "{} and {} both got canonicalised to {}, but they should be different.",
+                    Change::from(*a).pretty_string::<DefaultScoring>(),
+                    Change::from(*b).pretty_string::<DefaultScoring>(),
+                    a_canon.pretty_string::<DefaultScoring>(),
+                );
+            }
         }
     }
 
