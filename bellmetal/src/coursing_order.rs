@@ -457,7 +457,7 @@ impl CoursingOrder {
         let run_sections = self.get_run_sections();
 
         // Add "no runs." or "runs:" depending on if this will be followed by some run segments
-        if run_sections.len() == 0 {
+        if run_sections.is_empty() {
             string.push_str("no runs.");
         } else {
             string.push_str("runs:");
@@ -781,7 +781,7 @@ pub struct BasicCoursingOrderIterator<'a> {
 }
 
 impl BasicCoursingOrderIterator<'_> {
-    pub fn new<'a>(coursing_order: &'a CoursingOrder) -> BasicCoursingOrderIterator<'a> {
+    pub fn new(coursing_order: &CoursingOrder) -> BasicCoursingOrderIterator {
         BasicCoursingOrderIterator {
             coursing_order,
             index: 0,
@@ -809,7 +809,7 @@ pub struct LeadheadCoursingOrderIterator<'a, T: Transposition> {
 }
 
 impl<T: Transposition> LeadheadCoursingOrderIterator<'_, T> {
-    pub fn new<'a>(leadhead: &'a T) -> LeadheadCoursingOrderIterator<'a, T> {
+    pub fn new(leadhead: &T) -> LeadheadCoursingOrderIterator<'_, T> {
         LeadheadCoursingOrderIterator {
             leadhead,
             iterator: PlainCoursingOrderIterator::new(leadhead.stage()),
@@ -864,7 +864,7 @@ impl CoursingOrderIterator for PlainCoursingOrderIterator {
 
             if self.current_bell >= self.stage.as_usize() {
                 self.is_going_down = true;
-                self.current_bell = (self.stage.as_usize() + 1 & !1) - 2;
+                self.current_bell = ((self.stage.as_usize() + 1) & !1) - 2;
             }
         }
 

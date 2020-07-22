@@ -141,8 +141,8 @@ pub trait Transposition {
 
         let start = bells[0].as_usize();
 
-        for i in 0..stage {
-            if bells[i].as_usize() != (start + i) % stage {
+        for (i, bell) in bells.iter().enumerate() {
+            if bell.as_usize() != (start + i) % stage {
                 return false;
             }
         }
@@ -161,8 +161,8 @@ pub trait Transposition {
 
         let start = bells[0].as_usize() + stage;
 
-        for i in 0..stage {
-            if bells[i].as_usize() != (start - i) % stage {
+        for (i, bell) in bells.iter().enumerate() {
+            if bell.as_usize() != (start - i) % stage {
                 return false;
             }
         }
@@ -229,8 +229,8 @@ pub trait Transposition {
         let bells = self.slice();
         let stage = bells.len();
 
-        for i in 0..stage {
-            if bells[i].as_usize() != stage - 1 - i {
+        for (i, bell) in bells.iter().enumerate() {
+            if bell.as_usize() != stage - 1 - i {
                 return false;
             }
         }
@@ -239,11 +239,8 @@ pub trait Transposition {
     }
 
     fn is_rounds(&self) -> bool {
-        let bells = self.slice();
-        let stage = bells.len();
-
-        for i in 0..stage {
-            if bells[i].as_usize() != i {
+        for (i, bell) in self.slice().iter().enumerate() {
+            if bell.as_usize() != i {
                 return false;
             }
         }
@@ -341,10 +338,8 @@ pub trait Transposition {
 
         let colours = ["97", "91", "96"];
 
-        for i in 0..stage {
+        for (i, bell) in bells.iter().enumerate() {
             // Useful vars
-            let bell = bells[i];
-
             let char_colour = if bell.as_usize() == 0 {
                 1
             } else if bell.as_usize() == stage - 1 {
@@ -393,7 +388,7 @@ impl<T> MultiplicationIterator<'_, T>
 where
     T: Iterator<Item = Bell>,
 {
-    pub fn new<'a>(lhs: &'a [Bell], rhs: T) -> MultiplicationIterator<'a, T> {
+    pub fn new(lhs: &[Bell], rhs: T) -> MultiplicationIterator<T> {
         MultiplicationIterator { lhs, rhs }
     }
 }

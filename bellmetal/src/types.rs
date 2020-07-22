@@ -12,6 +12,7 @@ pub enum Parity {
 impl Mul for Parity {
     type Output = Self;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, other: Self) -> Self {
         match (self as usize) ^ (other as usize) {
             0 => Parity::Even,
@@ -216,7 +217,7 @@ impl Stage {
     pub const TWENTY_TWO: Stage = Stage(22);
 }
 
-static STAGE_NAMES: [&'static str; 23] = [
+static STAGE_NAMES: [&str; 23] = [
     "Zero",
     "One",
     "Two",

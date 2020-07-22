@@ -19,7 +19,7 @@ pub fn closure(change: &Change) -> Vec<Change> {
 }
 
 pub fn extent(stage: Stage) -> impl Iterator<Item = Change> {
-    ExtentIterator::new(Stage::from(stage))
+    ExtentIterator::new(stage)
 }
 
 pub struct ExtentIterator {
@@ -102,10 +102,8 @@ impl ExtentGenerator {
 
                 let mut temp = Bell::from(stage - 1);
 
-                for i in self.insert_location..stage {
-                    let t2 = slice[i];
-                    slice[i] = temp;
-                    temp = t2;
+                for bell in slice.iter_mut().take(stage).skip(self.insert_location) {
+                    std::mem::swap(&mut *bell, &mut temp);
                 }
             }
             None => {
@@ -130,7 +128,7 @@ impl ExtentGenerator {
             } else {
                 Some(Box::new(ExtentGenerator::new(Stage::from(s - 1))))
             },
-            stage: stage,
+            stage,
             array_index: 0,
             insert_location: 0,
         }

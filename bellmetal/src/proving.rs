@@ -9,9 +9,9 @@ use std::cmp::Ordering;
 pub type ProofGroups = Vec<Vec<usize>>;
 
 pub fn fill_from_iterator<T: Sized>(iter: &mut impl Iterator<Item = T>, slice: &mut [T]) -> bool {
-    for i in 0..slice.len() {
+    for element in slice.iter_mut() {
         if let Some(v) = iter.next() {
-            slice[i] = v;
+            *element = v;
         } else {
             return false;
         }
@@ -35,7 +35,7 @@ pub trait ProvingContext {
     fn prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        canon: impl FnMut(&[Bell], &mut Change) -> (),
+        canon: impl FnMut(&[Bell], &mut Change)
     ) -> bool {
         self.prove_canonical(&touch.iter(), canon)
     }
@@ -156,7 +156,7 @@ impl FullProvingContext for NaiveProver {
         }
 
         if temp_vec.len() > 1 {
-            truth.push(temp_vec.clone());
+            truth.push(temp_vec);
         }
 
         truth
@@ -258,7 +258,7 @@ impl ProvingContext for HashProver {
     fn prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change)
     ) -> bool {
         assert_eq!(touch.stage, self.stage);
 
@@ -313,7 +313,7 @@ impl ProvingContext for HashProver {
     fn prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change) -> (),
+        mut canon: impl FnMut(&[Bell], &mut Change)
     ) -> bool {
         assert_eq!(iter.stage(), self.stage);
 
@@ -648,8 +648,8 @@ pub fn canon_fixed_treble_cyclic(slice: &[Bell], change: &mut Change) {
 
         change.set_bell(Place::from(0), Bell::from(0));
 
-        for i in 1..stage {
-            let new_bell = slice[i].as_isize() - shift;
+        for (i, val) in slice.iter().enumerate().skip(1) {
+            let new_bell = val.as_isize() - shift;
 
             if new_bell <= 0 {
                 change.set_bell(
@@ -696,8 +696,8 @@ pub fn canon_full_cyclic(slice: &[Bell], change: &mut Change) {
 
     let shift = slice[0].as_usize();
 
-    for i in 0..stage {
-        let new_bell = slice[i].as_usize() + stage - shift;
+    for (i, val) in slice.iter().enumerate() {
+        let new_bell = val.as_usize() + stage - shift;
 
         change.set_bell(Place::from(i), Bell::from(new_bell % stage));
     }

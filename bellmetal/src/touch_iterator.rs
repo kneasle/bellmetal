@@ -364,11 +364,11 @@ pub struct MultiChainTouchIterator<'a, T: TouchIterator<'a>> {
 
 impl<'a, T: TouchIterator<'a>> MultiChainTouchIterator<'a, T> {
     pub fn new(iterators: &'a [T]) -> MultiChainTouchIterator<'a, T> {
-        assert!(iterators.len() > 0);
+        assert!(!iterators.is_empty());
 
         let stage = iterators[0].stage();
-        for i in 1..iterators.len() {
-            assert_eq!(iterators[i].stage(), stage);
+        for iter in iterators.iter().skip(1) {
+            assert_eq!(iter.stage(), stage);
         }
 
         MultiChainTouchIterator {

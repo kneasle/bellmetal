@@ -1,22 +1,13 @@
 use crate::consts;
 use crate::types::*;
 use crate::{Change, ChangeAccumulator, MaskMethods};
-use std::cmp::PartialEq;
 use std::fmt;
 
-#[derive(Hash, Copy, Clone)]
+#[derive(Hash, Copy, Clone, PartialEq, Eq)]
 pub struct PlaceNotation {
     pub places: Mask,
     pub stage: Stage,
 }
-
-impl PartialEq for PlaceNotation {
-    fn eq(&self, other: &Self) -> bool {
-        self.places == other.places && self.stage == other.stage
-    }
-}
-
-impl Eq for PlaceNotation {}
 
 impl fmt::Debug for PlaceNotation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -48,7 +39,7 @@ impl PlaceNotation {
     pub fn places_made<'a>(&'a self) -> impl Iterator<Item = Place> + 'a {
         (0..self.stage.as_usize())
             .filter(move |x| self.places.get(*x as Number))
-            .map(|x| Place::from(x))
+            .map(Place::from)
     }
 
     // Returns the place notation that represents 'self' but with the places reversed
@@ -359,7 +350,7 @@ impl PlaceNotation {
 
                 comma_index = Some(place_notations.len());
             } else if PlaceNotation::is_cross_notation(c) {
-                if string_buff.len() != 0 {
+                if !string_buff.is_empty() {
                     add_place_not!();
                 }
 
@@ -409,7 +400,7 @@ impl PlaceNotation {
     }
 
     pub fn overall_transposition(pns: &[PlaceNotation]) -> Change {
-        if pns.len() == 0 {
+        if pns.is_empty() {
             panic!("Can't find overall transposition of empty PlaceNotation list");
         }
 

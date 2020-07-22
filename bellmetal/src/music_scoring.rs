@@ -16,18 +16,14 @@ pub fn run_length_from_iter(i: impl Iterator<Item = Bell>) -> usize {
     let mut last = iter.next().unwrap().as_i32();
     let mut i = 1;
 
-    loop {
-        if let Some(b) = iter.next() {
-            let diff = b.as_i32() - last;
+    for b in iter {
+        let diff = b.as_i32() - last;
 
-            if diff != -1 && diff != 1 {
-                break;
-            }
-
-            last = b.as_i32()
-        } else {
+        if diff != -1 && diff != 1 {
             break;
         }
+
+        last = b.as_i32();
 
         i += 1;
     }
@@ -136,12 +132,8 @@ pub fn cyclic_run_length_from_iter(i: impl Iterator<Item = Bell>, stage: i32) ->
     // Continue reading values until a run stops and then return
     let mut length: usize = 2;
 
-    loop {
-        if let Some(x) = iter.next() {
-            if x.as_i32() != (((first + length as i32 * diff) % stage) + stage) % stage {
-                break;
-            }
-        } else {
+    for x in iter {
+        if x.as_i32() != (((first + length as i32 * diff) % stage) + stage) % stage {
             break;
         }
 

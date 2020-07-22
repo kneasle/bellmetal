@@ -75,11 +75,8 @@ impl MethodLibrary {
             }
             Some(_) => {
                 for l in string.lines() {
-                    match deserialise_stored_method_filtered(l, stage) {
-                        Some(m) => {
-                            stored_methods.push(m);
-                        }
-                        None => {}
+                    if let Some(m) = deserialise_stored_method_filtered(l, stage) {
+                        stored_methods.push(m);
                     }
                 }
             }
@@ -113,13 +110,10 @@ fn deserialise_stored_method_filtered(
     let mut parts = string.split(DELIMITER);
 
     let stage = Stage::from(parts.next().unwrap().parse::<usize>().unwrap());
-    match stage_filter {
-        Some(s) => {
-            if stage != s {
-                return None;
-            }
+    if let Some(s) = stage_filter {
+        if stage != s {
+            return None;
         }
-        _ => {}
     }
     let name = parts.next().unwrap().to_string();
     let place_notation = PlaceNotation::from_multiple_string(parts.next().unwrap(), stage);

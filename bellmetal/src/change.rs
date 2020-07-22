@@ -77,7 +77,7 @@ impl Change {
     /// assert_eq!(Change::rounds(Stage::CATERS), Change::from("123456789"));
     /// ```
     pub fn rounds(stage: Stage) -> Change {
-        Change::from_iterator((0..stage.as_usize()).map(|x| Bell::from(x)))
+        Change::from_iterator((0..stage.as_usize()).map(Bell::from))
     }
 
     /// Creates a new `Change`, given a vector of [Bell]s that it should contain.
@@ -664,9 +664,7 @@ impl Change {
 
         // Repeatedly swap pairs of values, missing out the middle value if the stage is odd
         for i in 0..stage / 2 {
-            let tmp = self.seq[i];
-            self.seq[i] = self.seq[stage - 1 - i];
-            self.seq[stage - 1 - i] = tmp;
+            self.seq.swap(i, stage - 1 - i);
         }
     }
 
@@ -1069,16 +1067,10 @@ impl ChangeAccumulator {
             panic!("Can't write a change of the wrong stage into accumulator");
         }
 
-        let slice = transposition.slice();
-
         if self.using_second_change {
-            for i in 0..self.stage.as_usize() {
-                self.change_2.seq[i] = slice[i];
-            }
+            self.change_2.overwrite_from(transposition);
         } else {
-            for i in 0..self.stage.as_usize() {
-                self.change_1.seq[i] = slice[i];
-            }
+            self.change_1.overwrite_from(transposition);
         }
     }
 

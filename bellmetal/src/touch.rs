@@ -12,7 +12,7 @@ use std::iter::Cloned;
 use std::marker::PhantomData;
 
 fn depth_first_search(
-    edges: &Vec<(usize, usize)>,
+    edges: &[(usize, usize)],
     groups: &mut Vec<Option<usize>>,
     num_verts_covered: &mut usize,
     current_group_id: usize,
@@ -28,7 +28,7 @@ fn depth_first_search(
     }
 }
 
-fn falseness_to_table(falseness_map: &Vec<Vec<usize>>) -> HashMap<usize, usize> {
+fn falseness_to_table(falseness_map: &[Vec<usize>]) -> HashMap<usize, usize> {
     // Create a tree of mappings which are adjacent to one another
     let mut tree_edges: Vec<(usize, usize)> =
         Vec::with_capacity(falseness_map.len() * falseness_map.len());
@@ -239,12 +239,13 @@ impl<'a> Ord for Row<'a> {
                 return Ordering::Equal;
             }
 
-            if self.bells[i] == other.bells[i] {
-                i += 1;
-            } else if self.bells[i] < other.bells[i] {
-                return Ordering::Less;
-            } else {
-                return Ordering::Greater;
+            match self.bells[i].cmp(&other.bells[i]) {
+                Ordering::Equal => {
+                    i += 1;
+                }
+                other => {
+                    return other;
+                }
             }
         }
     }
@@ -269,15 +270,15 @@ pub struct Touch {
 }
 
 impl Touch {
-    pub fn row_iterator<'a>(&'a self) -> RowIterator<'a> {
+    pub fn row_iterator(&self) -> RowIterator {
         RowIterator::new(self)
     }
 
-    pub fn iter<'a>(&'a self) -> BasicTouchIterator<'a> {
+    pub fn iter(&self) -> BasicTouchIterator {
         BasicTouchIterator::new(self)
     }
 
-    pub fn append_bell_iterator<'a>(&mut self, iter: impl Iterator<Item = Bell>) {
+    pub fn append_bell_iterator(&mut self, iter: impl Iterator<Item = Bell>) {
         self.bells.extend(iter);
 
         // Copy the last change inserted into the leftover change
@@ -367,10 +368,7 @@ impl Touch {
     pub fn row_at(&self, index: usize) -> Row {
         Row {
             index,
-            is_ruled_off: match self.ruleoffs.binary_search(&index) {
-                Ok(_) => true,
-                Err(_) => false,
-            },
+            is_ruled_off: self.ruleoffs.binary_search(&index).is_ok(),
             call_char: match self.calls.get(&index) {
                 Some(c) => *c,
                 None => ' ',
@@ -564,7 +562,6 @@ impl Touch {
         let mut column_splits: Vec<usize> = Vec::with_capacity(columns);
 
         let mut next_ideal_split = ideal_column_height;
-        let mut ruleoffs_used_this_split = 0;
         let mut last_r = 0;
 
         macro_rules! add {
@@ -575,7 +572,7 @@ impl Touch {
             };
         }
 
-        for &r in &self.ruleoffs {
+        for (ruleoffs_used_this_split, &r) in self.ruleoffs.iter().enumerate() {
             if r > next_ideal_split {
                 if ruleoffs_used_this_split == 0 {
                     add!(r + 1);
@@ -586,7 +583,6 @@ impl Touch {
                 next_ideal_split += ideal_column_height;
             }
 
-            ruleoffs_used_this_split += 1;
             last_r = r;
         }
 
@@ -816,18 +812,14 @@ impl Touch {
         self.bells.clear();
         self.bells.reserve(length * stage);
 
-        let mut counter = 0;
-
-        for line in string.lines() {
-            if counter < length {
+        for (i, line) in string.lines().enumerate() {
+            if i < length {
                 for c in line.chars() {
                     self.bells.push(Bell::from(c));
                 }
             } else {
                 self.leftover_change.overwrite_from_string(line);
             }
-
-            counter += 1;
         }
     }
 
@@ -1046,7 +1038,7 @@ pub struct BasicTouchIterator<'a> {
 }
 
 impl BasicTouchIterator<'_> {
-    pub fn new<'a>(touch: &'a Touch) -> BasicTouchIterator<'a> {
+    pub fn new(touch: &Touch) -> BasicTouchIterator {
         BasicTouchIterator { touch }
     }
 }

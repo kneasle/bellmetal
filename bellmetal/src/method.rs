@@ -45,7 +45,7 @@ impl Call {
     }
 
     pub fn new(notation: char, place_notations: Vec<PlaceNotation>, location: &str) -> Call {
-        if place_notations.len() == 0 {
+        if place_notations.is_empty() {
             panic!("Can't have a call with empty place notation array");
         }
 
@@ -104,11 +104,11 @@ impl Method {
         Change::from_iterator(self.lead_end_iterator())
     }
 
-    pub fn lead_end_row<'a>(&'a self) -> Row<'a> {
+    pub fn lead_end_row(&self) -> Row {
         self.plain_lead.row_at(self.plain_lead.length - 1)
     }
 
-    pub fn lead_end_slice<'a>(&'a self) -> &'a [Bell] {
+    pub fn lead_end_slice(&self) -> &[Bell] {
         self.plain_lead.slice_at(self.plain_lead.length - 1)
     }
 
@@ -259,7 +259,7 @@ impl Method {
         place_notation: Vec<PlaceNotation>,
         location_map: HashMap<String, usize>,
     ) -> Method {
-        assert!(place_notation.len() > 0);
+        assert!(!place_notation.is_empty());
 
         Method {
             name,

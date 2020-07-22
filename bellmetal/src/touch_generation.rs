@@ -43,7 +43,7 @@ pub fn one_part_spliced_touch(
         let mut has_consumed_call = true; // A hack to stop it adding an erraneous call at the start
 
         for c in string.chars() {
-            if partial_method_name.len() == 0 {
+            if partial_method_name.is_empty() {
                 // We're between method names
                 match call_hashmap.get(&c) {
                     Some(call) => {
@@ -72,13 +72,10 @@ pub fn one_part_spliced_touch(
 
             partial_method_name.push(c);
 
-            match method_hashmap.get(&partial_method_name[..]) {
-                Some(x) => {
-                    methods.push(*x);
+            if let Some(x) = method_hashmap.get(&partial_method_name[..]) {
+                methods.push(*x);
 
-                    partial_method_name.clear();
-                }
-                None => {}
+                partial_method_name.clear();
             }
         }
 
@@ -115,7 +112,7 @@ pub fn one_part_spliced_touch_from_indices<'a>(
     }
 
     // Find the number of calls used
-    let num_calls = calls.iter().filter(|i| i.len() == 0).count();
+    let num_calls = calls.iter().filter(|i| i.is_empty()).count();
     let num_method_splices = methods
         .clone()
         .tuple_windows()
