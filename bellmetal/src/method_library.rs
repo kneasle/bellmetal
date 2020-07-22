@@ -82,9 +82,7 @@ impl MethodLibrary {
             }
         }
 
-        MethodLibrary {
-            stored_methods,
-        }
+        MethodLibrary { stored_methods }
     }
 
     pub fn from_file(path: &Path) -> MethodLibrary {

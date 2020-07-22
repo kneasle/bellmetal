@@ -371,9 +371,7 @@ impl<'a, T: TouchIterator<'a>> MultiChainTouchIterator<'a, T> {
             assert_eq!(iter.stage(), stage);
         }
 
-        MultiChainTouchIterator {
-            iterators,
-        }
+        MultiChainTouchIterator { iterators }
     }
 }
 

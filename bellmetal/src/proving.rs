@@ -35,7 +35,7 @@ pub trait ProvingContext {
     fn prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        canon: impl FnMut(&[Bell], &mut Change)
+        canon: impl FnMut(&[Bell], &mut Change),
     ) -> bool {
         self.prove_canonical(&touch.iter(), canon)
     }
@@ -49,7 +49,7 @@ pub trait FullProvingContext: ProvingContext {
     fn full_prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        canon: impl FnMut(&[Bell], &mut Change)
+        canon: impl FnMut(&[Bell], &mut Change),
     ) -> ProofGroups;
 
     #[cfg_attr(tarpaulin, skip)]
@@ -60,7 +60,7 @@ pub trait FullProvingContext: ProvingContext {
     fn full_prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        canon: impl FnMut(&[Bell], &mut Change)
+        canon: impl FnMut(&[Bell], &mut Change),
     ) -> ProofGroups {
         self.full_prove_canonical(&touch.iter(), canon)
     }
@@ -114,7 +114,7 @@ impl FullProvingContext for NaiveProver {
     fn full_prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change)
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> ProofGroups {
         let mut temporary_change = Change::rounds(iter.stage());
         let mut temp_slice = vec![Bell::from(0); iter.stage().as_usize()];
@@ -167,7 +167,7 @@ impl ProvingContext for NaiveProver {
     fn prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change)
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> bool {
         let mut temporary_change = Change::rounds(iter.stage());
 
@@ -258,7 +258,7 @@ impl ProvingContext for HashProver {
     fn prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        mut canon: impl FnMut(&[Bell], &mut Change)
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> bool {
         assert_eq!(touch.stage, self.stage);
 
@@ -313,7 +313,7 @@ impl ProvingContext for HashProver {
     fn prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change)
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> bool {
         assert_eq!(iter.stage(), self.stage);
 
@@ -414,7 +414,7 @@ impl FullProvingContext for CompactHashProver {
     fn full_prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        mut canon: impl FnMut(&[Bell], &mut Change)
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> ProofGroups {
         let truth = full_proof_from_iterator(
             CompactHashTouchIterator {
@@ -437,7 +437,7 @@ impl FullProvingContext for CompactHashProver {
     fn full_prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change) 
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> ProofGroups {
         let truth = full_proof_from_iterator(
             CompactHashIterator {
@@ -465,7 +465,7 @@ impl ProvingContext for CompactHashProver {
     fn prove_touch_canonical(
         &mut self,
         touch: &Touch,
-        mut canon: impl FnMut(&[Bell], &mut Change)
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> bool {
         let truth = CompactHashTouchIterator {
             hash_prover: self,
@@ -489,7 +489,7 @@ impl ProvingContext for CompactHashProver {
     fn prove_canonical<'a>(
         &mut self,
         iter: &impl TouchIterator<'a>,
-        mut canon: impl FnMut(&[Bell], &mut Change)
+        mut canon: impl FnMut(&[Bell], &mut Change),
     ) -> bool {
         let truth = CompactHashIterator {
             hash_prover: self,

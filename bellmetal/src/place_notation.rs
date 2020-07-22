@@ -190,10 +190,7 @@ impl PlaceNotation {
             }
         }
 
-        PlaceNotation {
-            places,
-            stage,
-        }
+        PlaceNotation { places, stage }
     }
 
     pub fn to_multiple_string_short(place_notations: &[PlaceNotation]) -> String {

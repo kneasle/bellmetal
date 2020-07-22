@@ -1139,10 +1139,7 @@ impl<T: Iterator<Item = Bell>> ChangeCollectIter<T> {
     ///
     /// See the example for the [ChangeCollectIter] class.
     pub fn new(bell_iter: T, stage: Stage) -> ChangeCollectIter<T> {
-        ChangeCollectIter {
-            bell_iter,
-            stage,
-        }
+        ChangeCollectIter { bell_iter, stage }
     }
 }
 

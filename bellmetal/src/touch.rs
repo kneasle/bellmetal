@@ -424,10 +424,7 @@ impl Touch {
         NaiveProver {}.full_prove_touch(&self)
     }
 
-    pub fn full_truth_canonical(
-        &self,
-        canon: impl FnMut(&[Bell], &mut Change)
-    ) -> ProofGroups {
+    pub fn full_truth_canonical(&self, canon: impl FnMut(&[Bell], &mut Change)) -> ProofGroups {
         NaiveProver {}.full_prove_touch_canonical(&self, canon)
     }
 
