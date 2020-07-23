@@ -1,8 +1,25 @@
 [package]
 name = "bellmetal"
 version = "0.1.0"
-authors = ["Kneasle <kneasle@gmail.com>"]
+authors = ["Ben White-Horne <kneasle@gmail.com>"]
 edition = "2018"
+include = [
+    "src/**/*",
+    "Cargo.toml",
+    "README.md"
+]
+description = "A Rust library for efficiently proving and generating change ringing touches."
+repository = "https://github.com/Kneasle/bellmetal"
+license = "MIT"
+readme = "README.md"
+keywords = [
+    "change-ringing",
+    "bellmetal"
+]
+categories = [
+    "mathematics",
+    "data-structures"
+]
 
 [dependencies]
 factorial = "0.2.0"
