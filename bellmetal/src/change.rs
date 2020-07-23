@@ -738,13 +738,7 @@ impl Transposition for Change {
 
 impl fmt::Display for Change {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut s = String::with_capacity(self.stage().as_usize());
-
-        for b in &self.seq {
-            s.push(b.as_char());
-        }
-
-        write!(f, "<{}>", s)
+        write!(f, "<{}>", self.ugly_string())
     }
 }
 
@@ -1173,8 +1167,6 @@ mod tests {
 
     use crate::utils::ExtentIterator;
 
-    use std::fmt::Write;
-
     #[test]
     fn equality() {
         assert!(
@@ -1549,19 +1541,9 @@ mod tests {
 
     #[test]
     fn debug_print() {
-        let mut s = String::with_capacity(20);
-
-        write!(&mut s, "{:?}", Change::from("")).unwrap();
-        assert_eq!(s, "<>");
-        s.clear();
-
-        write!(&mut s, "{:?}", Change::from("14325")).unwrap();
-        assert_eq!(s, "<14325>");
-        s.clear();
-
-        write!(&mut s, "{:?}", Change::from("1678902345ET")).unwrap();
-        assert_eq!(s, "<1678902345ET>");
-        s.clear();
+        assert_eq!(format!("{}", Change::from("")), "<>");
+        assert_eq!(format!("{}", Change::from("14325")), "<14325>");
+        assert_eq!(format!("{}", Change::from("1678902345ET")), "<1678902345ET>");
     }
 }
 

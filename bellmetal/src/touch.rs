@@ -1301,7 +1301,7 @@ P   \x1b[91;49m1\x1b[97;49m64\x1b[96;49m8\x1b[97;49m2735\x1b[0m                 
             let t = Touch::from(s);
 
             if t.to_string() != "" {
-                assert_eq!(t.to_string() + "\n" + &t.leftover_change.to_string(), s);
+                assert_eq!(t.to_string() + "\n" + &t.leftover_change.ugly_string(), s);
             }
         }
     }

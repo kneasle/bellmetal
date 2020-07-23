@@ -271,7 +271,7 @@ pub trait Transposition {
     }
 
     // To string
-    fn to_string(&self) -> String {
+    fn ugly_string(&self) -> String {
         let mut string = String::with_capacity(self.slice().len());
 
         for i in self.slice() {
