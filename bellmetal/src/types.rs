@@ -64,9 +64,9 @@ impl Not for Stroke {
 
 type MaskType = u64;
 
-#[derive(Hash, Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Default)]
 pub struct MaskStruct {
-    pub mask: MaskType,
+    mask: MaskType,
 }
 
 pub type Mask = MaskStruct;
@@ -126,7 +126,7 @@ pub type Number = u32;
 
 macro_rules! define_int_synonymn {
     ($type:ident) => {
-        #[derive(Hash, Eq, Ord, PartialEq, PartialOrd, Debug, Copy, Clone)]
+        #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
         pub struct $type(Number);
 
         impl From<Number> for $type {

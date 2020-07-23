@@ -59,6 +59,7 @@ pub trait TouchIterator<'a> {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct CallShift<I: Iterator<Item = (usize, char)>> {
     iter: I,
     shift: usize,
@@ -79,6 +80,7 @@ impl<T: Iterator<Item = (usize, char)>> Iterator for CallShift<T> {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct RuleoffShift<I: Iterator<Item = usize>> {
     iter: I,
     shift: usize,
@@ -119,6 +121,7 @@ impl<'a, T: Iterator<Item = (usize, &'a str)>> Iterator for MethodNameShift<'a, 
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ChainedTouchIterator<'a, I: TouchIterator<'a>, J: TouchIterator<'a>> {
     first: &'a I,
     second: &'a J,
@@ -182,6 +185,7 @@ impl<'a, I: TouchIterator<'a>, J: TouchIterator<'a>> TouchIterator<'a>
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MultiChainBellIterator<'a, T: TouchIterator<'a>> {
     iterators: &'a [T],
     iter_index: usize,
@@ -220,6 +224,7 @@ impl<'a, T: TouchIterator<'a>> Iterator for MultiChainBellIterator<'a, T> {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MultiChainRuleoffIterator<'a, T: TouchIterator<'a>> {
     iterators: &'a [T],
     iter_index: usize,
@@ -266,6 +271,7 @@ impl<'a, T: TouchIterator<'a>> Iterator for MultiChainRuleoffIterator<'a, T> {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MultiChainCallIterator<'a, T: TouchIterator<'a>> {
     iterators: &'a [T],
     iter_index: usize,
@@ -312,6 +318,7 @@ impl<'a, T: TouchIterator<'a>> Iterator for MultiChainCallIterator<'a, T> {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MultiChainMethodNameIterator<'a, T: TouchIterator<'a>> {
     iterators: &'a [T],
     iter_index: usize,
@@ -358,6 +365,7 @@ impl<'a, T: TouchIterator<'a>> Iterator for MultiChainMethodNameIterator<'a, T> 
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MultiChainTouchIterator<'a, T: TouchIterator<'a>> {
     iterators: &'a [T],
 }
@@ -411,6 +419,7 @@ impl<'a, T: TouchIterator<'a>> TouchIterator<'a> for MultiChainTouchIterator<'a,
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct TransfiguredTouchIterator<'a, I: TouchIterator<'a>, T: Transposition> {
     iterator: I,
     transposition: &'a T,

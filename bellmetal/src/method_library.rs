@@ -5,7 +5,7 @@ use std::path::Path;
 
 const DELIMITER: char = '|';
 
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 struct StoredMethod {
     name: String,
     place_notation: Vec<PlaceNotation>,
@@ -28,7 +28,7 @@ impl StoredMethod {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct MethodLibrary {
     stored_methods: Vec<StoredMethod>,
 }

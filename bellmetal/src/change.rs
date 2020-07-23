@@ -38,7 +38,7 @@ use crate::{Row, Touch};
 ///
 /// assert_eq!(cyclic_part_head * some_change, Change::from("28713456"));
 /// ```
-#[derive(Hash, PartialOrd, Ord, Eq, PartialEq, Clone)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Change {
     seq: Vec<Bell>,
 }
@@ -736,7 +736,7 @@ impl Transposition for Change {
     }
 }
 
-impl fmt::Debug for Change {
+impl fmt::Display for Change {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut s = String::with_capacity(self.stage().as_usize());
 
@@ -811,6 +811,7 @@ impl From<&str> for Change {
 ///
 /// assert_eq!(accum.total(), &Change::rounds(Stage::MAJOR));
 /// ```
+#[derive(Clone, Debug)]
 pub struct ChangeAccumulator {
     change_1: Change,
     change_2: Change,
@@ -1129,12 +1130,13 @@ impl ChangeAccumulator {
 /// assert_eq!(collected_iter.next(), Some(Change::from("4321")));
 /// assert_eq!(collected_iter.next(), None);
 /// ```
-pub struct ChangeCollectIter<T: Iterator<Item = Bell>> {
+#[derive(Clone, Debug)]
+pub struct ChangeCollectIter<T> {
     bell_iter: T,
     stage: Stage,
 }
 
-impl<T: Iterator<Item = Bell>> ChangeCollectIter<T> {
+impl<T> ChangeCollectIter<T> {
     /// Creates a new `ChangeCollectIter` from any [Iterator] of [Bell]s.
     ///
     /// See the example for the [ChangeCollectIter] class.
@@ -1143,7 +1145,10 @@ impl<T: Iterator<Item = Bell>> ChangeCollectIter<T> {
     }
 }
 
-impl<T: Iterator<Item = Bell>> Iterator for ChangeCollectIter<T> {
+impl<T> Iterator for ChangeCollectIter<T>
+where
+    T: Iterator<Item = Bell>,
+{
     type Item = Change;
 
     fn next(&mut self) -> Option<Change> {

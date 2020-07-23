@@ -90,7 +90,7 @@ fn full_proof_from_iterator(iterator: impl Iterator<Item = (usize, usize)>) -> P
     vec
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 struct IndexedChange {
     pub index: usize,
     pub change: Change,
@@ -108,7 +108,8 @@ impl PartialOrd for IndexedChange {
     }
 }
 
-pub struct NaiveProver {}
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct NaiveProver();
 
 impl FullProvingContext for NaiveProver {
     fn full_prove_canonical<'a>(
@@ -209,6 +210,7 @@ impl ProvingContext for NaiveProver {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 struct BitMap {
     vec: Vec<u64>,
 }
@@ -249,6 +251,7 @@ impl BitMap {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct HashProver {
     stage: Stage,
     bit_map: BitMap,
@@ -392,6 +395,7 @@ impl HashProver {
 
 type IndexType = i32;
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct CompactHashProver {
     stage: Stage,
     falseness_map: Vec<IndexType>,
@@ -512,6 +516,7 @@ impl ProvingContext for CompactHashProver {
     }
 }
 
+#[derive(Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct CompactHashIterator<'a, I: Iterator<Item = Bell>, T: FnMut(&[Bell], &mut Change)> {
     hash_prover: &'a mut CompactHashProver,
     bell_iter: &'a mut I,
@@ -551,6 +556,7 @@ impl<'a, I: Iterator<Item = Bell>, T: FnMut(&[Bell], &mut Change)> Iterator
     }
 }
 
+#[derive(Eq, PartialEq, Debug)]
 pub struct CompactHashTouchIterator<'a, T: FnMut(&[Bell], &mut Change)> {
     hash_prover: &'a mut CompactHashProver,
     row_iterator: &'a mut RowIterator<'a>,

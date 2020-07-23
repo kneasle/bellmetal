@@ -87,7 +87,7 @@ fn falseness_to_table(falseness_map: &[Vec<usize>]) -> HashMap<usize, usize> {
     hash_map
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Copy, Clone, Hash, Debug)]
 pub struct Row<'a> {
     pub index: usize,
     pub is_ruled_off: bool,
@@ -258,7 +258,7 @@ impl<'a> PartialOrd for Row<'a> {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct Touch {
     pub stage: Stage,
     pub length: usize,
@@ -953,6 +953,7 @@ impl fmt::Display for Touch {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct RowIterator<'a> {
     touch: &'a Touch,
     row_index: usize,
@@ -991,6 +992,7 @@ impl<'a> Iterator for RowIterator<'a> {
 }
 
 // An iterator that dereferences the values coming from an iterator without using map
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct CallDerefIter<'a, T: Iterator<Item = (&'a usize, &'a char)>> {
     iterator: T,
     phantom: PhantomData<&'a ()>,
@@ -1012,6 +1014,7 @@ impl<'a, T: Iterator<Item = (&'a usize, &'a char)>> Iterator for CallDerefIter<'
 }
 
 // An iterator that dereferences the values coming from an iterator without using map
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MethodNameDerefIter<'a, T: Iterator<Item = (&'a usize, &'a String)>> {
     iterator: T,
     phantom: PhantomData<&'a ()>,
@@ -1033,6 +1036,7 @@ impl<'a, T: Iterator<Item = (&'a usize, &'a String)>> Iterator for MethodNameDer
 }
 
 // The full iterator
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct BasicTouchIterator<'a> {
     touch: &'a Touch,
 }

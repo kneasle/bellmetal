@@ -3,20 +3,10 @@ use crate::types::*;
 use crate::{Change, ChangeAccumulator, MaskMethods};
 use std::fmt;
 
-#[derive(Hash, Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct PlaceNotation {
     pub places: Mask,
     pub stage: Stage,
-}
-
-impl fmt::Display for PlaceNotation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut s = String::with_capacity(Mask::limit() as usize);
-
-        self.write_to_string_full(&mut s);
-
-        write!(f, "{}", s)
-    }
 }
 
 impl PlaceNotation {
@@ -430,6 +420,17 @@ impl PlaceNotation {
     }
 }
 
+impl fmt::Display for PlaceNotation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = String::with_capacity(Mask::limit() as usize);
+
+        self.write_to_string_full(&mut s);
+
+        write!(f, "{}", s)
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PlaceNotationIterator<'a> {
     place_notation: &'a PlaceNotation,
     index: usize,

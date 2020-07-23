@@ -10,7 +10,7 @@ use std::ops::Index;
 /// For example, the coursing order `975346280` has two run segments (the `75346` generating
 /// backstroke 76543s, and the wrapped `80 97` generating backstroke 7890s).  Note that the 7th is
 /// contained in both run segements.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct RunSection {
     /// The index of the left-most [Bell] that is part of this `RunSection`
     pub start: isize,
@@ -47,7 +47,7 @@ impl PartialOrd for RunSection {
 /// This implementation also does not assume Plain Bob lead heads, although many of the methods
 /// (such as [from_leadhead](CoursingOrder::from_leadhead),
 /// [to_coursehead](CoursingOrder::to_coursehead)) do assume this for simplicity.
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Default)]
 pub struct CoursingOrder {
     order: Vec<Bell>, // order will always start with the heaviest bell in the coursing order
 }
@@ -794,6 +794,7 @@ impl<'a> CoursingOrderIterator for BasicCoursingOrderIterator<'a> {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct LeadheadCoursingOrderIterator<'a, T: Transposition> {
     leadhead: &'a T,
     iterator: PlainCoursingOrderIterator,
@@ -819,6 +820,7 @@ impl<'a, T: Transposition> CoursingOrderIterator for LeadheadCoursingOrderIterat
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct PlainCoursingOrderIterator {
     stage: Stage,
     current_bell: usize,

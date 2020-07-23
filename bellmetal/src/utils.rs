@@ -22,6 +22,7 @@ pub fn extent(stage: Stage) -> impl Iterator<Item = Change> {
     ExtentIterator::new(stage)
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ExtentIterator {
     generator: ExtentGenerator,
     is_done: bool,
@@ -60,6 +61,7 @@ impl ExtentIterator {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 struct ExtentGenerator {
     recursive_generator: Option<Box<ExtentGenerator>>,
     pub stage: Stage,

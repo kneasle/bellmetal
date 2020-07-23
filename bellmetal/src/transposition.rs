@@ -379,6 +379,7 @@ pub trait Transposition {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MultiplicationIterator<'a, T: Iterator<Item = Bell>> {
     lhs: &'a [Bell],
     rhs: T,

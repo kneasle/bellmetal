@@ -9,7 +9,7 @@ use std::collections::HashMap;
 pub const LEAD_END_LOCATION: &str = "LE";
 pub const HALF_LEAD_LOCATION: &str = "HL";
 
-#[derive(Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Call {
     pub place_notations: Vec<PlaceNotation>,
     pub transposition: Change,
@@ -76,7 +76,7 @@ impl Call {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Method {
     pub name: String,
     pub stage: Stage,

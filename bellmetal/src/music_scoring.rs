@@ -1,9 +1,17 @@
 use crate::{Bell, Mask, MaskMethods, Number, Touch, Transposition};
 
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum WrapType {
     NoWrap,
     FullCyclic,
     FixedTrebleCyclic,
+}
+
+impl Default for WrapType {
+    #[inline]
+    fn default() -> Self {
+        WrapType::NoWrap
+    }
 }
 
 pub fn run_length_from_iter(i: impl Iterator<Item = Bell>) -> usize {
@@ -62,7 +70,8 @@ pub trait MusicScoring {
     }
 }
 
-pub struct DefaultScoring {}
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct DefaultScoring();
 
 impl MusicScoring for DefaultScoring {
     fn score_transposition(t: &impl Transposition) -> usize {
@@ -151,7 +160,8 @@ fn cyclic_run_length_of_slice_back(slice: &[Bell], stage: i32) -> usize {
     cyclic_run_length_from_iter(slice.iter().copied().rev(), stage)
 }
 
-pub struct FullCyclicScoring {}
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct FullCyclicScoring();
 
 impl MusicScoring for FullCyclicScoring {
     fn score_transposition(t: &impl Transposition) -> usize {
