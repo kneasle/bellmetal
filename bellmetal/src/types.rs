@@ -1,7 +1,9 @@
 use crate::consts::BELL_NAMES;
 use std::convert::From;
+use std::error;
 use std::fmt;
 use std::ops::{Mul, Not};
+use std::str::FromStr;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
 pub enum Parity {
@@ -244,25 +246,7 @@ static STAGE_NAMES: [&str; 23] = [
 ];
 
 impl Stage {
-    pub fn from_str(string: &str) -> Stage {
-        for (i, s) in STAGE_NAMES.iter().enumerate() {
-            if *s == string {
-                return Stage::from(i);
-            }
-        }
-
-        panic!("Unkown stage name '{}'.", string);
-    }
-
-    pub fn to_string(&self) -> String {
-        let mut s = String::with_capacity(20);
-
-        self.into_string(&mut s);
-
-        s
-    }
-
-    pub fn into_string(&self, string: &mut String) {
+    pub fn write_to_string(&self, string: &mut String) {
         if self.0 as usize >= STAGE_NAMES.len() {
             string.push_str("<stage ");
             string.push_str(&self.0.to_string());
@@ -272,6 +256,41 @@ impl Stage {
         }
     }
 }
+
+impl fmt::Display for Stage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = String::with_capacity(20);
+
+        self.write_to_string(&mut s);
+
+        write!(f, "{}", s)
+    }
+}
+
+impl FromStr for Stage {
+    type Err = UnknownStageError;
+
+    fn from_str(string: &str) -> Result<Stage, Self::Err> {
+        for (i, s) in STAGE_NAMES.iter().enumerate() {
+            if *s == string {
+                return Ok(Stage::from(i));
+            }
+        }
+
+        Err(UnknownStageError)
+    }
+}
+
+#[derive(Copy, Clone, Hash, Debug, PartialEq, Eq)]
+pub struct UnknownStageError;
+
+impl fmt::Display for UnknownStageError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "unknown stage name")
+    }
+}
+
+impl error::Error for UnknownStageError {}
 
 impl From<char> for Bell {
     fn from(c: char) -> Bell {
@@ -284,28 +303,27 @@ impl From<char> for Bell {
 
 #[cfg(test)]
 mod stage_tests {
+    use crate::types::UnknownStageError;
     use crate::Stage;
+    use std::str::FromStr;
 
-    macro_rules! stage_from_string_panic {
-        ($name : ident, $val : expr) => {
-            #[test]
-            #[should_panic]
-            fn $name() {
-                Stage::from_str($val);
-            }
-        };
+    #[test]
+    fn stage_from_invalid_string() {
+        assert_eq!(Stage::from_str("").err(), Some(UnknownStageError));
+        assert_eq!(Stage::from_str("Sixteens").err(), Some(UnknownStageError));
+        assert_eq!(
+            Stage::from_str("ahlagskhdioghapsodihg").err(),
+            Some(UnknownStageError)
+        );
+        assert_eq!(Stage::from_str("\n\n\n\n\n").err(), Some(UnknownStageError));
     }
-
-    stage_from_string_panic!(from_string_empty, "");
-    stage_from_string_panic!(from_string_garbage, "laksdjflaksgibhsajdflaksbiha");
-    stage_from_string_panic!(from_string_close, "Sixteens");
 
     #[test]
     fn string_conversions() {
         for i in 0..23 {
             let s = Stage::from(i);
 
-            assert_eq!(Stage::from_str(&s.to_string()), s);
+            assert_eq!(Stage::from_str(&s.to_string()).ok(), Some(s));
         }
 
         assert_eq!(Stage::from(100).to_string(), "<stage 100>");

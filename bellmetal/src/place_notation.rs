@@ -3,17 +3,17 @@ use crate::types::*;
 use crate::{Change, ChangeAccumulator, MaskMethods};
 use std::fmt;
 
-#[derive(Hash, Copy, Clone, PartialEq, Eq)]
+#[derive(Hash, Copy, Clone, PartialEq, Eq, Debug)]
 pub struct PlaceNotation {
     pub places: Mask,
     pub stage: Stage,
 }
 
-impl fmt::Debug for PlaceNotation {
+impl fmt::Display for PlaceNotation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut s = String::with_capacity(Mask::limit() as usize);
 
-        self.into_string(&mut s);
+        self.write_to_string_full(&mut s);
 
         write!(f, "{}", s)
     }
@@ -79,7 +79,7 @@ impl PlaceNotation {
         Change::from_iterator(self.iter())
     }
 
-    pub fn into_string_implicit(&self, string: &mut String) {
+    pub fn write_to_string_compact(&self, string: &mut String) {
         let mut count = 0;
         let mut is_1sts_made = false;
         let mut is_nths_made = false;
@@ -119,7 +119,7 @@ impl PlaceNotation {
         }
     }
 
-    pub fn into_string(&self, string: &mut String) {
+    pub fn write_to_string_full(&self, string: &mut String) {
         let mut count = 0;
 
         for i in 0..self.stage.as_usize() {
@@ -152,7 +152,7 @@ impl PlaceNotation {
         }
     }
 
-    pub fn from_string(notation: &str, stage: Stage) -> PlaceNotation {
+    pub fn from_str(notation: &str, stage: Stage) -> PlaceNotation {
         let mut places = Mask::empty();
 
         if notation == "" || notation == "X" || notation == "x" || notation == "-" {
@@ -193,15 +193,18 @@ impl PlaceNotation {
         PlaceNotation { places, stage }
     }
 
-    pub fn to_multiple_string_short(place_notations: &[PlaceNotation]) -> String {
+    pub fn notations_to_string_short(place_notations: &[PlaceNotation]) -> String {
         let mut string = String::with_capacity(200);
 
-        PlaceNotation::into_multiple_string_short(place_notations, &mut string);
+        PlaceNotation::write_notations_to_string_compact(place_notations, &mut string);
 
         string
     }
 
-    pub fn into_multiple_string_short(place_notations: &[PlaceNotation], string: &mut String) {
+    pub fn write_notations_to_string_compact(
+        place_notations: &[PlaceNotation],
+        string: &mut String,
+    ) {
         let len = place_notations.len();
 
         let is_symmetrical = |i: usize| -> bool {
@@ -251,7 +254,7 @@ impl PlaceNotation {
                             string.push('.');
                         }
 
-                        p.into_string_implicit(string);
+                        p.write_to_string_compact(string);
 
                         was_last_place_notation_cross = false;
                     }
@@ -271,7 +274,7 @@ impl PlaceNotation {
                             string.push('.');
                         }
 
-                        p.into_string_implicit(string);
+                        p.write_to_string_compact(string);
 
                         was_last_place_notation_cross = false;
                     }
@@ -288,7 +291,7 @@ impl PlaceNotation {
                             string.push('.');
                         }
 
-                        p.into_string_implicit(string);
+                        p.write_to_string_compact(string);
 
                         was_last_place_notation_cross = false;
                     }
@@ -297,15 +300,15 @@ impl PlaceNotation {
         }
     }
 
-    pub fn to_multiple_string(place_notations: &[PlaceNotation]) -> String {
+    pub fn notations_to_string_full(place_notations: &[PlaceNotation]) -> String {
         let mut string = String::with_capacity(200);
 
-        PlaceNotation::into_multiple_string(place_notations, &mut string);
+        PlaceNotation::write_notations_to_string_full(place_notations, &mut string);
 
         string
     }
 
-    pub fn into_multiple_string(place_notations: &[PlaceNotation], string: &mut String) {
+    pub fn write_notations_to_string_full(place_notations: &[PlaceNotation], string: &mut String) {
         let mut was_last_place_notation_cross = true; // Used to decide whether to insert a dot
 
         for p in place_notations {
@@ -318,7 +321,7 @@ impl PlaceNotation {
                     string.push('.');
                 }
 
-                p.into_string(string);
+                p.write_to_string_full(string);
 
                 was_last_place_notation_cross = false;
             }
@@ -333,7 +336,7 @@ impl PlaceNotation {
         macro_rules! add_place_not {
             () => {
                 if string_buff.len() != 0 {
-                    place_notations.push(PlaceNotation::from_string(&string_buff, stage));
+                    place_notations.push(PlaceNotation::from_str(&string_buff, stage));
                     string_buff.clear();
                 }
             };
@@ -361,36 +364,52 @@ impl PlaceNotation {
 
         // Deal with strings with comma in them
         if let Some(ind) = comma_index {
-            let mut reordered_place_notations: Vec<PlaceNotation> =
-                Vec::with_capacity(ind * 2 + (place_notations.len() - ind) * 2 - 2);
+            // The notations before the comma forwards
+            place_notations
+                .iter()
+                .take(ind)
+                // The notations before the comma backwards
+                .chain(place_notations.iter().take(ind).rev().skip(1))
+                // The notations after the comma forwards
+                .chain(place_notations.iter().skip(ind))
+                // The notations after the comma backwards
+                .chain(place_notations.iter().skip(ind).rev().skip(1))
+                // Cloned and put into a vector
+                .cloned()
+                .collect::<Vec<PlaceNotation>>()
 
-            macro_rules! add {
-                ($x : expr) => {
-                    reordered_place_notations.push(place_notations[$x].clone());
-                };
-            }
+        /*
+        let mut reordered_place_notations: Vec<PlaceNotation> =
+            Vec::with_capacity(ind * 2 + (place_notations.len() - ind) * 2 - 2);
 
-            // Before the comma forwards
-            for i in 0..ind {
-                add!(i);
-            }
+        macro_rules! add {
+            ($x : expr) => {
+                reordered_place_notations.push(place_notations[$x].clone());
+            };
+        }
 
-            // Before the comma backwards
-            for i in 0..ind - 1 {
-                add!(ind - 2 - i);
-            }
+        // Before the comma forwards
+        for i in 0..ind {
+            add!(i);
+        }
 
-            // After the comma forwards
-            for i in ind..place_notations.len() {
-                add!(i);
-            }
+        // Before the comma backwards
+        for i in 0..ind - 1 {
+            add!(ind - 2 - i);
+        }
 
-            // After the comma backwards
-            for i in 0..place_notations.len() - ind - 1 {
-                add!(place_notations.len() - 2 - i);
-            }
+        // After the comma forwards
+        for i in ind..place_notations.len() {
+            add!(i);
+        }
 
-            reordered_place_notations
+        // After the comma backwards
+        for i in 0..place_notations.len() - ind - 1 {
+            add!(place_notations.len() - 2 - i);
+        }
+
+        reordered_place_notations
+        */
         } else {
             place_notations
         }
@@ -435,8 +454,7 @@ impl<'a> Iterator for PlaceNotationIterator<'a> {
             return None;
         }
 
-        #[allow(unused_assignments)]
-        let mut output = 0;
+        let output;
 
         if self.place_notation.places.get(self.index as Number) {
             output = self.index;
@@ -466,13 +484,13 @@ pub mod tests {
 
     #[test]
     fn is_cross() {
-        assert!(PlaceNotation::from_string("x", Stage::MAXIMUS).is_cross());
-        assert!(PlaceNotation::from_string("-", Stage::MAJOR).is_cross());
-        assert!(PlaceNotation::from_string("X", Stage::MINOR).is_cross());
-        assert!(PlaceNotation::from_string("", Stage::ROYAL).is_cross());
-        assert!(!PlaceNotation::from_string("1", Stage::TRIPLES).is_cross());
-        assert!(!PlaceNotation::from_string("18", Stage::MAJOR).is_cross());
-        assert!(!PlaceNotation::from_string("3", Stage::SINGLES).is_cross());
+        assert!(PlaceNotation::from_str("x", Stage::MAXIMUS).is_cross());
+        assert!(PlaceNotation::from_str("-", Stage::MAJOR).is_cross());
+        assert!(PlaceNotation::from_str("X", Stage::MINOR).is_cross());
+        assert!(PlaceNotation::from_str("", Stage::ROYAL).is_cross());
+        assert!(!PlaceNotation::from_str("1", Stage::TRIPLES).is_cross());
+        assert!(!PlaceNotation::from_str("18", Stage::MAJOR).is_cross());
+        assert!(!PlaceNotation::from_str("3", Stage::SINGLES).is_cross());
     }
 
     #[test]
@@ -490,7 +508,7 @@ pub mod tests {
     #[test]
     #[should_panic]
     fn parser_cross_odd_stage_cross() {
-        PlaceNotation::from_string("x", Stage::CINQUES);
+        PlaceNotation::from_str("x", Stage::CINQUES);
     }
 
     #[test]
@@ -533,7 +551,7 @@ pub mod tests {
             ), // Grandsire Cinques
         ] {
             assert_eq!(
-                PlaceNotation::to_multiple_string(&PlaceNotation::from_multiple_string(
+                PlaceNotation::notations_to_string_full(&PlaceNotation::from_multiple_string(
                     input, *stage
                 )),
                 *expansion
@@ -560,7 +578,7 @@ pub mod tests {
 
             let touch = Touch::from(&pns[..]);
 
-            assert_eq!(PlaceNotation::to_multiple_string_short(&pns), *string);
+            assert_eq!(PlaceNotation::notations_to_string_short(&pns), *string);
 
             assert_eq!(touch.length, *length);
             assert_eq!(touch.leftover_change, lh);
@@ -579,10 +597,7 @@ pub mod tests {
             ("", Stage::ROYAL, "x"),
             ("4", Stage::SIXTEEN, "14"),
         ] {
-            assert_eq!(
-                format!("{:?}", PlaceNotation::from_string(pn, *stage)),
-                *exp
-            );
+            assert_eq!(format!("{}", PlaceNotation::from_str(pn, *stage)), *exp);
         }
     }
 
@@ -595,8 +610,8 @@ pub mod tests {
     #[test]
     #[should_panic]
     fn shares_places_with_panic() {
-        PlaceNotation::from_string("14", Stage::MAJOR)
-            .shares_places_with(&PlaceNotation::from_string("14", Stage::ROYAL));
+        PlaceNotation::from_str("14", Stage::MAJOR)
+            .shares_places_with(&PlaceNotation::from_str("14", Stage::ROYAL));
     }
 
     #[test]
@@ -611,8 +626,8 @@ pub mod tests {
             ("1490", "1270", Stage::ROYAL, true),
         ] {
             assert_eq!(
-                PlaceNotation::from_string(lhs, *stage)
-                    .shares_places_with(&PlaceNotation::from_string(rhs, *stage)),
+                PlaceNotation::from_str(lhs, *stage)
+                    .shares_places_with(&PlaceNotation::from_str(rhs, *stage)),
                 *expected_value
             );
         }
@@ -628,8 +643,8 @@ pub mod tests {
             ("1490", "1270", Stage::ROYAL),
         ] {
             assert_eq!(
-                PlaceNotation::from_string(original, *stage).reversed(),
-                PlaceNotation::from_string(reversed, *stage)
+                PlaceNotation::from_str(original, *stage).reversed(),
+                PlaceNotation::from_str(reversed, *stage)
             );
         }
     }
@@ -637,18 +652,18 @@ pub mod tests {
     #[test]
     fn equality() {
         assert!(
-            PlaceNotation::from_string("14", Stage::MINIMUS)
-                == PlaceNotation::from_string("14", Stage::MINIMUS)
+            PlaceNotation::from_str("14", Stage::MINIMUS)
+                == PlaceNotation::from_str("14", Stage::MINIMUS)
         );
 
         assert!(
-            PlaceNotation::from_string("14", Stage::MINIMUS)
-                != PlaceNotation::from_string("14", Stage::DOUBLES)
+            PlaceNotation::from_str("14", Stage::MINIMUS)
+                != PlaceNotation::from_str("14", Stage::DOUBLES)
         );
 
         assert!(
-            PlaceNotation::from_string("14", Stage::MAJOR)
-                != PlaceNotation::from_string("1458", Stage::MAJOR)
+            PlaceNotation::from_str("14", Stage::MAJOR)
+                != PlaceNotation::from_str("1458", Stage::MAJOR)
         );
     }
 
@@ -661,8 +676,8 @@ pub mod tests {
             ("1", "10", Stage::ROYAL),
         ] {
             assert_eq!(
-                PlaceNotation::from_string(lhs, *stage),
-                PlaceNotation::from_string(rhs, *stage)
+                PlaceNotation::from_str(lhs, *stage),
+                PlaceNotation::from_str(rhs, *stage)
             );
         }
     }
@@ -676,7 +691,7 @@ pub mod tests {
             ("135", "12345"),
         ] {
             assert_eq!(
-                PlaceNotation::from_string(lhs, Stage::from(rhs.len())).transposition(),
+                PlaceNotation::from_str(lhs, Stage::from(rhs.len())).transposition(),
                 Change::from(*rhs)
             );
         }
@@ -700,7 +715,7 @@ pub mod tests {
             ("1456", Stage::MINOR, "45"),
             ("14", Stage::SIXTEEN, "4"),
         ] {
-            PlaceNotation::from_string(from, *stage).into_string_implicit(&mut s);
+            PlaceNotation::from_str(from, *stage).write_to_string_compact(&mut s);
 
             println!("{}", from);
 

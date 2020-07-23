@@ -355,35 +355,16 @@ impl CoursingOrder {
     ///
     /// let mut s = String::with_capacity(10);
     ///
-    /// CoursingOrder::from("8753462").into_string(&mut s);
+    /// CoursingOrder::from("8753462").write_to_string(&mut s);
     ///
     /// assert_eq!(s, "8753462");
     /// ```
-    pub fn into_string(&self, string: &mut String) {
+    pub fn write_to_string(&self, string: &mut String) {
         string.reserve(self.order.len());
 
         for b in &self.order {
             string.push(b.as_char());
         }
-    }
-
-    /// Writes all the [Bell]s in this [CoursingOrder] to a [String], with no formatting.
-    ///
-    /// # Example
-    /// ```
-    /// use bellmetal::{Change, CoursingOrder};
-    ///
-    /// assert_eq!(
-    ///     CoursingOrder::from("8753462").to_string(),
-    ///     "8753462"
-    /// );
-    /// ```
-    pub fn to_string(&self) -> String {
-        let mut s = String::with_capacity(0);
-
-        self.into_string(&mut s);
-
-        s
     }
 
     /// Returns a [CoursingOrderIterator] that will iterate the bells in this `CoursingOrder`.
@@ -526,6 +507,16 @@ impl From<&str> for CoursingOrder {
 impl fmt::Debug for CoursingOrder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "<{}>", self.to_string())
+    }
+}
+
+impl fmt::Display for CoursingOrder {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = String::with_capacity(0);
+
+        self.write_to_string(&mut s);
+
+        write!(f, "{}", s)
     }
 }
 

@@ -663,13 +663,13 @@ pub fn canon_fixed_treble_cyclic(slice: &[Bell], change: &mut Change) {
     } else {
         let shift = slice[0].as_isize() - 1;
 
-        for i in 0..stage {
-            if slice[i] == Bell::from(0) {
+        for (i, &bell) in slice.iter().enumerate() {
+            if bell == Bell::from(0) {
                 change.set_bell(Place::from(i), Bell::from(0));
                 continue;
             }
 
-            let new_bell = slice[i].as_isize() - shift;
+            let new_bell = bell.as_isize() - shift;
 
             if new_bell <= 0 {
                 change.set_bell(

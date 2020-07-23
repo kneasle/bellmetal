@@ -279,7 +279,7 @@ impl Method {
         Method::double_symmetry(
             name,
             &PlaceNotation::from_multiple_string(first_quarter_place_notation, stage),
-            PlaceNotation::from_string(lead_end_notation, stage),
+            PlaceNotation::from_str(lead_end_notation, stage),
         )
     }
 
@@ -339,7 +339,7 @@ impl Method {
             name,
             &PlaceNotation::from_multiple_string(place_notation, stage),
             lh,
-            PlaceNotation::from_string(lead_end_notation, stage),
+            PlaceNotation::from_str(lead_end_notation, stage),
         )
     }
 
@@ -399,8 +399,8 @@ mod call_tests {
         Call::new(
             '-',
             vec![
-                PlaceNotation::from_string("14", Stage::MAJOR),
-                PlaceNotation::from_string("x", Stage::MINOR),
+                PlaceNotation::from_str("14", Stage::MAJOR),
+                PlaceNotation::from_str("x", Stage::MINOR),
             ],
             LEAD_END_LOCATION,
         );
@@ -539,7 +539,7 @@ mod tests {
             Method::double_symmetry (
                 "Double Norwich Court Bob Major",
                 &PlaceNotation::from_multiple_string ("x14x36", Stage::MAJOR),
-                PlaceNotation::from_string ("18", Stage::MAJOR)
+                PlaceNotation::from_str ("18", Stage::MAJOR)
             ).plain_lead.to_string (),
             "12345678\n21436587\n24135678\n42316587\n24361578\n42635187\n24365817\n42638571\n46283751
 64827315\n46287135\n64821753\n46812735\n64187253\n61482735\n16847253"
@@ -578,7 +578,7 @@ mod tests {
                 "Partial Method",
                 &PlaceNotation::from_multiple_string("x30", Stage::ROYAL),
                 Change::from("1352749608"),
-                PlaceNotation::from_string("12", Stage::ROYAL)
+                PlaceNotation::from_str("12", Stage::ROYAL)
             )
             .plain_lead
             .to_string(),

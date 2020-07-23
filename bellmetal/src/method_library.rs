@@ -134,7 +134,7 @@ pub fn serialise_method(method: &Method, string: &mut String) {
     string.push(DELIMITER);
     string.push_str(&method.name);
     string.push(DELIMITER);
-    PlaceNotation::into_multiple_string_short(&method.place_notation, string);
+    PlaceNotation::write_notations_to_string_compact(&method.place_notation, string);
 }
 
 #[cfg(test)]

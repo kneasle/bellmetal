@@ -8,6 +8,7 @@ use crate::utils::AndNext;
 use itertools::Itertools;
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt;
 use std::iter::Cloned;
 use std::marker::PhantomData;
 
@@ -707,24 +708,6 @@ impl Touch {
         )
     }
 
-    pub fn to_string(&self) -> String {
-        let stage = self.stage.as_usize();
-
-        let mut s = String::with_capacity(stage * self.length + self.length);
-
-        for i in 0..self.length {
-            for j in 0..stage {
-                s.push(self.bells[i * stage + j].as_char());
-            }
-
-            if i != self.length - 1 {
-                s.push('\n');
-            }
-        }
-
-        s
-    }
-
     // Functions defined to increase performance by avoiding memory allocations
     pub fn overwrite_from_place_notations(&mut self, place_notations: &[PlaceNotation]) {
         let length = place_notations.len();
@@ -947,6 +930,26 @@ impl From<&str> for Touch {
         touch.overwrite_from_string(string);
 
         touch
+    }
+}
+
+impl fmt::Display for Touch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let stage = self.stage.as_usize();
+
+        let mut s = String::with_capacity(stage * self.length + self.length);
+
+        for i in 0..self.length {
+            for j in 0..stage {
+                s.push(self.bells[i * stage + j].as_char());
+            }
+
+            if i != self.length - 1 {
+                s.push('\n');
+            }
+        }
+
+        write!(f, "{}", s)
     }
 }
 
