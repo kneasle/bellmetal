@@ -354,52 +354,54 @@ impl PlaceNotation {
 
         // Deal with strings with comma in them
         if let Some(ind) = comma_index {
-            // The notations before the comma forwards
-            place_notations
-                .iter()
-                .take(ind)
-                // The notations before the comma backwards
-                .chain(place_notations.iter().take(ind).rev().skip(1))
-                // The notations after the comma forwards
-                .chain(place_notations.iter().skip(ind))
-                // The notations after the comma backwards
-                .chain(place_notations.iter().skip(ind).rev().skip(1))
-                // Cloned and put into a vector
-                .cloned()
-                .collect::<Vec<PlaceNotation>>()
+            // Disappoiningly, the handwritten implementation is faster than iterator magic,
+            // and so despite clippy's continued complaints, I'm keeping it.
+            if false {
+                // The notations before the comma forwards
+                place_notations
+                    .iter()
+                    .take(ind)
+                    // The notations before the comma backwards
+                    .chain(place_notations.iter().take(ind).rev().skip(1))
+                    // The notations after the comma forwards
+                    .chain(place_notations.iter().skip(ind))
+                    // The notations after the comma backwards
+                    .chain(place_notations.iter().skip(ind).rev().skip(1))
+                    // Cloned and put into a vector
+                    .cloned()
+                    .collect::<Vec<PlaceNotation>>()
+            } else {
+                let mut reordered_place_notations: Vec<PlaceNotation> =
+                    Vec::with_capacity(ind * 2 + (place_notations.len() - ind) * 2 - 2);
 
-        /*
-        let mut reordered_place_notations: Vec<PlaceNotation> =
-            Vec::with_capacity(ind * 2 + (place_notations.len() - ind) * 2 - 2);
+                macro_rules! add {
+                    ($x : expr) => {
+                        reordered_place_notations.push(place_notations[$x].clone());
+                    };
+                }
 
-        macro_rules! add {
-            ($x : expr) => {
-                reordered_place_notations.push(place_notations[$x].clone());
-            };
-        }
+                // Before the comma forwards
+                for i in 0..ind {
+                    add!(i);
+                }
 
-        // Before the comma forwards
-        for i in 0..ind {
-            add!(i);
-        }
+                // Before the comma backwards
+                for i in 0..ind - 1 {
+                    add!(ind - 2 - i);
+                }
 
-        // Before the comma backwards
-        for i in 0..ind - 1 {
-            add!(ind - 2 - i);
-        }
+                // After the comma forwards
+                for i in ind..place_notations.len() {
+                    add!(i);
+                }
 
-        // After the comma forwards
-        for i in ind..place_notations.len() {
-            add!(i);
-        }
+                // After the comma backwards
+                for i in 0..place_notations.len() - ind - 1 {
+                    add!(place_notations.len() - 2 - i);
+                }
 
-        // After the comma backwards
-        for i in 0..place_notations.len() - ind - 1 {
-            add!(place_notations.len() - 2 - i);
-        }
-
-        reordered_place_notations
-        */
+                reordered_place_notations
+            }
         } else {
             place_notations
         }

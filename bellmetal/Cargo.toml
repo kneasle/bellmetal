@@ -21,7 +21,14 @@ categories = [
     "data-structures"
 ]
 
+[dev-dependencies]
+criterion = "0.3"
+
 [dependencies]
-factorial = "0.2.0"
-itertools = "0.9.0"
-common_macros = "0.1.1"
+factorial = "0.2"
+itertools = "0.9"
+common_macros = "0.1"
+
+[[bench]]
+name = "place_notation_parsing"
+harness = false
