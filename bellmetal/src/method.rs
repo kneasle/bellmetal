@@ -216,7 +216,7 @@ impl Method {
             name: new_name.to_string(),
             stage: self.stage,
             plain_lead: self.plain_lead.inverted(),
-            place_notations: selfplace_notationsn.iter().map(|x| x.reversed()).collect(),
+            place_notations: self.place_notations.iter().map(|x| x.reversed()).collect(),
             location_map: self.location_map.clone(),
         }
     }

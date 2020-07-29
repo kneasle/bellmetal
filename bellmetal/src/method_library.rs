@@ -192,7 +192,7 @@ mod tests {
 
             assert_eq!(method.name, m.name);
             assert_eq!(method.stage, m.stage);
-            assert_eq!(method.place_notations, mplace_notationsn);
+            assert_eq!(method.place_notations, m.place_notations);
         }
     }
 
