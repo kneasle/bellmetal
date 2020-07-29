@@ -58,7 +58,7 @@ impl MethodLibrary {
         None
     }
 
-    pub fn get_method(&self, string: &str) -> Option<Method> {
+    pub fn get_method_by_name(&self, string: &str) -> Option<Method> {
         for stored_method in &self.stored_methods {
             if stored_method.name == string {
                 return Some(stored_method.to_method());
@@ -251,7 +251,7 @@ mod tests {
         );
 
         assert_eq!(
-            method_lib.get_method("Fellowship of the Ring Alliance Triples"),
+            method_lib.get_method_by_name("Fellowship of the Ring Alliance Triples"),
             Some(Method::from_str(
                 "Fellowship of the Ring Alliance Triples",
                 "7.1.5.3.7.5.3.5.7,1",
@@ -260,12 +260,12 @@ mod tests {
         );
 
         assert_eq!(
-            method_lib_triples.get_method("Fellowship of the Ring Alliance Triples"),
+            method_lib_triples.get_method_by_name("Fellowship of the Ring Alliance Triples"),
             None
         );
 
         assert_eq!(
-            method_lib.get_method("Fellowship of The Ring Alliance Triples"),
+            method_lib.get_method_by_name("Fellowship of The Ring Alliance Triples"),
             None
         );
     }
