@@ -8,23 +8,33 @@ const DELIMITER: char = '|';
 #[derive(Clone, Hash, Debug)]
 struct StoredMethod {
     name: String,
-    place_notation: Vec<PlaceNotation>,
+    place_notations: Vec<PlaceNotation>,
     stage: Stage,
 }
 
 impl StoredMethod {
+    pub fn new(name: String, place_notations: Vec<PlaceNotation>, stage: Stage) -> StoredMethod {
+        StoredMethod {
+            name,
+            place_notations,
+            stage,
+        }
+    }
+
     pub fn to_method(&self) -> Method {
-        Method::new_with_lead_end_location(self.name.clone(), self.place_notation.clone())
+        Method::new_with_lead_end_location(self.name.clone(), self.place_notations.clone())
     }
 }
 
-impl StoredMethod {
-    pub fn new(name: String, place_notation: Vec<PlaceNotation>, stage: Stage) -> StoredMethod {
-        StoredMethod {
-            name,
-            place_notation,
-            stage,
-        }
+impl From<&str> for StoredMethod {
+    fn from(string: &str) -> StoredMethod {
+        let mut parts = string.split(DELIMITER);
+
+        let stage = Stage::from(parts.next().unwrap().parse::<usize>().unwrap());
+        let name = parts.next().unwrap().to_string();
+        let place_notation = PlaceNotation::from_multiple_string(parts.next().unwrap(), stage);
+
+        StoredMethod::new(name, place_notation, stage)
     }
 }
 
@@ -40,7 +50,7 @@ impl MethodLibrary {
 
     pub fn get_method_by_notation(&self, place_notations: &[PlaceNotation]) -> Option<Method> {
         for m in &self.stored_methods {
-            if m.place_notation == place_notations {
+            if m.place_notations == place_notations {
                 return Some(m.to_method());
             }
         }
@@ -70,7 +80,7 @@ impl MethodLibrary {
         match stage {
             None => {
                 for l in string.lines() {
-                    stored_methods.push(deserialise_stored_method(l));
+                    stored_methods.push(StoredMethod::from(l));
                 }
             }
             Some(_) => {
@@ -98,7 +108,7 @@ impl MethodLibrary {
 }
 
 pub fn deserialise_method(string: &str) -> Method {
-    deserialise_stored_method(string).to_method()
+    StoredMethod::from(string).to_method()
 }
 
 fn deserialise_stored_method_filtered(
@@ -117,16 +127,6 @@ fn deserialise_stored_method_filtered(
     let place_notation = PlaceNotation::from_multiple_string(parts.next().unwrap(), stage);
 
     Some(StoredMethod::new(name, place_notation, stage))
-}
-
-fn deserialise_stored_method(string: &str) -> StoredMethod {
-    let mut parts = string.split(DELIMITER);
-
-    let stage = Stage::from(parts.next().unwrap().parse::<usize>().unwrap());
-    let name = parts.next().unwrap().to_string();
-    let place_notation = PlaceNotation::from_multiple_string(parts.next().unwrap(), stage);
-
-    StoredMethod::new(name, place_notation, stage)
 }
 
 pub fn serialise_method(method: &Method, string: &mut String) {
