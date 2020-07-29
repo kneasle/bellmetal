@@ -134,7 +134,7 @@ pub fn serialise_method(method: &Method, string: &mut String) {
     string.push(DELIMITER);
     string.push_str(&method.name);
     string.push(DELIMITER);
-    PlaceNotation::write_notations_to_string_compact(&method.place_notation, string);
+    PlaceNotation::write_notations_to_string_compact(&method.place_notations, string);
 }
 
 #[cfg(test)]
@@ -192,7 +192,7 @@ mod tests {
 
             assert_eq!(method.name, m.name);
             assert_eq!(method.stage, m.stage);
-            assert_eq!(method.place_notation, m.place_notation);
+            assert_eq!(method.place_notations, mplace_notationsn);
         }
     }
 

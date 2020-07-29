@@ -81,7 +81,7 @@ pub struct Method {
     pub name: String,
     pub stage: Stage,
 
-    pub place_notation: Vec<PlaceNotation>,
+    pub place_notations: Vec<PlaceNotation>,
     pub plain_lead: Touch,
 
     location_map: HashMap<String, usize>,
@@ -216,7 +216,7 @@ impl Method {
             name: new_name.to_string(),
             stage: self.stage,
             plain_lead: self.plain_lead.inverted(),
-            place_notation: self.place_notation.iter().map(|x| x.reversed()).collect(),
+            place_notations: selfplace_notationsn.iter().map(|x| x.reversed()).collect(),
             location_map: self.location_map.clone(),
         }
     }
@@ -226,8 +226,8 @@ impl Method {
             return false;
         }
 
-        let mut own_iterator = self.place_notation.iter().rev().peekable();
-        let mut others_iterator = other.place_notation.iter().rev().peekable();
+        let mut own_iterator = self.place_notations.iter().rev().peekable();
+        let mut others_iterator = other.place_notations.iter().rev().peekable();
 
         // Pop the lead end PNs
         own_iterator.next();
@@ -265,7 +265,7 @@ impl Method {
             name,
             stage: place_notation[0].stage,
             plain_lead: Touch::from(&place_notation[..]),
-            place_notation,
+            place_notations: place_notation,
             location_map,
         }
     }
@@ -371,7 +371,7 @@ impl Method {
             name: name.to_string(),
             stage,
             plain_lead: Touch::from_changes(&changes, lead_head),
-            place_notation: Vec::with_capacity(0),
+            place_notations: Vec::with_capacity(0),
             location_map: hash_map! { LEAD_END_LOCATION.to_string () => changes.len () },
         }
     }
