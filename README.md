@@ -1,6 +1,12 @@
 # BellMetal
 A Rust library for efficiently proving and generating change ringing touches.
 
+## By the way:
+
+This project has been superceded by [BellFrame](https://github.com/kneasle/ringing/tree/master/bellframe).  If you want a Rust library for processing change ringing, use BellFrame - it benefitted a lot from the design mistakes of this project.  You're still welcome to look around at this code for interests' sake, but the design of BellFrame is much better.
+
+---
+
 I would hope that real bells have less rust than this repo!
 
 This library is designed mainly with my own use in mind.  It has been pivotal in the creation of many of my more recent compositions, including what I believe is the first time where a peal composition in its entirety has had rotational as well as palindromic symmetry (as well as being the record highest-music-scoring 9-part of Royal): [5004 9-Spliced Royal by Ben White-Horne](https://complib.org/composition/65034).  It also helped me improve some old compositions, such as this newer cyclic variable-treble quarter peal of Plain Bob Triples, with 72 of the 96 possible 4-bell runs: [1274 Plain Bob Triples by Ben White-Horne](https://complib.org/composition/61698).  I have started work on Python bindings which will hopefully have both the flexibilty of Python and the speed of Rust, as well as making the library easier to use since it doesn't require learning a fairly challenging systems programming language.
